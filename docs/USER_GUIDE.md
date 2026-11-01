@@ -135,6 +135,11 @@ to five generations. **Reports → Keep living people private** shows living peo
   no. n is 2n and the mother 2n+1), a chart number, "No. 1 on this chart is the same as no. __ on chart __", and
   "cont. on chart __" on the last generation so charts can be linked. Landscape, one page. The LDS version adds
   tick boxes for each person's ordinances. If your browser prints it portrait, choose Landscape in the print window.
+
+Printing from Safari on a Mac: Safari doesn't fit pages to the paper by itself. If the right side is cut off, lower
+**Scale** in the print window (try 85%), and choose Landscape for pedigree charts and census forms. To leave out
+Safari's own title, date and web address at the top and bottom, untick **Print headers and footers**. Chrome and
+Firefox fit the page by themselves.
 - **Census forms...:** a worksheet for any United States census from 1790 to 1950 Canadian census from 1851 to 1931, or UK census from 1841 to 1921, with that year's questions as the
   column headings, numbered as on the original schedule. Boxes at the top take the state, county, enumeration
   district, sheet and where you found it. Wide early censuses (1830, 1840) and the 1940 and 1950 extra questions
