@@ -1,129 +1,156 @@
-# Releasing Gilded Roots
+# Gilded Roots
 
-How to put a new version on GitHub with installers for Windows, Mac and Linux. The installers are built by
-GitHub (the **Build installers** workflow in `.github/workflows/installers.yml`), not on your own computer.
+A modern, native family-history program for Windows, macOS and Linux, built as a replacement for
+PAF (Personal Ancestral File). Your tree stays on your computer, in a visible folder, in an open format.
 
-## 1. Before uploading
+Written in Rust with [egui](https://github.com/emilk/egui). No account, no subscription, no cloud.
 
-- [ ] `Cargo.toml` has the right `version` (1.0.0 for the first release). Help > About shows this number.
-- [ ] `CHANGELOG.md` has a section for this version.
-- [ ] In Finder, delete the stray file `.gitignore copy` from `ft-rust` (the real `.gitignore` already has
-      everything in it).
-- [ ] Never upload the `target` folder (it is huge and is rebuilt by GitHub). `.gitignore` keeps it out when
-      using git.
+## Privacy first
 
-Hidden files: `.github` and `.gitignore` start with a dot, so Finder hides them. Press **Cmd + Shift + .**
-in Finder to show them. They must be uploaded: `.github` is what builds the installers.
+Family history is personal. Gilded Roots is built so that it stays yours:
 
-## 2. Upload the code to GitHub
+- **No account** and **no subscription**. Install it and start.
+- **No advertising** and **no tracking**. The program never contacts a server.
+- **Nothing is uploaded.** Your tree, photos and documents stay in a folder on your own computer
+  (`Documents/Gilded Roots`), which you can move, back up or copy as you like.
+- **You decide what living people's details leave your computer.** Printouts and reports can hide living
+  people, and GEDCOM can be exported with living people kept private.
+- **Works offline**, including the map and the built-in user guide.
 
-**On the website:** open the repository, choose **Add file > Upload files**, and drag in everything inside
-`ft-rust` except `target` (including `.github`, `.gitignore`, `packaging`, `assets`, `icons`, `docs`,
-`src`, `tools`, `tests_data` and the files at the top level). Write a message such as "Version 1.0.0" and
-choose **Commit changes** to `main`.
+## Moving from PAF
 
-**Or with git** (Terminal, in the `ft-rust` folder):
+Gilded Roots was made for people coming from **Personal Ancestral File (PAF)**. Choose **Import an existing
+family tree** and pick your PAF 5 `.paf` file: names, births, deaths, marriages and every family link are read
+directly, with no need for PAF itself. If your file also has christenings, burials, LDS ordinances, notes,
+sources or photos, export a GEDCOM from PAF instead (**File > Export**) and import that, so those come across too.
+The import report shows exactly how many people, families, sources, citations, notes and photos came across,
+and anything that could not be carried over. Your PAF file is never changed.
 
-```
-git add -A
-git commit -m "Version 1.0.0"
-git push
-```
+## Features
 
-Files that must be on GitHub for the installers to build: `Cargo.toml`, `Cargo.lock`, `build.rs`, `src/`,
-`assets/`, `icons/`, `packaging/gilded-roots.iss`, `packaging/gilded-roots.desktop`,
-`packaging/PORTABLE-README.txt`, `LICENSE`, `README.txt`, `THIRD_PARTY_LICENSES.txt` and
-`.github/workflows/installers.yml`.
+- **Safe by design.** Atomic saves with read-back verification, a kept previous version, daily
+  checksummed backups for 14 days, automatic recovery from damaged files, and a visible
+  `Documents/Gilded Roots` data folder that you can relocate.
+- **GEDCOM in and out.** Opens PAF 5 `.paf` files directly. Reads GEDCOM 5.5 / 5.5.1 (UTF-8, UTF-16, ANSEL, Windows ANSI) from PAF, Ancestry,
+  FamilySearch, MyHeritage, RootsMagic, Gramps and others. Anything the app has no field for is preserved and
+  written back. Every import and export is checked and reported.
+- **Real sources and citations.** Reusable source records, repositories, page/entry references, URLs, access
+  dates, transcriptions and quality ratings, attached to people, events and families.
+- **Safer merging.** Name and birth year are only clues. Merges happen on a side-by-side review screen that
+  compares parents, spouses, children and conflicting facts, and needs your confirmation.
+- **Complex families.** Several sets of parents, adoption, step, foster and guardian relationships kept
+  separate from biological ones, multiple partnerships, derived step/half relatives, and associations such as
+  godparent or guardian.
+- **Charts, reports and tools.** Pedigree, family and descendant views, fan chart, hourglass and lifespan
+  charts, a sortable People table (saves as CSV), relationship finder, data checker, duplicate finder, printable
+  charts and group sheets, bibliography, photos, documents and recorded stories.
+- **Research tools.** Research to-do lists (exported as `_TODO`), a Places explorer that finds and fixes places
+  spelled more than one way, face tagging in photos with face-crop portraits, a built-in PDF viewer, an offline Map of where your family lived, Memories (stories,
+  recordings, documents and notes), bookmarks and recent people.
+- **Fast to get around.** Quick jump (Ctrl/Cmd+K) to any person or command, F-key shortcuts, a History of changes
+  you can step back through, and saved daily versions you can browse and restore one person from.
+- **Comfortable to read.** Adjustable text size, name and date styles, dockable panels with saved layouts, full screen.
+- **Archive and protect.** One-file Family Tree Archives with every photo and document, backups on your
+  schedule with a second copy on a USB stick or drive, saved daily versions, and a sample family to practise on.
+- **Research tools.** Research journal, confidence ratings on every fact, historical events in timelines,
+  family statistics, a smarter duplicate finder, a report designer, and separate trees for separate projects.
+- **DNA.** Autosomal results (ethnicity table, bar chart and map; match lists with shared cM and a "How related?"
+  guide), Y-DNA and mtDNA (haplogroup, markers or mutations, matches, and the direct line drawn on the map).
+  Match lists import from CSV, tab-separated and Excel files exported by FTDNA, Ancestry, 23andMe, MyHeritage
+  and others.
+- **Printable forms.** Blank family group sheets and 4- or 5-generation pedigree charts (plain or with LDS
+  ordinance boxes), and census worksheets for the US (1790–1950), Canada (1851–1931) and England and Wales
+  (1841–1921).
+- **Tombstone calculator.** Turns a gravestone's death date and age ("aged 72 years, 3 months, 10 days") into a
+  birth date or range and saves it with a gravestone source.
+- **Map** in a clean flat style that can match the app's colours, and wraps around the world.
+- **Portable versions** for Windows, Mac and Linux that run from a USB drive with the data beside them.
 
-## 3. Test build (recommended)
+## Install
 
-1. On GitHub open **Actions > Build installers > Run workflow**, keep `main`, and choose **Run workflow**.
-2. Wait for all four jobs (Windows, Mac Apple Silicon, Mac Intel, Linux) to turn green. About 15 to 30 minutes.
-3. Open the finished run and download the artifacts at the bottom. Try at least the Mac `.dmg` on your Mac:
-   open it, import a GEDCOM and a `.paf`, print a blank form, open the DNA tab.
-4. If a job is red, open it, copy the red error lines, and bring them to Claude.
+Download the installer for your system from the
+[Releases](../../releases) page (or from the **Actions → Build installers** run artifacts):
 
-A test build does not publish anything.
-
-## 4. Publish the release
-
-1. On GitHub open **Releases > Draft a new release**.
-2. **Choose a tag:** type `v1.0.0` and choose **Create new tag: v1.0.0 on publish**. Target: `main`.
-3. **Release title:** `Gilded Roots 1.0.0`.
-4. **Description:** paste the release notes below.
-5. Choose **Publish release**.
-
-Publishing creates the tag, the tag starts the **Build installers** workflow, and when it finishes it attaches
-the installers to the release by itself. After about 20 to 30 minutes the release should list these 8 files:
-
-| File | For |
+| System | File |
 | --- | --- |
-| `GildedRoots-Setup.exe` | Windows installer |
-| `GildedRoots-portable-windows.zip` | Windows, USB drive |
-| `GildedRoots-apple-silicon.dmg` | Mac with an M1 or later chip |
-| `GildedRoots-intel.dmg` | Older Intel Mac |
-| `GildedRoots-portable-mac-apple-silicon.zip` | Mac (M chip), USB drive |
-| `GildedRoots-portable-mac-intel.zip` | Mac (Intel), USB drive |
-| `GildedRoots-linux-amd64.deb` | Linux (Ubuntu, Debian, Mint) |
-| `GildedRoots-portable-linux-x86_64.tar.gz` | Linux, USB drive |
+| Windows | `GildedRoots-Setup.exe` |
+| macOS (Apple Silicon / Intel) | `GildedRoots-apple-silicon.dmg` / `GildedRoots-intel.dmg` |
+| Linux | `GildedRoots-linux-amd64.deb` |
 
-If no run appears under **Actions** a few minutes after publishing: **Actions > Build installers > Run
-workflow**, set **Use workflow from** to **Tags > v1.0.0**, and run it. Started from a tag, it still attaches
-the files to the release.
+### Portable (runs from a USB drive)
 
-## 5. After publishing
+| System | File |
+| --- | --- |
+| Windows | `GildedRoots-portable-windows.zip` |
+| macOS (Apple Silicon / Intel) | `GildedRoots-portable-mac-apple-silicon.zip` / `GildedRoots-portable-mac-intel.zip` |
+| Linux | `GildedRoots-portable-linux-x86_64.tar.gz` |
 
-- [ ] Download one installer from the release page itself and open it, to check the public link works.
-- [ ] Repository **About** (gear icon on the main page): a short description, for example "Free, offline family
-      history program for Windows, Mac and Linux. A modern replacement for PAF.", and topics such as
-      `genealogy`, `family-tree`, `gedcom`, `paf`, `rust`.
-- [ ] **Settings > General > Features:** Issues ticked (the README sends bug reports there). The Sponsor
-      button comes from `.github/FUNDING.yml`.
+Unzip the **Gilded Roots** folder onto a USB stick or external drive. It holds the program and a
+`FamilyTreeData` folder; everything (trees, photos, backups, settings) is kept there and nothing is written to the
+computer it is plugged into. Keep the two side by side. On a Mac, if the program says portable mode cannot be used,
+run `xattr -dr com.apple.quarantine` on the app once (details in the README inside the zip). An installed copy can
+also be made portable with **Tools > Make portable**.
 
-## Later versions
+The installers are unsigned. On Windows choose **More info → Run anyway**. On a Mac, open the app once, click
+**Done** when macOS warns about it, then go to **System Settings → Privacy & Security** and click **Open Anyway**
+(on macOS 14 or older you can instead right-click the app and choose **Open**). You only need to do this once.
 
-1. Change `version` in `Cargo.toml` (for example 1.0.1 for fixes, 1.1.0 for new features).
-2. Add a section at the top of `CHANGELOG.md`.
-3. Upload as in step 2, then publish a release with the matching tag (`v1.0.1`).
-
-The Windows installer keeps the same AppId in every version, so a new version installs over the old one.
-Nobody's family tree is touched: it lives in `Documents/Gilded Roots`, which installing or uninstalling never
-removes.
-
-## Release notes for 1.0.0 (paste into the release description)
+## Build from source
 
 ```
-Gilded Roots 1.0.0, the first public release.
-
-A free, offline family history program for Windows, Mac and Linux, made as a modern replacement for
-PAF (Personal Ancestral File). No account, no subscription, no advertising, nothing uploaded.
-
-Highlights
-- Import your tree from a GEDCOM file (PAF, Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy and
-  others), or open a PAF 5 .paf file directly. Every import comes with a report of what came across.
-- Pedigree, family, individual and descendant views; fan, hourglass and lifespan charts; reports and
-  printable family group sheets.
-- Sources and citations, research journal, to-do lists, places explorer, duplicate finder and data checker.
-- Photos with face tagging, documents, a PDF viewer and recorded family stories.
-- Offline map of where your family lived.
-- DNA: ethnicity, match lists with a "How related?" guide, and Y-DNA / mtDNA with the direct line on the map.
-- Printable blank forms: family group sheets, 4- and 5-generation pedigrees (plain or LDS) and census
-  worksheets for the US, Canada and England and Wales.
-- Tombstone calculator: a birth date from the age on a gravestone.
-- Safe saving, daily backups, Family Tree Archives, and portable versions for a USB drive.
-
-Which file do I download?
-- Windows: GildedRoots-Setup.exe
-- Mac: GildedRoots-apple-silicon.dmg (M1 or newer) or GildedRoots-intel.dmg (older Macs)
-- Linux: GildedRoots-linux-amd64.deb
-- To run from a USB drive: the matching "portable" file.
-
-The installers are not signed. Windows: choose More info > Run anyway. Mac: open the app once, click Done at
-the warning, then choose System Settings > Privacy & Security > Open Anyway (on macOS 14 or older,
-right-click the app and choose Open).
-
-Coming from PAF? A .paf file brings in names, births, deaths, marriages and family links. For christenings,
-burials, LDS ordinances, notes and sources, export a GEDCOM from PAF (File > Export) and import that instead.
-
-Full list of changes: CHANGELOG.md. How to use it: docs/USER_GUIDE.md.
+cargo run --release
 ```
+
+Install [Rust](https://rustup.rs) 1.92 or newer (if you already have Rust, run `rustup update`). On Linux you also need GTK and graphics headers:
+
+```
+sudo apt install build-essential pkg-config libgtk-3-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev libasound2-dev
+```
+
+On macOS run `xcode-select --install` first, and `bash build-mac.sh` to make a double-clickable app.
+Full platform notes are in [`README.txt`](README.txt).
+
+## Where your data lives
+
+`Documents/Gilded Roots/tree.json`, plus `media/` and `backups/`. Move it with **Tools → Move my data
+folder…**. If that folder is inside iCloud, OneDrive or Dropbox, the app warns you, because live syncing can
+conflict with saves.
+
+## Documentation
+
+- [User guide](docs/USER_GUIDE.md): the menus and tools, step by step
+- [Changelog](CHANGELOG.md): what has been built
+- [Contributing](CONTRIBUTING.md): building, testing and project layout
+
+## Support
+
+Donations are entirely optional, go to the author personally, and are not tax-deductible.
+
+Gilded Roots is free. If you enjoy it and would like to help with its development, a small donation, even $5,
+is very much appreciated. It is entirely optional, and donations are voluntary gifts that do not buy features
+or support. Thank you!
+
+[Donate with PayPal](https://www.paypal.me/doylemcintosh).
+
+## Questions and bug reports
+
+Please use the **Issues** tab of this repository. Include your operating system, the Gilded Roots version
+(Help > About) and what you were doing. Never attach your real tree file to a public issue: it contains
+names and dates of living people. A small made-up example, or a screenshot, is enough.
+
+## Trademarks
+
+Gilded Roots is an independent project. It is not affiliated with, endorsed by or connected to FamilySearch,
+The Church of Jesus Christ of Latter-day Saints, Ancestry, MyHeritage, RootsMagic or any other company named in
+this project. Personal Ancestral File (PAF) and the other product names are trademarks of their owners and are
+used only to describe compatibility (for example, "imports GEDCOM files exported from PAF").
+
+## Author
+
+Created and maintained by **DGMCINT**
+
+## License
+
+MIT. See [LICENSE](LICENSE). Gilded Roots is built with open-source libraries under permissive licences (MIT,
+Apache-2.0, BSD, Zlib and similar); map data comes from Natural Earth (public domain) and GeoNames (CC BY 4.0). Their notices are in [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) and in the
+program under **Help > Open-source licences**.
