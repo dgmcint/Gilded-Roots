@@ -116,6 +116,20 @@ details.help ol{padding-left:20px;margin:8px 0 0}
 details.help li{margin:4px 0}
 code{font:14px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 
+
+/* bring your tree */
+section.bring{padding:72px 0 8px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+.tabs button{font:600 15px var(--sans);padding:9px 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tabs button[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:#15181e}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-top:14px;max-width:860px}
+.panel[hidden]{display:none}
+.panel ol{margin:0 0 10px;padding-left:22px}
+.panel li{margin:6px 0}
+.panel .note{margin:6px 0 0}
+.then{max-width:860px;margin-top:18px;color:var(--ink-2)}
+
 /* faq */
 section.faq{padding:64px 0;background:var(--paper-2);border-top:1px solid var(--line)}
 .faq-list{max-width:820px}
@@ -138,7 +152,7 @@ footer .wrap{display:grid;gap:10px}
   <div class="wrap">
     <a class="brand" href="#"><img src="images/icon.png" alt="">Gilded Roots</a>
     <nav class="links">
-      <a href="#paf">Coming from PAF</a>
+      <a href="#bring">Bring your tree</a>
       <a href="#features">Features</a>
       <a href="#faq">Questions</a>
       <a class="js-repo" href="#">GitHub</a>
@@ -181,6 +195,84 @@ footer .wrap{display:grid;gap:10px}
       <p class="note">Your original PAF file is never changed. A <code>.paf</code> file brings in names, dates, places and all family links. For christenings, burials, LDS ordinances, notes and sources, export a GEDCOM from PAF (File › Export) and import that instead.</p>
     </div>
     <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="images/individual.png" alt="A person's page in Gilded Roots with vital facts, timeline, relationships and research to-do list" width="1400" height="790" loading="lazy"></div>
+  </div>
+</section>
+
+
+<section class="bring" id="bring">
+  <div class="wrap">
+    <div class="eyebrow">Bring your tree</div>
+    <h2>Moving from another site or program.</h2>
+    <p style="max-width:46em;color:var(--ink-2)">Almost every family history website and program can save your tree as a <b>GEDCOM</b> file (it ends in <code>.ged</code>). Save one from where your tree is now, then open Gilded Roots and choose <b>Import an existing family tree</b>. Pick where your tree is now:</p>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-t="ancestry">Ancestry</button>
+      <button role="tab" aria-selected="false" data-t="familysearch">FamilySearch</button>
+      <button role="tab" aria-selected="false" data-t="myheritage">MyHeritage</button>
+      <button role="tab" aria-selected="false" data-t="findmypast">Findmypast</button>
+      <button role="tab" aria-selected="false" data-t="ftm">Family Tree Maker</button>
+      <button role="tab" aria-selected="false" data-t="paf">PAF</button>
+      <button role="tab" aria-selected="false" data-t="other">Other programs</button>
+    </div>
+
+    <div class="panel" data-p="ancestry">
+      <ol>
+        <li>Sign in to Ancestry, click <b>Trees</b> at the top and open your tree.</li>
+        <li>Click the <b>More</b> menu (three dots) on the left and choose <b>Tree Settings</b>.</li>
+        <li>Under <b>Manage your tree</b>, click <b>Export tree</b>, then <b>Export</b>. Wait while it says “Generating a GEDCOM file”.</li>
+        <li>Click <b>Download your GEDCOM file</b>. It downloads as a zip: double-click it to get the <code>.ged</code> file inside.</li>
+      </ol>
+      <p class="note">Only the tree's owner can export it, but no subscription is needed. Photos stay on Ancestry: the file holds links to them, which Gilded Roots keeps with an “Open online” button. Download the pictures you want to keep and add them in Gilded Roots.</p>
+    </div>
+    <div class="panel" data-p="familysearch" hidden>
+      <p>FamilySearch's Family Tree is one shared tree, and the website has no full GEDCOM export. Instead:</p>
+      <ol>
+        <li>Bring the people you want into a program that connects to FamilySearch: <b>RootsMagic</b> or <b>Ancestral Quest</b> (Windows and Mac), or <b>Legacy Family Tree</b> (Windows). Each has a free version; check on its website which features it includes.</li>
+        <li>In that program, choose <b>File › Export</b> and save a GEDCOM file.</li>
+      </ol>
+      <p class="note">Sources usually have to be brought across person by person. FamilySearch's “Download your family tree” page may also save a GEDCOM of your direct ancestors.</p>
+    </div>
+    <div class="panel" data-p="myheritage" hidden>
+      <ol>
+        <li>Sign in to MyHeritage, point to <b>Family tree</b> at the top and choose <b>Manage trees</b>.</li>
+        <li>Next to your tree, click <b>Export to GEDCOM</b>.</li>
+        <li>Choose whether to include photos, click <b>Begin the export</b>, and download the file when it's ready.</li>
+      </ol>
+      <p class="note">Photos come across as links to MyHeritage, not the pictures themselves.</p>
+    </div>
+    <div class="panel" data-p="findmypast" hidden>
+      <ol>
+        <li>Sign in to Findmypast, open <b>Family tree</b> at the top and choose to view all your trees.</li>
+        <li>Click the export icon next to your tree.</li>
+        <li>When the file is ready, click <b>Download tree</b>.</li>
+      </ol>
+    </div>
+    <div class="panel" data-p="ftm" hidden>
+      <ol>
+        <li>Choose <b>File › Export</b>.</li>
+        <li>Choose <b>Entire file</b>, and pick a <b>GEDCOM</b> option under <b>Output format</b>.</li>
+        <li>Click <b>OK</b>, choose where to save it, and click <b>Save</b>.</li>
+      </ol>
+      <p class="note">Keep your tree's media folder next to the <code>.ged</code> file so the photos come across.</p>
+    </div>
+    <div class="panel" data-p="paf" hidden>
+      <p><b>The quick way:</b> choose your PAF 5 <code>.paf</code> file directly. Names, dates, places and all family links come across.</p>
+      <p><b>The full way</b>, for christenings, burials, LDS ordinances, notes and sources:</p>
+      <ol>
+        <li>In PAF, choose <b>File › Export</b>.</li>
+        <li>Pick <b>GEDCOM 5.5</b>, and tick <b>Include notes</b>, <b>Include sources</b> and <b>Include multimedia links</b>.</li>
+        <li>Save the <code>.ged</code> file, with your photo folder next to it.</li>
+      </ol>
+    </div>
+    <div class="panel" data-p="other" hidden>
+      <p>RootsMagic, Legacy, Ancestral Quest, Gramps, Family Historian, Heredis, MacFamilyTree and most other programs can save a GEDCOM file:</p>
+      <ol>
+        <li>Choose <b>File › Export</b> (in Legacy, <b>File › Export File</b>).</li>
+        <li>Choose <b>GEDCOM</b>, include everyone, notes and sources, and save the file.</li>
+      </ol>
+      <p class="note">Keep any photo folder next to the <code>.ged</code> file, and Gilded Roots copies in the photos it finds.</p>
+    </div>
+
+    <p class="then"><b>Then, in Gilded Roots:</b> choose <b>Import an existing family tree</b> (or <b>File › Import tree</b>) and pick the file. The import report shows exactly what came across. Websites change their menus now and then: if a step doesn't match, look for <b>Export</b> or <b>Download GEDCOM</b> near your tree's settings.</p>
   </div>
 </section>
 
@@ -301,7 +393,7 @@ footer .wrap{display:grid;gap:10px}
     <div class="faq-list">
       <details><summary>Is it really free?</summary><p>Yes. No adverts, no subscription, no paid version. It's open source under the MIT licence. Donations are welcome but entirely optional.</p></details>
       <details><summary>Where is my family tree kept?</summary><p>In a folder called <b>Gilded Roots</b> inside your Documents folder: your tree, photos, documents and backups. You can move it from inside the program. If that folder is in iCloud, OneDrive or Dropbox, the program warns you, because live syncing can clash with saving.</p></details>
-      <details><summary>Can I bring my tree from Ancestry, FamilySearch, MyHeritage or another program?</summary><p>Yes. Almost every family history program and website can save your tree as a GEDCOM (<code>.ged</code>) file. Export one, then choose <b>Import an existing family tree</b> in Gilded Roots. PAF 5 <code>.paf</code> files can be opened directly.</p></details>
+      <details><summary>Can I bring my tree from Ancestry, FamilySearch, MyHeritage or another program?</summary><p>Yes. See <a href="#bring">Bring your tree</a> above for the steps for each site and program. PAF 5 <code>.paf</code> files can be opened directly.</p></details>
       <details><summary>Will it change my PAF file?</summary><p>No. Gilded Roots only reads it. Your PAF file stays exactly as it was, and you can import it again at any time.</p></details>
       <details><summary>Does it record LDS ordinances?</summary><p>It brings them in from GEDCOM files and keeps them, and the printable family group sheet and pedigree chart come in LDS versions with ordinance boxes.</p></details>
       <details><summary>Does it need the internet?</summary><p>No. Everything works offline, including the map and the user guide. The program never connects to a server.</p></details>
@@ -349,6 +441,15 @@ footer .wrap{display:grid;gap:10px}
   set(".js-guide", base && base + "/blob/main/docs/USER_GUIDE.md");
   document.querySelectorAll(".js-file").forEach(function (a) {
     a.href = base ? base + "/releases/latest/download/" + a.dataset.file : "#download";
+  });
+
+
+  // "Bring your tree" tabs
+  document.querySelectorAll(".tabs button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".tabs button").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
+      document.querySelectorAll(".panel").forEach(function (p) { p.hidden = p.dataset.p !== b.dataset.t; });
+    });
   });
 
   // Highlight the visitor's own system and point the top button at it.
