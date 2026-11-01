@@ -3775,10 +3775,13 @@ fn page_with_css(title: &str, body: &str, landscape: bool, extra: &str, show_tit
         .foot{margin-top:14px;color:#777;font-size:10.5px;border-top:1px solid #ddd;padding-top:4px}\
         .noprint{margin-bottom:10px;font-family:system-ui,sans-serif}\
         .noprint button{font-size:14px;padding:6px 14px}\
-        @media print{.noprint{display:none}body{padding:0}svg{max-height:150mm}.foot{display:none}}";
+        @media print{.noprint{display:none}body{padding:0}svg{max-height:150mm}.foot{display:none}}\
+        @media print{body.port{width:7.25in}body.land{width:9.75in}}\
+        @media print and (orientation:portrait){body.land{width:7.25in}}\
+        .safari{display:none;background:#fff6d6;border:1px solid #e0c97a;padding:6px 10px;margin:8px 0;font-size:13px}";
     let heading = if show_title { format!("<h1>{}</h1><hr class=\"rule\">", esc(title)) } else { String::new() };
     format!(
-        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>{t}</title><style>{css}{extra}@page{{size:letter {o};margin:12mm 12mm 14mm 12mm;@bottom-left{{content:'{t2}';font:9px Georgia,serif;color:#888}}@bottom-center{{content:'Prepared {d} with Gilded Roots';font:9px Georgia,serif;color:#888}}@bottom-right{{content:'Page ' counter(page) ' of ' counter(pages);font:9px Georgia,serif;color:#888}}}}</style></head><body><div class=\"noprint\"><button onclick=\"window.print()\">Print or save as PDF</button></div>{h}{body}<div class=\"foot\">Prepared {d} with Gilded Roots</div><script>{fit}window.onload=function(){{setTimeout(function(){{window.print()}},500)}}</script></body></html>",
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>{t}</title><style>{css}{extra}@page{{size:letter {o};margin:12mm 12mm 14mm 12mm;@bottom-left{{content:'{t2}';font:9px Georgia,serif;color:#888}}@bottom-center{{content:'Prepared {d} with Gilded Roots';font:9px Georgia,serif;color:#888}}@bottom-right{{content:'Page ' counter(page) ' of ' counter(pages);font:9px Georgia,serif;color:#888}}}}</style></head><body class=\"{bc}\"><div class=\"noprint\"><button onclick=\"window.print()\">Print or save as PDF</button><div class=\"safari\" id=\"grSafari\">Printing from Safari? If the right side is cut off, lower <b>Scale</b> in the print window (try 85%){lt}. Chrome and Firefox fit the page by themselves.</div></div>{h}{body}<div class=\"foot\">Prepared {d} with Gilded Roots</div><script>{fit}window.onload=function(){{setTimeout(function(){{window.print()}},500)}}</script></body></html>",
         t = esc(title),
         t2 = esc(title).replace('\'', "\\'"),
         css = css,
@@ -3787,7 +3790,11 @@ fn page_with_css(title: &str, body: &str, landscape: bool, extra: &str, show_tit
         // No shrink-to-fit script: every page is laid out to the paper's width with CSS (tables and
         // charts are 100% wide), and a script measuring the page while printing misjudged it and
         // shrank pages that already fitted.
-        fit = "",
+        // Safari prints at 100% without shrinking to the paper; the page widths in @media print above
+        // keep it on the paper, and Safari users get a tip in case their printer's margins are wider.
+        fit = "if(/^((?!chrome|chromium|crios|fxios|edg|android).)*safari/i.test(navigator.userAgent)){var s=document.getElementById('grSafari');if(s)s.style.display='block';}",
+        bc = if landscape { "land" } else { "port" },
+        lt = if landscape { ", and choose Landscape" } else { "" },
         h = heading,
         body = body,
         d = {
