@@ -408,7 +408,7 @@ footer .wrap{display:grid;gap:10px}
   <div class="wrap">
     <h2>Enjoying Gilded Roots?</h2>
     <p>It's free, and always will be. If it's helped you and you'd like to support its development, a small donation, even $5, is very much appreciated. Donations are voluntary gifts; they don't buy features or support.</p>
-    <a class="btn btn-ghost" href="https://www.paypal.me/doylemcintosh">Donate with PayPal</a>
+    <a class="btn btn-ghost" href="https://www.paypal.me/doylemcintosh" target="_blank" rel="noopener">Donate with PayPal</a>
   </div>
 </section>
 </main>
@@ -443,6 +443,14 @@ footer .wrap{display:grid;gap:10px}
     a.href = base ? base + "/releases/latest/download/" + a.dataset.file : "#download";
   });
 
+
+  // Links to other sites (GitHub, the user guide, PayPal...) open in a new tab, so this page stays open.
+  // Download buttons are left alone: they start the download without leaving the page.
+  document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+    if (a.classList.contains("js-file")) return;
+    a.target = "_blank";
+    a.rel = "noopener";
+  });
 
   // "Bring your tree" tabs
   document.querySelectorAll(".tabs button").forEach(function (b) {
