@@ -11,7 +11,9 @@ or Linux). Nothing is written to the computer you plug it into.
 Keep the program and the FamilyTreeData folder side by side. Copy the whole folder to back
 it up, or use File > Save Family Tree Archive for a single-file copy.
 
-Mac: the first time, right-click Gilded Roots.app and choose Open (it is not signed by Apple).
+Mac: it is not signed by Apple, so the first time, open Gilded Roots.app, click Done at the warning,
+then choose System Settings > Privacy & Security > Open Anyway. (On macOS 14 or older, right-click
+the app and choose Open instead.)
 If the program says it is not running in portable mode, open Terminal and run, once:
     xattr -dr com.apple.quarantine "/Volumes/YOUR DRIVE/Gilded Roots/Gilded Roots.app"
 (drag the app onto the Terminal window to fill in its path). macOS otherwise runs downloaded
