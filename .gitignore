@@ -1,0 +1,6 @@
+/target
+target/
+dist/
+*.damaged-*
+*.prev
+.DS_Store
