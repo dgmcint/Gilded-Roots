@@ -53,7 +53,8 @@ includes a GitHub workflow that builds them in the cloud for free.
      linux-installer        -> GildedRoots-linux-amd64.deb (sudo apt install ./file.deb)
 To publish a downloadable release page instead, push a tag such as v1.0.0.
 The installers are unsigned: Windows may show a SmartScreen warning (More info > Run anyway)
-and on Mac you right-click the app and choose Open the first time.
+and on Mac, open the app once, then choose System Settings > Privacy & Security > Open Anyway
+(on macOS 14 or older, right-click the app and choose Open instead).
 
 PHOTOS, DOCUMENTS AND RECORDED STORIES
 Files you add are copied into a "media" folder next to your tree data, and recordings are saved there as .wav files.

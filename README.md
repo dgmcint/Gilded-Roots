@@ -91,8 +91,9 @@ computer it is plugged into. Keep the two side by side. On a Mac, if the program
 run `xattr -dr com.apple.quarantine` on the app once (details in the README inside the zip). An installed copy can
 also be made portable with **Tools > Make portable**.
 
-The installers are unsigned. On Windows choose **More info → Run anyway**; on macOS right-click the app and
-choose **Open** the first time.
+The installers are unsigned. On Windows choose **More info → Run anyway**. On a Mac, open the app once, click
+**Done** when macOS warns about it, then go to **System Settings → Privacy & Security** and click **Open Anyway**
+(on macOS 14 or older you can instead right-click the app and choose **Open**). You only need to do this once.
 
 ## Build from source
 

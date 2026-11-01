@@ -118,8 +118,9 @@ Which file do I download?
 - Linux: GildedRoots-linux-amd64.deb
 - To run from a USB drive: the matching "portable" file.
 
-The installers are not signed. Windows: choose More info > Run anyway. Mac: right-click the app and choose
-Open the first time.
+The installers are not signed. Windows: choose More info > Run anyway. Mac: open the app once, click Done at
+the warning, then choose System Settings > Privacy & Security > Open Anyway (on macOS 14 or older,
+right-click the app and choose Open).
 
 Coming from PAF? A .paf file brings in names, births, deaths, marriages and family links. For christenings,
 burials, LDS ordinances, notes and sources, export a GEDCOM from PAF (File > Export) and import that instead.
