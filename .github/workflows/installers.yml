@@ -41,6 +41,8 @@ jobs:
   macos:
     runs-on: macos-latest
     strategy:
+      # build both Macs even if one fails, so a problem with one doesn't hide the other
+      fail-fast: false
       matrix:
         include:
           - target: aarch64-apple-darwin
@@ -52,7 +54,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      - run: cargo install cargo-bundle
+      # cargo-bundle 0.12 pulls in a library (sigstore 0.14) that no longer compiles on current Rust;
+      # 0.11 is the last version without it. --locked uses the versions it was released with.
+      - run: cargo install cargo-bundle --version 0.11.0 --locked
       - run: cargo bundle --release --target ${{ matrix.target }}
       - name: Allow microphone access
         run: |
