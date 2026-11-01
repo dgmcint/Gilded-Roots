@@ -1,0 +1,126 @@
+name: Build installers
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+      - run: choco install innosetup -y --no-progress
+      - run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\gilded-roots.iss'
+      - name: Make portable zip (runs from a USB drive)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "portable\Gilded Roots\FamilyTreeData" | Out-Null
+          Copy-Item target\release\gilded-roots.exe "portable\Gilded Roots\GildedRoots.exe"
+          Copy-Item packaging\PORTABLE-README.txt "portable\Gilded Roots\README.txt"
+          Copy-Item packaging\PORTABLE-README.txt "portable\Gilded Roots\FamilyTreeData\ABOUT-THIS-FOLDER.txt"
+          Compress-Archive -Path "portable\Gilded Roots" -DestinationPath dist\GildedRoots-portable-windows.zip -Force
+      - uses: actions/upload-artifact@v5
+        with:
+          name: windows-installer
+          path: |
+            dist/GildedRoots-Setup.exe
+            dist/GildedRoots-portable-windows.zip
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/GildedRoots-Setup.exe
+            dist/GildedRoots-portable-windows.zip
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            label: apple-silicon
+          - target: x86_64-apple-darwin
+            label: intel
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo install cargo-bundle
+      - run: cargo bundle --release --target ${{ matrix.target }}
+      - name: Allow microphone access
+        run: |
+          APP="target/${{ matrix.target }}/release/bundle/osx/Gilded Roots.app"
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string Record family stories" "$APP/Contents/Info.plist"
+          codesign --force --deep -s - "$APP"
+      - name: Make dmg
+        run: |
+          mkdir -p dist stage
+          cp -R "target/${{ matrix.target }}/release/bundle/osx/Gilded Roots.app" stage/
+          ln -s /Applications stage/Applications
+          hdiutil create -volname "Gilded Roots" -srcfolder stage -ov -format UDZO "dist/GildedRoots-${{ matrix.label }}.dmg"
+      - name: Make portable zip (runs from a USB drive)
+        run: |
+          mkdir -p "portable/Gilded Roots/FamilyTreeData"
+          cp -R "target/${{ matrix.target }}/release/bundle/osx/Gilded Roots.app" "portable/Gilded Roots/"
+          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/README.txt"
+          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
+          (cd portable && ditto -c -k --sequesterRsrc --keepParent "Gilded Roots" "../dist/GildedRoots-portable-mac-${{ matrix.label }}.zip")
+      - uses: actions/upload-artifact@v5
+        with:
+          name: mac-installer-${{ matrix.label }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.dmg
+            dist/*.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgtk-3-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev libasound2-dev
+      - name: Check that ALSA is visible to the build
+        run: |
+          pkg-config --modversion alsa
+          dpkg -l | grep -i libasound2-dev
+      - run: cargo install cargo-deb
+      - run: cargo deb
+      - run: |
+          mkdir -p dist
+          cp target/debian/*.deb dist/GildedRoots-linux-amd64.deb
+      - name: Make portable archive (runs from a USB drive)
+        run: |
+          mkdir -p "portable/Gilded Roots/FamilyTreeData"
+          cp target/release/gilded-roots "portable/Gilded Roots/gilded-roots"
+          chmod +x "portable/Gilded Roots/gilded-roots"
+          cp icons/256x256.png "portable/Gilded Roots/gilded-roots.png"
+          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/README.txt"
+          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
+          tar -C portable -czf dist/GildedRoots-portable-linux-x86_64.tar.gz "Gilded Roots"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: linux-installer
+          path: |
+            dist/*.deb
+            dist/*.tar.gz
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.deb
+            dist/*.tar.gz
