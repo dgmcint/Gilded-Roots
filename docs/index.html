@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gilded Roots — free family history software</title>
+<meta name="description" content="Gilded Roots is a free, offline family history program for Windows, Mac and Linux, made as a modern replacement for PAF (Personal Ancestral File). No account, no subscription, nothing uploaded.">
+<link rel="icon" href="images/icon.png">
+<meta property="og:title" content="Gilded Roots — free family history software">
+<meta property="og:description" content="A free, offline replacement for PAF. Windows, Mac and Linux. No account, no subscription.">
+<meta property="og:image" content="images/pedigree.png">
+<style>
+:root{
+  --paper:#faf6ec; --paper-2:#f2ebda; --ink:#1f2430; --ink-2:#4a4f5c; --muted:#6c6f78;
+  --navy:#173a6b; --navy-2:#0f2a50; --gold:#b8892e; --gold-2:#8f6a1f; --leaf:#4f8a3c;
+  --line:#e2d8bf; --card:#fffdf7; --shadow:0 1px 2px rgba(30,25,10,.06),0 8px 28px rgba(30,25,10,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#15181e; --paper-2:#1b1f27; --ink:#ece6d6; --ink-2:#c9c2b0; --muted:#9a968b;
+  --navy:#8fb3e8; --navy-2:#b9d0f2; --gold:#d6a94c; --gold-2:#e2bd6c; --leaf:#7fbf6a;
+  --line:#2c313b; --card:#1d2129; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--navy)}
+a:hover{color:var(--gold-2)}
+img{max-width:100%;height:auto;display:block}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.2;margin:0 0 .5em;letter-spacing:-.005em}
+h2{font-size:clamp(28px,3.4vw,38px)}
+h3{font-size:21px}
+p{margin:0 0 1em}
+.eyebrow{font:600 13px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--gold-2);margin-bottom:12px}
+
+/* header */
+header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:600 20px var(--serif)}
+.brand img{width:34px;height:34px}
+nav.links{margin-left:auto;display:flex;gap:22px;font-size:15px}
+nav.links a{text-decoration:none;color:var(--ink-2)}
+nav.links a:hover{color:var(--ink)}
+@media (max-width:720px){nav.links a:not(.dl){display:none}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:10px;font:600 16px var(--sans);text-decoration:none;border:1px solid transparent;cursor:pointer}
+.btn-primary{background:var(--navy);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn-primary{background:var(--gold);color:#15181e}}
+.btn-primary:hover{filter:brightness(1.1);color:#fff}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:var(--card)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--ink)}
+.btn small{font-weight:400;opacity:.8}
+
+/* hero */
+.hero{padding:64px 0 40px;text-align:center}
+.hero h1{font-size:clamp(36px,5.6vw,62px);max-width:21ch;margin:0 auto .35em}
+.hero h1 em{font-style:italic;color:var(--gold-2)}
+.hero .lead{font-size:clamp(17px,2vw,20px);color:var(--ink-2);max-width:42em;margin:0 auto 28px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:14px}
+.ticks{display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;color:var(--muted);font-size:15px;margin:18px 0 0;padding:0;list-style:none}
+.ticks li::before{content:"✓";color:var(--leaf);font-weight:700;margin-right:7px}
+.shot{border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);background:#20232a}
+.shot .bar{height:26px;background:#2a2e36;display:flex;align-items:center;gap:6px;padding:0 10px}
+.shot .bar i{width:10px;height:10px;border-radius:50%;background:#555b66;display:block}
+.hero .shot{margin:44px auto 0;max-width:1040px}
+
+/* PAF band */
+.band{background:var(--paper-2);border-block:1px solid var(--line);padding:64px 0}
+.paf{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+@media (max-width:860px){.paf{grid-template-columns:1fr}}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;position:relative;padding:0 0 18px 50px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:-2px;width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--gold);color:var(--gold-2);font:600 16px/32px var(--serif);text-align:center}
+.steps b{display:block;font-family:var(--serif);font-size:18px;margin-bottom:2px}
+.note{font-size:15px;color:var(--muted)}
+
+/* features */
+section.features{padding:72px 0}
+.feat{display:grid;grid-template-columns:1fr 1.25fr;gap:44px;align-items:center;margin:0 0 72px}
+.feat.flip{grid-template-columns:1.25fr 1fr}
+.feat.flip .txt{order:2}
+@media (max-width:860px){.feat,.feat.flip{grid-template-columns:1fr;gap:22px}.feat.flip .txt{order:0}}
+.feat ul{padding-left:20px;margin:0;color:var(--ink-2)}
+.feat li{margin:4px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
+.card h3{font-size:19px;margin-bottom:6px}
+.card p{margin:0;color:var(--ink-2);font-size:15.5px}
+.card .ic{font-size:22px;margin-bottom:8px}
+
+/* privacy */
+.privacy{background:var(--navy-2);color:#f3efe3;padding:64px 0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .privacy{background:#0d1b31}}
+.privacy h2{color:#fff}
+.privacy .grid .card{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+.privacy .card p{color:#d9d3c2}
+.privacy .card h3{color:#fff}
+
+/* download */
+section.download{padding:72px 0}
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:26px}
+.os{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;position:relative}
+.os.mine{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 25%,transparent)}
+.os .badge{display:none;position:absolute;top:-11px;left:20px;background:var(--gold);color:#1a1406;font:700 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:6px 9px;border-radius:999px}
+.os.mine .badge{display:block}
+.os h3{margin-bottom:12px}
+.os .btn{width:100%;justify-content:center;margin-bottom:8px}
+.os .alt{font-size:14.5px;color:var(--muted);margin-top:8px}
+.os .alt a{color:var(--ink-2)}
+details.help{margin-top:14px;font-size:15px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px}
+details.help summary{cursor:pointer;color:var(--ink);font-weight:600}
+details.help ol{padding-left:20px;margin:8px 0 0}
+details.help li{margin:4px 0}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+
+/* faq */
+section.faq{padding:64px 0;background:var(--paper-2);border-top:1px solid var(--line)}
+.faq-list{max-width:820px}
+.faq-list details{border-bottom:1px solid var(--line);padding:16px 0}
+.faq-list summary{cursor:pointer;font:600 18px var(--serif);list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq-list summary::after{content:"+";color:var(--gold-2);font-size:22px;line-height:1}
+.faq-list details[open] summary::after{content:"–"}
+.faq-list details p{margin:10px 0 0;color:var(--ink-2)}
+
+/* support + footer */
+section.support{padding:64px 0;text-align:center}
+section.support p{max-width:40em;margin:0 auto 1em;color:var(--ink-2)}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:grid;gap:10px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="images/icon.png" alt="">Gilded Roots</a>
+    <nav class="links">
+      <a href="#paf">Coming from PAF</a>
+      <a href="#features">Features</a>
+      <a href="#faq">Questions</a>
+      <a class="js-repo" href="#">GitHub</a>
+      <a class="dl" href="#download"><b>Download</b></a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Free family history software</div>
+    <h1>Your family history, kept on <em>your own</em> computer.</h1>
+    <p class="lead">Gilded Roots is a modern, easy-to-use replacement for PAF (Personal Ancestral File). Pedigrees, family group sheets, sources, photos and stories, with no account, no subscription and nothing uploaded.</p>
+    <div class="cta">
+      <a class="btn btn-primary" id="heroBtn" href="#download">Download free</a>
+      <a class="btn btn-ghost" href="#features">See what it does</a>
+    </div>
+    <ul class="ticks">
+      <li>Free, no adverts</li>
+      <li>Works offline</li>
+      <li>Windows, Mac and Linux</li>
+      <li>Opens PAF and GEDCOM files</li>
+    </ul>
+    <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="images/pedigree.png" alt="The pedigree view in Gilded Roots, showing four generations of a sample family" width="1400" height="560"></div>
+  </div>
+</section>
+
+<section class="band" id="paf">
+  <div class="wrap paf">
+    <div>
+      <div class="eyebrow">Coming from PAF?</div>
+      <h2>Made for people who loved PAF.</h2>
+      <p>PAF was retired years ago and only ever ran on Windows. Gilded Roots keeps what made it good (the Family, Pedigree and Individual views, family group sheets and plain dependable files) and adds what's been missing since.</p>
+      <ol class="steps">
+        <li><b>Install Gilded Roots</b>Download it below. It's free.</li>
+        <li><b>Choose “Import an existing family tree”</b>Pick your PAF 5 <code>.paf</code> file, or a GEDCOM (<code>.ged</code>) file from any program.</li>
+        <li><b>Read the import report</b>It counts every person, family, source and note that came across, and lists anything that didn't.</li>
+      </ol>
+      <p class="note">Your original PAF file is never changed. A <code>.paf</code> file brings in names, dates, places and all family links. For christenings, burials, LDS ordinances, notes and sources, export a GEDCOM from PAF (File › Export) and import that instead.</p>
+    </div>
+    <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="images/individual.png" alt="A person's page in Gilded Roots with vital facts, timeline, relationships and research to-do list" width="1400" height="790" loading="lazy"></div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="feat">
+      <div class="txt">
+        <div class="eyebrow">Charts and reports</div>
+        <h2>See your family at a glance.</h2>
+        <ul>
+          <li>Pedigree, family, descendant and individual views</li>
+          <li>Fan, hourglass and lifespan charts</li>
+          <li>Printable family group sheets and pedigree charts</li>
+          <li>Blank forms to fill in by hand, including LDS versions and census worksheets for the US, Canada and England and Wales</li>
+        </ul>
+      </div>
+      <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="images/fan-chart.png" alt="A fan chart of ancestors" width="1400" height="790" loading="lazy"></div>
+    </div>
+
+    <div class="feat flip">
+      <div class="txt">
+        <div class="eyebrow">Maps</div>
+        <h2>Where your family lived.</h2>
+        <ul>
+          <li>Births, marriages, deaths and burials pinned on a map that works offline</li>
+          <li>Show one person, their ancestors, descendants or everyone</li>
+          <li>Play through the years to watch the family move</li>
+          <li>Map colours that match the look you choose for the app</li>
+        </ul>
+      </div>
+      <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="images/map.png" alt="A map with pins showing where a family was born, married and died" width="1400" height="790" loading="lazy"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><div class="ic">📚</div><h3>Real sources</h3><p>Reusable source records, citations with page numbers, transcriptions and quality ratings, attached to people, events and families.</p></div>
+      <div class="card"><div class="ic">🧬</div><h3>DNA</h3><p>Ethnicity on a map, match lists with a “How related?” guide, and Y-DNA and mtDNA with the direct line drawn through your tree. Imports match lists from the big testing companies.</p></div>
+      <div class="card"><div class="ic">🪦</div><h3>Tombstone calculator</h3><p>“Aged 72 years, 3 months, 10 days”? Enter the death date and age from a gravestone and get the birth date.</p></div>
+      <div class="card"><div class="ic">🖼️</div><h3>Photos and stories</h3><p>Photos with faces tagged, documents, a built-in PDF viewer, and family stories recorded in your relatives' own voices.</p></div>
+      <div class="card"><div class="ic">🔎</div><h3>Research tools</h3><p>To-do lists, a research journal, a duplicate finder that asks before merging, a data checker and a places explorer that tidies up spellings.</p></div>
+      <div class="card"><div class="ic">👨‍👩‍👧</div><h3>Real families</h3><p>Adoptive, step, foster and guardian parents kept separate from birth parents, several marriages, and godparents and other associations.</p></div>
+      <div class="card"><div class="ic">🛟</div><h3>Safe by design</h3><p>Every save is checked, the previous version is kept, and daily backups are kept for two weeks, with a second copy on a USB drive if you like.</p></div>
+      <div class="card"><div class="ic">🔌</div><h3>Portable</h3><p>A version that runs from a USB stick with your tree beside it. Plug it into any computer; nothing is left behind.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="privacy">
+  <div class="wrap">
+    <div class="eyebrow" style="color:#e2bd6c">Privacy first</div>
+    <h2>Family history is personal. It stays yours.</h2>
+    <div class="grid" style="margin-top:22px">
+      <div class="card"><h3>No account</h3><p>Install it and start. No sign-up, no email address, no subscription.</p></div>
+      <div class="card"><h3>Nothing uploaded</h3><p>The program never contacts a server. Your tree, photos and documents stay in a folder on your computer.</p></div>
+      <div class="card"><h3>Open format</h3><p>Your tree is kept in a visible folder in an open format, and exports to GEDCOM for any other program.</p></div>
+      <div class="card"><h3>Living people protected</h3><p>Printouts and GEDCOM exports can keep living relatives' details private.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="download" id="download">
+  <div class="wrap">
+    <div class="eyebrow">Download</div>
+    <h2>Free for Windows, Mac and Linux.</h2>
+    <p class="note" id="verLine">Always the latest version. <a class="js-releases" href="#">See all releases and what changed</a>.</p>
+
+    <div class="dl-grid">
+      <div class="os" data-os="mac">
+        <span class="badge">Your computer</span>
+        <h3>Mac</h3>
+        <a class="btn btn-primary js-file" data-file="GildedRoots-apple-silicon.dmg" href="#">Download for Apple chip</a>
+        <a class="btn btn-ghost js-file" data-file="GildedRoots-intel.dmg" href="#">Download for Intel Mac</a>
+        <p class="alt">Apple chip means M1 or newer (most Macs since 2021). Not sure? Apple menu › About This Mac: “Chip: Apple M…” means Apple chip; “Processor: Intel” means Intel.<br>
+          Portable: <a class="js-file" data-file="GildedRoots-portable-mac-apple-silicon.zip" href="#">Apple chip</a> · <a class="js-file" data-file="GildedRoots-portable-mac-intel.zip" href="#">Intel</a></p>
+        <details class="help"><summary>Opening it the first time</summary>
+          <ol>
+            <li>Open the downloaded file and drag <b>Gilded Roots</b> into <b>Applications</b>.</li>
+            <li>Open it. macOS says it can't check the developer, because the app isn't signed by Apple. Click <b>Done</b>.</li>
+            <li>Open <b>System Settings › Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b> next to Gilded Roots, then confirm.</li>
+          </ol>
+          <p class="note" style="margin-top:8px">You only need to do this once. On older versions of macOS you can instead right-click the app and choose Open.</p>
+        </details>
+      </div>
+
+      <div class="os" data-os="win">
+        <span class="badge">Your computer</span>
+        <h3>Windows</h3>
+        <a class="btn btn-primary js-file" data-file="GildedRoots-Setup.exe" href="#">Download for Windows</a>
+        <p class="alt">Windows 10 or 11, 64-bit.<br>Portable: <a class="js-file" data-file="GildedRoots-portable-windows.zip" href="#">zip for a USB drive</a></p>
+        <details class="help"><summary>Opening it the first time</summary>
+          <ol>
+            <li>Run <b>GildedRoots-Setup.exe</b>.</li>
+            <li>If Windows shows “Windows protected your PC”, click <b>More info</b>, then <b>Run anyway</b>. This appears because the installer isn't signed.</li>
+            <li>Follow the installer. Gilded Roots appears in the Start menu.</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="os" data-os="linux">
+        <span class="badge">Your computer</span>
+        <h3>Linux</h3>
+        <a class="btn btn-primary js-file" data-file="GildedRoots-linux-amd64.deb" href="#">Download .deb</a>
+        <p class="alt">Ubuntu, Debian, Mint and similar, 64-bit.<br>Portable: <a class="js-file" data-file="GildedRoots-portable-linux-x86_64.tar.gz" href="#">tar.gz for a USB drive</a></p>
+        <details class="help"><summary>Installing</summary>
+          <ol>
+            <li>Double-click the <code>.deb</code> to open it in your software centre, or run<br><code>sudo apt install ./GildedRoots-linux-amd64.deb</code></li>
+            <li>Gilded Roots appears with your other applications.</li>
+          </ol>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="eyebrow">Questions</div>
+    <h2>Good to know.</h2>
+    <div class="faq-list">
+      <details><summary>Is it really free?</summary><p>Yes. No adverts, no subscription, no paid version. It's open source under the MIT licence. Donations are welcome but entirely optional.</p></details>
+      <details><summary>Where is my family tree kept?</summary><p>In a folder called <b>Gilded Roots</b> inside your Documents folder: your tree, photos, documents and backups. You can move it from inside the program. If that folder is in iCloud, OneDrive or Dropbox, the program warns you, because live syncing can clash with saving.</p></details>
+      <details><summary>Can I bring my tree from Ancestry, FamilySearch, MyHeritage or another program?</summary><p>Yes. Almost every family history program and website can save your tree as a GEDCOM (<code>.ged</code>) file. Export one, then choose <b>Import an existing family tree</b> in Gilded Roots. PAF 5 <code>.paf</code> files can be opened directly.</p></details>
+      <details><summary>Will it change my PAF file?</summary><p>No. Gilded Roots only reads it. Your PAF file stays exactly as it was, and you can import it again at any time.</p></details>
+      <details><summary>Does it record LDS ordinances?</summary><p>It brings them in from GEDCOM files and keeps them, and the printable family group sheet and pedigree chart come in LDS versions with ordinance boxes.</p></details>
+      <details><summary>Does it need the internet?</summary><p>No. Everything works offline, including the map and the user guide. The program never connects to a server.</p></details>
+      <details><summary>Why does my computer warn me when I open it?</summary><p>Windows and macOS warn about programs that aren't signed with a paid developer certificate. Gilded Roots is a free, independent project, so the installers aren't signed. The steps under each download show how to open it.</p></details>
+      <details><summary>Is it connected to FamilySearch or the Church?</summary><p>No. Gilded Roots is an independent project and isn't affiliated with or endorsed by FamilySearch, The Church of Jesus Christ of Latter-day Saints, Ancestry, MyHeritage or any other company. PAF is mentioned only to describe compatibility.</p></details>
+      <details><summary>I found a problem. Where do I report it?</summary><p>On the <a class="js-issues" href="#">Issues</a> page. Say which computer and version you're using (Help › About) and what you were doing. Please don't attach your real tree: it contains details of living people. A screenshot is usually enough.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="support">
+  <div class="wrap">
+    <h2>Enjoying Gilded Roots?</h2>
+    <p>It's free, and always will be. If it's helped you and you'd like to support its development, a small donation, even $5, is very much appreciated. Donations are voluntary gifts; they don't buy features or support.</p>
+    <a class="btn btn-ghost" href="https://www.paypal.me/doylemcintosh">Donate with PayPal</a>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>Gilded Roots is made by <b>DGMCINT</b> and released under the MIT licence. <a class="js-repo" href="#">Source code on GitHub</a> · <a class="js-guide" href="#">User guide</a> · <a class="js-releases" href="#">Releases</a></div>
+    <div>Map data from Natural Earth (public domain) and GeoNames (CC BY 4.0). Personal Ancestral File (PAF) and other product names are trademarks of their owners and are used only to describe compatibility. Screenshots show the made-up sample family that comes with the program.</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // The GitHub repository, as "owner/name". Left empty, it is worked out from the
+  // GitHub Pages address (https://owner.github.io/name/).
+  var REPO = "";
+
+  if (!REPO) {
+    var host = location.hostname, m = host.match(/^([^.]+)\.github\.io$/i);
+    var first = location.pathname.split("/").filter(Boolean)[0];
+    if (m && first) REPO = m[1] + "/" + first;
+  }
+  var base = REPO ? "https://github.com/" + REPO : "";
+  function set(sel, url) {
+    document.querySelectorAll(sel).forEach(function (a) { if (url) a.href = url; });
+  }
+  set(".js-repo", base);
+  set(".js-releases", base && base + "/releases");
+  set(".js-issues", base && base + "/issues");
+  set(".js-guide", base && base + "/blob/main/docs/USER_GUIDE.md");
+  document.querySelectorAll(".js-file").forEach(function (a) {
+    a.href = base ? base + "/releases/latest/download/" + a.dataset.file : "#download";
+  });
+
+  // Highlight the visitor's own system and point the top button at it.
+  var ua = navigator.userAgent, os = /Windows/i.test(ua) ? "win" : /Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua) ? "mac" : /Linux|X11/i.test(ua) && !/Android/i.test(ua) ? "linux" : "";
+  var card = os && document.querySelector('.os[data-os="' + os + '"]');
+  if (card) {
+    card.classList.add("mine");
+    card.parentNode.insertBefore(card, card.parentNode.firstChild);
+    var label = { mac: "Download for Mac", win: "Download for Windows", linux: "Download for Linux" }[os];
+    var hero = document.getElementById("heroBtn");
+    hero.textContent = label;
+    // Macs: send people to the download section, so they can choose Apple chip or Intel.
+    if (os !== "mac") { var first = card.querySelector(".js-file"); if (first && base) hero.href = first.href; }
+  }
+})();
+</script>
+</body>
+</html>
