@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Gilded Roots
+Comment=Family tree and genealogy
+Exec=gilded-roots
+Icon=gilded-roots
+Terminal=false
+Categories=Office;Education;
