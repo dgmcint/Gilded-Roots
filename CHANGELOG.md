@@ -197,6 +197,8 @@ Major work so far, in the order it was done.
   edge to edge. The LDS family group sheet holds eight children and puts the couple's ordinances side by side.
 - Removed the shrink-to-fit print script: it misjudged the page while printing and shrank or shifted pages
   that already fitted. Every printout is laid out to the paper width instead.
+- Safari: printouts are sized in inches so they fit at Safari's 100% scale, family group sheets leave room for
+  Safari's own header and footer, and a tip on the page (not printed) explains the Scale and Landscape settings.
 - Vital facts on the Individual page no longer wrap one word per line.
 
 ### PAF files
