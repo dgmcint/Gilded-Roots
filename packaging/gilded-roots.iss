@@ -17,7 +17,7 @@
 AppId={{6B1F2C47-8E3A-4D9B-A0C5-3F7E21D84B90}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisher=DGMCINT
+AppPublisher=Doyle McIntosh (DGMCINT)
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
