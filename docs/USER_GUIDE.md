@@ -20,7 +20,7 @@ Press **Ctrl+K** (Windows/Linux) or **Cmd+K** (Mac), or **F4**, from anywhere. T
 
 ## Getting started
 When there is no tree yet, the welcome screen offers four choices:
-- **Import an existing family tree** from PAF, Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy or any GEDCOM file.
+- **Import an existing family tree** from Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy, PAF or any GEDCOM file.
   **PAF 5 files (.paf) can be imported directly**, without PAF: names, sex, births, deaths, marriages, husbands,
   wives and children in PAF's order come across. Christenings, burials, LDS ordinances, notes, sources and photos
   can't be read from a .paf file yet; if your file has any, the import report says so. For those, use the full way:
