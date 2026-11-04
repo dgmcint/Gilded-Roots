@@ -5843,7 +5843,7 @@ impl App {
             };
             ui.vertical_centered(|ui| {
                 ui.set_max_width(640.0);
-                if card(ui, "Import an existing family tree", "Bring in your research from PAF (Personal Ancestral File), Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy or any program that saves GEDCOM (.ged) files. PAF 5 .paf files can be opened directly. You get a full report of what came across.") {
+                if card(ui, "Import an existing family tree", "Bring in your research from Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy, PAF or any program that saves GEDCOM (.ged) files. PAF 5 .paf files can be opened directly. You get a full report of what came across.") {
                     self.imp_open = true;
                 }
                 ui.horizontal(|ui| {
@@ -10391,8 +10391,8 @@ impl eframe::App for App {
                     ui.add_space(4.0);
                     ui.heading("Gilded Roots");
                     ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
-                    ui.label("A modern take on Personal Ancestral File (PAF) for keeping your family history.");
-                    ui.label(RichText::new("Created by DGMCINT").italics());
+                    ui.label("A free, offline home for your family history.");
+                    ui.label(RichText::new("Created by Doyle McIntosh (DGMCINT)").italics());
                 });
                 ui.separator();
                 ui.label(RichText::new("Quick tips").strong());
