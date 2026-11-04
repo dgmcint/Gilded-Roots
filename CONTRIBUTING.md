@@ -34,7 +34,7 @@ Each file should report `LOST 0`.
 
 ## Maintainer
 
-Gilded Roots is created and maintained by DGMCINT. Contributions are welcome through pull requests.
+Gilded Roots is created and maintained by Doyle McIntosh (DGMCINT). Contributions are welcome through pull requests.
 
 ## Third-party notices
 

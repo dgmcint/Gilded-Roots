@@ -1,7 +1,7 @@
 # Gilded Roots
 
-A modern, native family-history program for Windows, macOS and Linux, built as a replacement for
-PAF (Personal Ancestral File). Your tree stays on your computer, in a visible folder, in an open format.
+A modern, native family-history program for Windows, macOS and Linux, in the spirit of the classic
+desktop genealogy programs. Your tree stays on your computer, in a visible folder, in an open format.
 
 Written in Rust with [egui](https://github.com/emilk/egui). No account, no subscription, no cloud.
 
@@ -17,14 +17,14 @@ Family history is personal. Gilded Roots is built so that it stays yours:
   people, and GEDCOM can be exported with living people kept private.
 - **Works offline**, including the map and the built-in user guide.
 
-## Moving from PAF
+## Moving from another program
 
-Gilded Roots was made for people coming from **Personal Ancestral File (PAF)**. Choose **Import an existing
-family tree** and pick your PAF 5 `.paf` file: names, births, deaths, marriages and every family link are read
-directly, with no need for PAF itself. If your file also has christenings, burials, LDS ordinances, notes,
-sources or photos, export a GEDCOM from PAF instead (**File > Export**) and import that, so those come across too.
-The import report shows exactly how many people, families, sources, citations, notes and photos came across,
-and anything that could not be carried over. Your PAF file is never changed.
+Coming from an older genealogy program? Choose **Import an existing family tree** and pick a GEDCOM (`.ged`)
+file exported from it. PAF 5 `.paf` files can also be opened directly: names, births, deaths, marriages and
+every family link are read without needing PAF itself. If a `.paf` file also has christenings, burials, LDS
+ordinances, notes, sources or photos, export a GEDCOM from PAF instead (**File > Export**) and import that, so
+those come across too. The import report shows exactly how many people, families, sources, citations, notes
+and photos came across, and anything that could not be carried over. Your original file is never changed.
 
 ## Features
 
@@ -147,7 +147,7 @@ used only to describe compatibility (for example, "imports GEDCOM files exported
 
 ## Author
 
-Created and maintained by **DGMCINT**
+Created and maintained by **Doyle McIntosh (DGMCINT)**
 
 ## License
 

@@ -75,7 +75,7 @@ the files to the release.
 
 - [ ] Download one installer from the release page itself and open it, to check the public link works.
 - [ ] Repository **About** (gear icon on the main page): a short description, for example "Free, offline family
-      history program for Windows, Mac and Linux. A modern replacement for PAF.", and topics such as
+      history program for Windows, Mac and Linux.", and topics such as
       `genealogy`, `family-tree`, `gedcom`, `paf`, `rust`.
 - [ ] **Settings > General > Features:** Issues ticked (the README sends bug reports there). The Sponsor
       button comes from `.github/FUNDING.yml`.
@@ -95,8 +95,8 @@ removes.
 ```
 Gilded Roots 1.0.0, the first public release.
 
-A free, offline family history program for Windows, Mac and Linux, made as a modern replacement for
-PAF (Personal Ancestral File). No account, no subscription, no advertising, nothing uploaded.
+A free, offline family history program for Windows, Mac and Linux, in the spirit of the classic desktop
+genealogy programs. No account, no subscription, no advertising, nothing uploaded.
 
 Highlights
 - Import your tree from a GEDCOM file (PAF, Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy and
