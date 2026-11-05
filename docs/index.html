@@ -76,6 +76,7 @@ nav.links a:hover{color:var(--ink)}
 .steps li::before{content:counter(s);position:absolute;left:0;top:-2px;width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--gold);color:var(--gold-2);font:600 16px/32px var(--serif);text-align:center}
 .steps b{display:block;font-family:var(--serif);font-size:18px;margin-bottom:2px}
 .note{font-size:15px;color:var(--muted)}
+.dlcount{display:block;margin:10px 0 0;height:20px}
 
 /* features */
 section.features{padding:72px 0}
@@ -337,6 +338,7 @@ footer .wrap{display:grid;gap:10px}
     <div class="eyebrow">Download</div>
     <h2>Free for Windows, Mac and Linux.</h2>
     <p class="note" id="verLine">Always the latest version. <a class="js-releases" href="#">See all releases and what changed</a>.</p>
+    <a class="js-releases" href="#" title="Total downloads of every release"><img class="dlcount" id="dlCount" alt="" hidden></a>
 
     <div class="dl-grid">
       <div class="os" data-os="mac">
@@ -439,6 +441,14 @@ footer .wrap{display:grid;gap:10px}
   set(".js-releases", base && base + "/releases");
   set(".js-issues", base && base + "/issues");
   set(".js-guide", base && base + "/blob/main/docs/USER_GUIDE.md");
+  // Download counter: GitHub counts every download of the release files; shields.io turns
+  // the total into a small badge. No cookies, and nothing about visitors is collected.
+  var dc = document.getElementById("dlCount");
+  if (dc && REPO) {
+    dc.onload = function () { dc.hidden = false; };
+    dc.alt = "Total downloads";
+    dc.src = "https://img.shields.io/github/downloads/" + REPO + "/total?label=downloads&color=b8860b";
+  }
   document.querySelectorAll(".js-file").forEach(function (a) {
     a.href = base ? base + "/releases/latest/download/" + a.dataset.file : "#download";
   });
