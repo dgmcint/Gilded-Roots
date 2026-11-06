@@ -2086,6 +2086,10 @@ struct QuickEdit {
 /// Screen state for the newer tools (kept together so App's long constructor stays readable).
 #[derive(Default)]
 struct Extra {
+    /// Gallery/Memories: choosing several items to remove at once
+    gal_pick: bool,
+    gal_sel: HashSet<(u32, usize)>,
+    gal_confirm: bool,
     jump_open: bool,
     jump_q: String,
     jump_sel: usize,
@@ -2993,6 +2997,34 @@ fn online_photo(m: &Media) -> bool {
 
 fn is_url(s: &str) -> bool {
     s.starts_with("http://") || s.starts_with("https://")
+}
+
+/// Take several photos, documents or recordings off the people they belong to, in one go.
+/// The files are left in the media folder (and backups); a profile photo that was removed is
+/// cleared so no box points at it. Returns how many were removed.
+fn remove_media_items(db: &mut Db, sel: &HashSet<(u32, usize)>) -> usize {
+    let mut by: HashMap<u32, Vec<usize>> = HashMap::new();
+    for (who, i) in sel {
+        by.entry(*who).or_default().push(*i);
+    }
+    let mut n = 0;
+    for (who, mut idx) in by {
+        let Some(p) = db.people.get_mut(&who) else { continue };
+        idx.sort_unstable_by(|a, b| b.cmp(a));
+        idx.dedup();
+        for i in idx {
+            if i < p.media.len() {
+                let m = p.media.remove(i);
+                if !m.file.is_empty() && p.portrait == m.file {
+                    p.portrait.clear();
+                    p.face_portrait = None;
+                    p.portrait_crop = None;
+                }
+                n += 1;
+            }
+        }
+    }
+    n
 }
 
 fn make_previews(src: &std::path::Path) -> Option<(String, String)> {
@@ -4321,6 +4353,36 @@ impl App {
             }
         }
         self.dirty = true;
+    }
+
+    /// Make previews for up to `max` photos (anywhere in the tree) that do not have one yet.
+    /// Returns true if any were made (the screen should be drawn again).
+    fn missing_previews(&mut self, max: usize) -> bool {
+        let todo: Vec<(u32, usize, String)> = self
+            .db
+            .people
+            .iter()
+            .flat_map(|(id, p)| p.media.iter().enumerate().filter(|(_, m)| is_image(&m.file) && m.thumb.is_empty()).map(move |(i, m)| (*id, i, m.file.clone())))
+            .take(max)
+            .collect();
+        if todo.is_empty() {
+            return false;
+        }
+        for (id, i, f) in todo {
+            let r = make_previews(&media_dir().join(&f));
+            if let Some(m) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(i)) {
+                match r {
+                    Some((t, mid)) => {
+                        m.thumb = t;
+                        m.mid = mid;
+                    }
+                    None => m.thumb = "-".to_string(),
+                }
+            }
+        }
+        self.dirty = true;
+        // ask for another frame either way, so the previews just made are drawn straight away
+        true
     }
 
     fn viewer(&mut self, ctx: &egui::Context) {
@@ -6794,6 +6856,13 @@ impl App {
         ui.horizontal(|ui| {
             ui.checkbox(&mut self.gal_only, "Only the selected person");
             ui.add(egui::TextEdit::singleline(&mut self.gal_find).hint_text("Filter by name or caption").desired_width(220.0));
+            ui.separator();
+            if !self.x.gal_pick {
+                if ui.button("Select...").on_hover_text("Click several items to tick them, then remove them in one go").clicked() {
+                    self.x.gal_pick = true;
+                    self.x.gal_sel.clear();
+                }
+            }
         });
         let q = self.gal_find.trim().to_lowercase();
         let want = if photos { 1 } else { self.x.gal_kind };
@@ -6833,6 +6902,28 @@ impl App {
             ui.label("Nothing here yet. Select a person and use + Add.");
             return;
         }
+        if self.x.gal_pick {
+            // only keep ticks for items still listed
+            let shown: HashSet<(u32, usize)> = items.iter().filter(|x| x.1 != usize::MAX).map(|x| (x.0, x.1)).collect();
+            self.x.gal_sel.retain(|k| shown.contains(k));
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(format!("{} selected", self.x.gal_sel.len())).strong());
+                if ui.button("Select all").clicked() {
+                    self.x.gal_sel = shown.clone();
+                }
+                if ui.button("Select none").clicked() {
+                    self.x.gal_sel.clear();
+                }
+                if ui.add_enabled(!self.x.gal_sel.is_empty(), egui::Button::new("Remove selected...")).clicked() {
+                    self.x.gal_confirm = true;
+                }
+                if ui.button("Done").clicked() {
+                    self.x.gal_pick = false;
+                    self.x.gal_sel.clear();
+                }
+            });
+            ui.add_space(4.0);
+        }
         let mut pdf_req: Option<(PathBuf, String)> = None;
         let mut story_open: Option<(u32, usize)> = None;
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
@@ -6863,14 +6954,31 @@ impl App {
                             } else {
                                 let m = &self.db.people[id].media[*i];
                                 if *kind == 1 && online_photo(m) {
-                                    if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open in browser")).clicked() {
-                                        ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
+                                    let picked = self.x.gal_sel.contains(&(*id, *i));
+                                    if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open in browser").selected(picked)).clicked() {
+                                        if self.x.gal_pick {
+                                            if !self.x.gal_sel.remove(&(*id, *i)) {
+                                                self.x.gal_sel.insert((*id, *i));
+                                            }
+                                        } else {
+                                            ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
+                                        }
                                     }
                                 } else if *kind == 1 && !m.thumb.is_empty() && m.thumb != "-" {
                                     let uri = img_uri(&media_dir().join("previews").join(&m.thumb));
                                     let r = ui.add(egui::Image::new(uri).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
+                                    if self.x.gal_sel.contains(&(*id, *i)) {
+                                        ui.painter().rect_stroke(r.rect.expand(2.0), 5.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                                    }
                                     if r.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                                        self.viewing = Some((*id, *i));
+                                        if self.x.gal_pick {
+                                            // choosing several: a click ticks or unticks the photo
+                                            if !self.x.gal_sel.remove(&(*id, *i)) {
+                                                self.x.gal_sel.insert((*id, *i));
+                                            }
+                                        } else {
+                                            self.viewing = Some((*id, *i));
+                                        }
                                     }
                                 } else {
                                     let (badge, hint) = match *kind {
@@ -6886,19 +6994,40 @@ impl App {
                                     ui.painter().text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, badge, FontId::proportional(28.0), ui.visuals().selection.bg_fill);
                                     let online = m.file.is_empty() && is_url(&m.path);
                                     ui.painter().text(rect.center() + vec2(0.0, 26.0), Align2::CENTER_CENTER, if online { "Open online" } else { hint }, FontId::proportional(12.0), ui.visuals().weak_text_color());
+                                    if self.x.gal_sel.contains(&(*id, *i)) {
+                                        ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                                    }
                                     if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                                        if online {
+                                        if self.x.gal_pick {
+                                            if !self.x.gal_sel.remove(&(*id, *i)) {
+                                                self.x.gal_sel.insert((*id, *i));
+                                            }
+                                        } else if online {
                                             ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
                                         } else if *kind == 4 && m.file.ends_with(".txt") {
                                             story_open = Some((*id, *i));
                                         } else if is_pdf(&m.file) {
                                             pdf_req = Some((media_dir().join(&m.file), title.clone()));
+                                        } else if *kind == 1 && m.thumb.is_empty() && !m.file.is_empty() {
+                                            self.viewing = Some((*id, *i));
                                         } else if !m.file.is_empty() {
                                             open_path(&media_dir().join(&m.file));
                                         }
                                     }
                                 }
-                                ui.add(egui::Label::new(RichText::new(title.as_str()).small()).truncate());
+                                if self.x.gal_pick {
+                                    let key = (*id, *i);
+                                    let mut on = self.x.gal_sel.contains(&key);
+                                    if ui.checkbox(&mut on, RichText::new(title.as_str()).small()).changed() {
+                                        if on {
+                                            self.x.gal_sel.insert(key);
+                                        } else {
+                                            self.x.gal_sel.remove(&key);
+                                        }
+                                    }
+                                } else {
+                                    ui.add(egui::Label::new(RichText::new(title.as_str()).small()).truncate());
+                                }
                             }
                             if ui.link(RichText::new(name.as_str()).small()).clicked() {
                                 *act = Some(Action::Open(*id));
@@ -6911,6 +7040,36 @@ impl App {
         });
         if pdf_req.is_some() {
             self.x.pdf_req = pdf_req;
+        }
+        if self.x.gal_confirm {
+            let n = self.x.gal_sel.len();
+            let mut go = false;
+            let mut cancel = false;
+            egui::Window::new("Remove selected items").id(egui::Id::new("gal_remove")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
+                ui.label(format!("Remove {} item(s) from the people they belong to?", n));
+                ui.label(RichText::new("The files themselves stay in your media folder and backups. Undo (Ctrl+Z) brings them back.").small().weak());
+                ui.add_space(6.0);
+                ui.horizontal(|ui| {
+                    if ui.button(RichText::new("Remove").strong()).clicked() {
+                        go = true;
+                    }
+                    if ui.button("Cancel").clicked() {
+                        cancel = true;
+                    }
+                });
+            });
+            if cancel {
+                self.x.gal_confirm = false;
+            }
+            if go {
+                self.x.gal_confirm = false;
+                let removed = remove_media_items(&mut self.db, &self.x.gal_sel);
+                self.x.gal_sel.clear();
+                self.x.gal_pick = false;
+                self.viewing = None;
+                self.dirty = true;
+                self.status = format!("Removed {} item(s). Undo (Ctrl+Z) brings them back.", removed);
+            }
         }
         if let Some((who, i)) = story_open {
             if let Some(m) = self.db.people.get(&who).and_then(|p| p.media.get(i)) {
@@ -8206,7 +8365,11 @@ impl App {
                                     self.viewing = Some((id, *i));
                                 }
                             } else if ui.add_sized([120.0, 90.0], egui::Button::new("Open")).clicked() {
-                                open_path(&media_dir().join(&m.file));
+                                if m.thumb.is_empty() {
+                                    self.viewing = Some((id, *i));
+                                } else {
+                                    open_path(&media_dir().join(&m.file));
+                                }
                             }
                             let cap = if m.caption.is_empty() { m.name.as_str() } else { m.caption.as_str() };
                             ui.label(RichText::new(cap).small());
@@ -8855,7 +9018,13 @@ impl App {
                         if m.thumb.is_empty() || m.thumb == "-" {
                             let label = if m.thumb == "-" { "No preview\nClick to open" } else { "Loading..." };
                             if ui.add_sized([150.0, 110.0], egui::Button::new(label)).clicked() {
-                                open_path(&media_dir().join(&m.file));
+                                // still making its preview: open it in our own viewer like any other photo;
+                                // only a photo that cannot be previewed at all goes to the computer's own app
+                                if m.thumb.is_empty() {
+                                    self.viewing = Some((id, *i));
+                                } else {
+                                    open_path(&media_dir().join(&m.file));
+                                }
                             }
                         } else {
                             let uri = img_uri(&media_dir().join("previews").join(&m.thumb));
@@ -10551,6 +10720,11 @@ impl eframe::App for App {
                 self.ensure_previews(id);
             }
         }
+        if matches!(self.view, View::Gallery | View::Memories | View::Person) && self.missing_previews(4) {
+            // new previews were made: draw again straight away (and make the next few), so new
+            // photos appear without having to leave the tab and come back
+            ctx.request_repaint();
+        }
         self.viewer(ctx);
 
         if self.check_open {
@@ -11953,6 +12127,22 @@ mod relation_tests {
 mod scale_tests {
     use super::*;
     use std::time::Instant;
+
+    #[test]
+    fn removing_several_media_at_once() {
+        let mut db = Db::default();
+        let mut p = Person { name: "A".into(), ..Default::default() };
+        for f in ["a.jpg", "b.jpg", "c.jpg", "d.pdf"] {
+            p.media.push(Media { file: f.into(), ..Default::default() });
+        }
+        p.portrait = "c.jpg".into();
+        db.people.insert(1, p);
+        let sel: HashSet<(u32, usize)> = [(1, 0), (1, 2), (1, 9), (7, 0)].into_iter().collect();
+        assert_eq!(remove_media_items(&mut db, &sel), 2);
+        let left: Vec<&str> = db.people[&1].media.iter().map(|m| m.file.as_str()).collect();
+        assert_eq!(left, vec!["b.jpg", "d.pdf"]);
+        assert!(db.people[&1].portrait.is_empty(), "a removed profile photo is cleared");
+    }
 
     #[test]
     #[ignore]
