@@ -178,7 +178,14 @@ impl App {
                     let t1 = a0 + (a1 - a0) * (s + 1) as f32 / steps as f32;
                     let p = |r: f32, t: f32| centre + vec2(t.cos(), t.sin()) * r;
                     if fill != Color32::TRANSPARENT {
-                        painter.add(egui::Shape::convex_polygon(vec![p(ri, t0), p(ro, t0), p(ro, t1), p(ri, t1)], fill, Stroke::NONE));
+                        // one mesh per slice pair, without edge smoothing, so no seams show between slices
+                        let mut mesh = egui::Mesh::default();
+                        for (r, t) in [(ri, t0), (ro, t0), (ro, t1), (ri, t1)] {
+                            mesh.colored_vertex(p(r, t), fill);
+                        }
+                        mesh.add_triangle(0, 1, 2);
+                        mesh.add_triangle(0, 2, 3);
+                        painter.add(egui::Shape::mesh(mesh));
                     }
                     outline.push(p(ro, t0));
                     if s + 1 == steps {
