@@ -9,6 +9,13 @@ permissions:
   contents: write
 
 jobs:
+  # Three downloads, one for each kind of computer, plus a README. Each download can install
+  # Gilded Roots or set up a portable copy that runs from a USB drive:
+  #   GildedRoots-Windows-Setup.exe  installer that asks: install on this computer, or portable
+  #   GildedRoots-Mac.dmg            one app for Apple chip and Intel Macs, plus a portable folder
+  #   GildedRoots-Linux.tar.gz       install.sh for this user, plus a portable folder
+  #   README.txt                     what to download and how to open it
+
   windows:
     runs-on: windows-latest
     steps:
@@ -17,80 +24,67 @@ jobs:
       - run: cargo build --release
       - run: choco install innosetup -y --no-progress
       - run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\gilded-roots.iss'
-      - name: Make portable zip (runs from a USB drive)
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "portable\Gilded Roots\FamilyTreeData" | Out-Null
-          Copy-Item target\release\gilded-roots.exe "portable\Gilded Roots\GildedRoots.exe"
-          Copy-Item packaging\PORTABLE-README.txt "portable\Gilded Roots\README.txt"
-          Copy-Item packaging\PORTABLE-README.txt "portable\Gilded Roots\FamilyTreeData\ABOUT-THIS-FOLDER.txt"
-          Compress-Archive -Path "portable\Gilded Roots" -DestinationPath dist\GildedRoots-portable-windows.zip -Force
       - uses: actions/upload-artifact@v5
         with:
-          name: windows-installer
-          path: |
-            dist/GildedRoots-Setup.exe
-            dist/GildedRoots-portable-windows.zip
+          name: windows
+          path: dist/GildedRoots-Windows-Setup.exe
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/GildedRoots-Setup.exe
-            dist/GildedRoots-portable-windows.zip
+          files: dist/GildedRoots-Windows-Setup.exe
 
   macos:
     runs-on: macos-latest
-    strategy:
-      # build both Macs even if one fails, so a problem with one doesn't hide the other
-      fail-fast: false
-      matrix:
-        include:
-          - target: aarch64-apple-darwin
-            label: apple-silicon
-          - target: x86_64-apple-darwin
-            label: intel
+    env:
+      # the oldest macOS the app runs on (both chips)
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
       # cargo-bundle 0.12 pulls in a library (sigstore 0.14) that no longer compiles on current Rust;
       # 0.11 is the last version without it. --locked uses the versions it was released with.
       - run: cargo install cargo-bundle --version 0.11.0 --locked
-      - run: cargo bundle --release --target ${{ matrix.target }}
-      - name: Allow microphone access
+      - name: Build for Apple chip and Intel
         run: |
-          APP="target/${{ matrix.target }}/release/bundle/osx/Gilded Roots.app"
+          cargo bundle --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+      - name: Make one app that runs on both (universal)
+        run: |
+          APP="target/aarch64-apple-darwin/release/bundle/osx/Gilded Roots.app"
+          BIN="$APP/Contents/MacOS/gilded-roots"
+          lipo -create -output "$BIN.universal" "$BIN" target/x86_64-apple-darwin/release/gilded-roots
+          mv "$BIN.universal" "$BIN"
+          lipo -info "$BIN"
+          lipo "$BIN" -verify_arch arm64 x86_64
           /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string Record family stories" "$APP/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Delete :LSMinimumSystemVersion" "$APP/Contents/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Add :LSMinimumSystemVersion string 11.0" "$APP/Contents/Info.plist"
           codesign --force --deep -s - "$APP"
-      - name: Make dmg
+          mkdir -p universal && cp -R "$APP" universal/
+      - name: Make the dmg (app, Applications shortcut, portable folder, README)
         run: |
-          mkdir -p dist stage
-          cp -R "target/${{ matrix.target }}/release/bundle/osx/Gilded Roots.app" stage/
+          mkdir -p dist stage "stage/Portable (USB drive)/FamilyTreeData"
+          cp -R "universal/Gilded Roots.app" stage/
           ln -s /Applications stage/Applications
-          hdiutil create -volname "Gilded Roots" -srcfolder stage -ov -format UDZO "dist/GildedRoots-${{ matrix.label }}.dmg"
-      - name: Make portable zip (runs from a USB drive)
-        run: |
-          mkdir -p "portable/Gilded Roots/FamilyTreeData"
-          cp -R "target/${{ matrix.target }}/release/bundle/osx/Gilded Roots.app" "portable/Gilded Roots/"
-          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/README.txt"
-          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
-          (cd portable && ditto -c -k --sequesterRsrc --keepParent "Gilded Roots" "../dist/GildedRoots-portable-mac-${{ matrix.label }}.zip")
+          cp -R "universal/Gilded Roots.app" "stage/Portable (USB drive)/"
+          cp packaging/PORTABLE-README.txt "stage/Portable (USB drive)/README.txt"
+          cp packaging/PORTABLE-README.txt "stage/Portable (USB drive)/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
+          cp packaging/DOWNLOAD-README.txt stage/README.txt
+          hdiutil create -volname "Gilded Roots" -srcfolder stage -ov -format UDZO dist/GildedRoots-Mac.dmg
       - uses: actions/upload-artifact@v5
         with:
-          name: mac-installer-${{ matrix.label }}
-          path: |
-            dist/*.dmg
-            dist/*.zip
+          name: mac
+          path: dist/GildedRoots-Mac.dmg
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*.dmg
-            dist/*.zip
+          files: dist/GildedRoots-Mac.dmg
 
   linux:
-    runs-on: ubuntu-latest
+    # built on the older Ubuntu 22.04 so the program also runs on older Linux versions
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -99,32 +93,34 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config libgtk-3-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev libasound2-dev
       - name: Check that ALSA is visible to the build
+        run: pkg-config --modversion alsa
+      - run: cargo build --release
+      - name: Make the tar.gz (install.sh, portable folder, README)
         run: |
-          pkg-config --modversion alsa
-          dpkg -l | grep -i libasound2-dev
-      - run: cargo install cargo-deb
-      - run: cargo deb
-      - run: |
-          mkdir -p dist
-          cp target/debian/*.deb dist/GildedRoots-linux-amd64.deb
-      - name: Make portable archive (runs from a USB drive)
-        run: |
-          mkdir -p "portable/Gilded Roots/FamilyTreeData"
-          cp target/release/gilded-roots "portable/Gilded Roots/gilded-roots"
-          chmod +x "portable/Gilded Roots/gilded-roots"
-          cp icons/256x256.png "portable/Gilded Roots/gilded-roots.png"
-          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/README.txt"
-          cp packaging/PORTABLE-README.txt "portable/Gilded Roots/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
-          tar -C portable -czf dist/GildedRoots-portable-linux-x86_64.tar.gz "Gilded Roots"
+          D="pkg/Gilded Roots"
+          mkdir -p "$D/Portable (USB drive)/FamilyTreeData" dist
+          cp target/release/gilded-roots "$D/gilded-roots"
+          cp icons/256x256.png "$D/gilded-roots.png"
+          cp packaging/install-linux.sh "$D/install.sh"
+          cp packaging/DOWNLOAD-README.txt "$D/README.txt"
+          cp target/release/gilded-roots "$D/Portable (USB drive)/gilded-roots"
+          cp icons/256x256.png "$D/Portable (USB drive)/gilded-roots.png"
+          cp packaging/PORTABLE-README.txt "$D/Portable (USB drive)/README.txt"
+          cp packaging/PORTABLE-README.txt "$D/Portable (USB drive)/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
+          chmod 755 "$D/gilded-roots" "$D/install.sh" "$D/Portable (USB drive)/gilded-roots"
+          cp LICENSE "$D/LICENSE.txt"
+          cp THIRD_PARTY_LICENSES.txt "$D/"
+          tar -C pkg -czf dist/GildedRoots-Linux.tar.gz "Gilded Roots"
+          cp packaging/DOWNLOAD-README.txt dist/README.txt
       - uses: actions/upload-artifact@v5
         with:
-          name: linux-installer
+          name: linux-and-readme
           path: |
-            dist/*.deb
-            dist/*.tar.gz
+            dist/GildedRoots-Linux.tar.gz
+            dist/README.txt
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.deb
-            dist/*.tar.gz
+            dist/GildedRoots-Linux.tar.gz
+            dist/README.txt
