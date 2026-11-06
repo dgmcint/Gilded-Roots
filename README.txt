@@ -21,7 +21,7 @@ MAC
    The first time, right-click it and choose Open, because it is not signed by Apple.
    Data is saved to ~/Documents/Gilded Roots/tree.json (older versions used ~/Library/Application Support/FamilyTree; it is moved over once, and the old copy is left in place)
 
-Build on the Mac you will use it on (Apple Silicon or Intel).
+Build on the Mac you will use it on (Apple Silicon or Intel). The GitHub installer is universal (both).
 Use File > Import GEDCOM to load your data and File > Export GEDCOM for backups.
 
 LINUX
@@ -47,10 +47,10 @@ includes a GitHub workflow that builds them in the cloud for free.
 1. Make a free account at https://github.com and create a new repository.
 2. Upload everything in this folder (keep the .github folder).
 3. Open the repository's Actions tab, pick "Build installers", click Run workflow.
-4. After about 10 minutes, open the finished run and download:
-     windows-installer      -> GildedRoots-Setup.exe
-     mac-installer-apple-silicon / mac-installer-intel -> .dmg files
-     linux-installer        -> GildedRoots-linux-amd64.deb (sudo apt install ./file.deb)
+4. After about 20 minutes, open the finished run and download:
+     windows          -> GildedRoots-Windows-Setup.exe (installs, or sets up a portable copy)
+     mac              -> GildedRoots-Mac.dmg (one app for Apple chip and Intel, plus a portable folder)
+     linux-and-readme -> GildedRoots-Linux.tar.gz (./install.sh, plus a portable folder) and README.txt
 To publish a downloadable release page instead, push a tag such as v1.0.0.
 The installers are unsigned: Windows may show a SmartScreen warning (More info > Run anyway)
 and on Mac, open the app once, then choose System Settings > Privacy & Security > Open Anyway

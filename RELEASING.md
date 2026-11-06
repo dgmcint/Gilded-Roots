@@ -54,18 +54,14 @@ A test build does not publish anything.
 5. Choose **Publish release**.
 
 Publishing creates the tag, the tag starts the **Build installers** workflow, and when it finishes it attaches
-the installers to the release by itself. After about 20 to 30 minutes the release should list these 8 files:
+the installers to the release by itself. After about 20 to 30 minutes the release should list these 4 files:
 
 | File | For |
 | --- | --- |
-| `GildedRoots-Setup.exe` | Windows installer |
-| `GildedRoots-portable-windows.zip` | Windows, USB drive |
-| `GildedRoots-apple-silicon.dmg` | Mac with an M1 or later chip |
-| `GildedRoots-intel.dmg` | Older Intel Mac |
-| `GildedRoots-portable-mac-apple-silicon.zip` | Mac (M chip), USB drive |
-| `GildedRoots-portable-mac-intel.zip` | Mac (Intel), USB drive |
-| `GildedRoots-linux-amd64.deb` | Linux (Ubuntu, Debian, Mint) |
-| `GildedRoots-portable-linux-x86_64.tar.gz` | Linux, USB drive |
+| `GildedRoots-Windows-Setup.exe` | Windows: installs on the computer, or sets up a portable copy |
+| `GildedRoots-Mac.dmg` | Every Mac (Apple chip and Intel), with a portable folder inside |
+| `GildedRoots-Linux.tar.gz` | Linux: `install.sh` for this user, with a portable folder inside |
+| `README.txt` | What to download and how to open it |
 
 If no run appears under **Actions** a few minutes after publishing: **Actions > Build installers > Run
 workflow**, set **Use workflow from** to **Tags > v1.0.0**, and run it. Started from a tag, it still attaches
@@ -113,9 +109,10 @@ Highlights
 - Safe saving, daily backups, Family Tree Archives, and portable versions for a USB drive.
 
 Which file do I download?
-- Windows: GildedRoots-Setup.exe
-- Mac: GildedRoots-apple-silicon.dmg (M1 or newer) or GildedRoots-intel.dmg (older Macs)
-- Linux: GildedRoots-linux-amd64.deb
+- Windows: GildedRoots-Windows-Setup.exe (install, or portable on a USB drive)
+- Mac: GildedRoots-Mac.dmg (every Mac, Apple chip or Intel; portable folder inside)
+- Linux: GildedRoots-Linux.tar.gz (./install.sh, or the portable folder)
+- README.txt: how to open each one
 - To run from a USB drive: the matching "portable" file.
 
 The installers are not signed. Windows: choose More info > Run anyway. Mac: open the app once, click Done at

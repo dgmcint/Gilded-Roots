@@ -2570,6 +2570,33 @@ fn safe_media_path(file: &str) -> Option<PathBuf> {
     Some(media_dir().join(file))
 }
 
+/// The full path of a stored media file, kept inside the media folder whatever the stored name
+/// says (a tree from someone else could hold a name like "C:\\Windows\\..." or "../../x").
+/// An unsafe name gives a path that does not exist, so nothing outside the folder is ever read.
+fn mfile(file: &str) -> PathBuf {
+    safe_media_path(file).unwrap_or_else(|| media_dir().join("previews").join("-missing-"))
+}
+
+/// The same for a preview picture (thumbnail or mid-size) in the previews folder.
+fn mprev(file: &str) -> PathBuf {
+    match safe_media_path(file) {
+        Some(_) => media_dir().join("previews").join(file),
+        None => media_dir().join("previews").join("-missing-"),
+    }
+}
+
+/// Open a stored media file in the computer's own app, but only a media file inside the media
+/// folder (never a program or a file somewhere else on the computer).
+fn open_media(file: &str) {
+    if is_media_name(file) {
+        if let Some(p) = safe_media_path(file) {
+            if p.is_file() {
+                open_path(&p);
+            }
+        }
+    }
+}
+
 fn is_pdf(f: &str) -> bool {
     ext_of(f) == "pdf"
 }
@@ -2708,7 +2735,7 @@ fn write_gedcom(db: &Db, path: &Path, private: bool) -> Result<String, String> {
     if has_media {
         let _ = std::fs::create_dir_all(dir.join(&folder));
         for (file, rel) in &ex.media {
-            let src = media_dir().join(file);
+            let src = mfile(file);
             let dst = dir.join(rel);
             if !src.exists() {
                 missing += 1;
@@ -3709,7 +3736,7 @@ fn cite_list(
                     ui.horizontal(|ui| {
                         ui.label("Web address of this record");
                         ui.add(egui::TextEdit::singleline(&mut c.url).hint_text("https://...").desired_width(260.0));
-                        if c.url.starts_with("http") {
+                        if is_url(&c.url) {
                             ui.hyperlink_to("Open", c.url.clone());
                         }
                     });
@@ -4339,7 +4366,7 @@ impl App {
             return;
         }
         for (i, f) in todo {
-            let r = make_previews(&media_dir().join(&f));
+            let r = make_previews(&mfile(&f));
             if let Some(m) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(i)) {
                 match r {
                     Some((t, mid)) => {
@@ -4369,7 +4396,7 @@ impl App {
             return false;
         }
         for (id, i, f) in todo {
-            let r = make_previews(&media_dir().join(&f));
+            let r = make_previews(&mfile(&f));
             if let Some(m) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(i)) {
                 match r {
                     Some((t, mid)) => {
@@ -4439,12 +4466,12 @@ impl App {
                     nav = Some(imgs[pos + 1]);
                 }
             });
-            let full = media_dir().join(&p.media[idx].file);
+            let full = mfile(&p.media[idx].file);
             let m = &mut p.media[idx];
             let uri = if m.mid.is_empty() || m.mid == "-" {
                 img_uri(&full)
             } else {
-                img_uri(&media_dir().join("previews").join(&m.mid))
+                img_uri(&mprev(&m.mid))
             };
             let file_name = m.file.clone();
             let sense = if self.x.tag_mode || self.x.crop_mode { Sense::click_and_drag() } else { Sense::hover() };
@@ -4496,7 +4523,7 @@ impl App {
             ui.add(egui::TextEdit::singleline(&mut m.caption).hint_text("Caption").desired_width(f32::INFINITY));
             ui.horizontal(|ui| {
                 if ui.button("Open full size").clicked() {
-                    open_path(&full);
+                    open_media(&m.file);
                 }
                 if ui.button("Use as profile photo").clicked() {
                     portrait = Some(file_name.clone());
@@ -5319,13 +5346,13 @@ impl App {
                 // a face is a small part of the picture, so use the larger preview
                 for f in [&m.mid, &m.thumb] {
                     if !f.is_empty() && f != "-" {
-                        let t = media_dir().join("previews").join(f);
+                        let t = mprev(f);
                         if t.is_file() {
                             return Some((img_uri(&t), fp.r));
                         }
                     }
                 }
-                let full = media_dir().join(&m.file);
+                let full = mfile(&m.file);
                 if full.is_file() {
                     return Some((img_uri(&full), fp.r));
                 }
@@ -5340,14 +5367,14 @@ impl App {
         let order = if p.portrait_crop.is_some() { [&m.mid, &m.thumb] } else { [&m.thumb, &m.mid] };
         for f in order {
             if !f.is_empty() && f != "-" {
-                let t = media_dir().join("previews").join(f);
+                let t = mprev(f);
                 if t.is_file() {
                     return Some((img_uri(&t), crop));
                 }
             }
         }
         // no small copy yet (or it was lost): use the photo itself
-        let full = media_dir().join(&m.file);
+        let full = mfile(&m.file);
         if full.is_file() && is_image(&m.file) {
             Some((img_uri(&full), crop))
         } else {
@@ -5367,7 +5394,7 @@ impl App {
         ui.horizontal_wrapped(|ui| {
             for (owner, i, r) in &tags {
                 let Some(m) = self.db.people.get(owner).and_then(|o| o.media.get(*i)) else { continue };
-                let src = [&m.mid, &m.thumb].into_iter().find(|f| !f.is_empty() && *f != "-").map(|f| media_dir().join("previews").join(f)).unwrap_or_else(|| media_dir().join(&m.file));
+                let src = [&m.mid, &m.thumb].into_iter().find(|f| !f.is_empty() && *f != "-").map(|f| mprev(f)).unwrap_or_else(|| mfile(&m.file));
                 let uri = img_uri(&src);
                 let who = self.db.label(*owner);
                 ui.vertical(|ui| {
@@ -5748,7 +5775,7 @@ impl App {
         if !imgs.is_empty() {
             b.push_str("<h2>Photos</h2><div style=\"display:flex;flex-wrap:wrap;gap:12px\">");
             for m in imgs {
-                let path = if !m.mid.is_empty() && m.mid != "-" { media_dir().join("previews").join(&m.mid) } else { media_dir().join(&m.file) };
+                let path = if !m.mid.is_empty() && m.mid != "-" { mprev(&m.mid) } else { mfile(&m.file) };
                 let cap = if m.caption.is_empty() { m.name.as_str() } else { m.caption.as_str() };
                 b.push_str(&format!(
                     "<figure style=\"margin:0;width:230px\"><img src=\"{}\" style=\"width:100%\"><figcaption style=\"font-size:12px\">{}</figcaption></figure>",
@@ -5763,7 +5790,7 @@ impl App {
             b.push_str("<h2>Documents and recorded stories</h2><ul>");
             for m in docs {
                 let cap = if m.caption.is_empty() { m.name.as_str() } else { m.caption.as_str() };
-                b.push_str(&format!("<li><a href=\"{}\">{}</a></li>", file_uri(&media_dir().join(&m.file)), esc(cap)));
+                b.push_str(&format!("<li><a href=\"{}\">{}</a></li>", file_uri(&mfile(&m.file)), esc(cap)));
             }
             b.push_str("</ul>");
         }
@@ -6070,7 +6097,7 @@ impl App {
                             for p in db.people.values_mut() {
                                 for m in p.media.iter_mut() {
                                     for f in [&mut m.thumb, &mut m.mid] {
-                                        if !f.is_empty() && f != "-" && !media_dir().join("previews").join(f.as_str()).is_file() {
+                                        if !f.is_empty() && f != "-" && !mprev(f.as_str()).is_file() {
                                             f.clear();
                                         }
                                     }
@@ -6965,7 +6992,7 @@ impl App {
                                         }
                                     }
                                 } else if *kind == 1 && !m.thumb.is_empty() && m.thumb != "-" {
-                                    let uri = img_uri(&media_dir().join("previews").join(&m.thumb));
+                                    let uri = img_uri(&mprev(&m.thumb));
                                     let r = ui.add(egui::Image::new(uri).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
                                     if self.x.gal_sel.contains(&(*id, *i)) {
                                         ui.painter().rect_stroke(r.rect.expand(2.0), 5.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
@@ -7007,11 +7034,11 @@ impl App {
                                         } else if *kind == 4 && m.file.ends_with(".txt") {
                                             story_open = Some((*id, *i));
                                         } else if is_pdf(&m.file) {
-                                            pdf_req = Some((media_dir().join(&m.file), title.clone()));
+                                            pdf_req = Some((mfile(&m.file), title.clone()));
                                         } else if *kind == 1 && m.thumb.is_empty() && !m.file.is_empty() {
                                             self.viewing = Some((*id, *i));
                                         } else if !m.file.is_empty() {
-                                            open_path(&media_dir().join(&m.file));
+                                            open_media(&m.file);
                                         }
                                     }
                                 }
@@ -8359,7 +8386,7 @@ impl App {
                         ui.vertical(|ui| {
                             ui.set_width(120.0);
                             if !m.thumb.is_empty() && m.thumb != "-" {
-                                let uri = img_uri(&media_dir().join("previews").join(&m.thumb));
+                                let uri = img_uri(&mprev(&m.thumb));
                                 let r = ui.add(egui::Image::new(uri).fit_to_exact_size(vec2(120.0, 90.0)).rounding(4.0).sense(Sense::click()));
                                 if r.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                                     self.viewing = Some((id, *i));
@@ -8368,7 +8395,7 @@ impl App {
                                 if m.thumb.is_empty() {
                                     self.viewing = Some((id, *i));
                                 } else {
-                                    open_path(&media_dir().join(&m.file));
+                                    open_media(&m.file);
                                 }
                             }
                             let cap = if m.caption.is_empty() { m.name.as_str() } else { m.caption.as_str() };
@@ -8383,9 +8410,9 @@ impl App {
                         val(ui, cap);
                         if !m.file.is_empty() && ui.small_button(if is_audio(&m.file) { "Play" } else if is_pdf(&m.file) { "Read" } else { "Open" }).clicked() {
                             if is_pdf(&m.file) {
-                                pdf_req = Some((media_dir().join(&m.file), cap.to_string()));
+                                pdf_req = Some((mfile(&m.file), cap.to_string()));
                             } else {
-                                open_path(&media_dir().join(&m.file));
+                                open_media(&m.file);
                             }
                         }
                         if m.file.is_empty() && is_url(&m.path) {
@@ -9023,11 +9050,11 @@ impl App {
                                 if m.thumb.is_empty() {
                                     self.viewing = Some((id, *i));
                                 } else {
-                                    open_path(&media_dir().join(&m.file));
+                                    open_media(&m.file);
                                 }
                             }
                         } else {
-                            let uri = img_uri(&media_dir().join("previews").join(&m.thumb));
+                            let uri = img_uri(&mprev(&m.thumb));
                             let r = ui.add(egui::Image::new(uri).fit_to_exact_size(vec2(150.0, 110.0)).rounding(4.0).sense(Sense::click()));
                             if r.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                                 self.viewing = Some((id, *i));
@@ -9049,7 +9076,7 @@ impl App {
                 let mut remove: Option<usize> = None;
                 for (i, m) in &others {
                     ui.group(|ui| {
-                        let full = media_dir().join(&m.file);
+                        let full = mfile(&m.file);
                         ui.vertical(|ui| {
                             if let Some(mm) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(*i)) {
                                 ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text("Caption").desired_width(280.0));
@@ -9069,7 +9096,7 @@ impl App {
                                     if is_pdf(&m.file) {
                                         *pdf_req = Some((full.clone(), if m.caption.is_empty() { m.name.clone() } else { m.caption.clone() }));
                                     } else {
-                                        open_path(&full);
+                                        open_media(&m.file);
                                     }
                                 }
                                 if ui.button("Remove").clicked() {
@@ -10226,7 +10253,7 @@ impl eframe::App for App {
                                         ui.label("Web address");
                                         ui.horizontal(|ui| {
                                             ui.add(egui::TextEdit::singleline(&mut s.url).hint_text("https://...").desired_width(310.0));
-                                            if s.url.starts_with("http") {
+                                            if is_url(&s.url) {
                                                 ui.hyperlink_to("Open", s.url.clone());
                                             }
                                         });
@@ -10343,7 +10370,7 @@ impl eframe::App for App {
                                         ui.label("Web address");
                                         ui.horizontal(|ui| {
                                             ui.add(egui::TextEdit::singleline(&mut r.url).hint_text("https://...").desired_width(310.0));
-                                            if r.url.starts_with("http") {
+                                            if is_url(&r.url) {
                                                 ui.hyperlink_to("Open", r.url.clone());
                                             }
                                         });
@@ -11626,7 +11653,7 @@ mod tests {
         let m = &db2.people.values().find(|p| p.given == "Grand").unwrap().media[0];
         assert!(!m.file.is_empty() && m.path.is_empty());
         assert_eq!(m.caption, "On the farm");
-        assert_eq!(std::fs::read(media_dir().join(&m.file)).unwrap(), b"not really a jpeg but bytes are bytes");
+        assert_eq!(std::fs::read(mfile(&m.file)).unwrap(), b"not really a jpeg but bytes are bytes");
 
         // a photo that cannot be found is reported, and its name is kept
         std::fs::remove_file(out.join("tree-media").join("grandpa.jpg")).unwrap();
@@ -12127,6 +12154,18 @@ mod relation_tests {
 mod scale_tests {
     use super::*;
     use std::time::Instant;
+
+    #[test]
+    fn media_names_cannot_reach_outside_the_media_folder() {
+        for bad in ["../../etc/passwd", "C:\\Windows\\notepad.exe", "/Applications/Calculator.app", "a/b.jpg", "x:y.jpg", ""] {
+            assert!(!mfile(bad).starts_with(std::path::Path::new("/etc")));
+            assert!(mfile(bad).starts_with(media_dir()), "{bad}");
+            assert!(mprev(bad).starts_with(media_dir()), "{bad}");
+            assert!(mfile(bad).ends_with("-missing-"), "{bad}");
+        }
+        assert_eq!(mfile("photo.jpg"), media_dir().join("photo.jpg"));
+        assert!(!is_media_name("setup.exe") && !is_media_name("run.bat") && !is_media_name("x.app"));
+    }
 
     #[test]
     fn removing_several_media_at_once() {

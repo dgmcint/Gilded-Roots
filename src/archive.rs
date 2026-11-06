@@ -166,7 +166,9 @@ pub fn read_archive(path: &Path) -> Result<(Db, usize), String> {
         let Some(file) = name.strip_prefix("media/") else { continue };
         // only plain file names, never folders or ".." (a damaged or hostile zip cannot write elsewhere)
         let Some(dst) = safe_media_path(file) else { continue };
-        if e.is_dir() {
+        // only photos, documents and recordings: never programs or scripts, even if a damaged or
+        // hostile archive holds them
+        if e.is_dir() || !is_media_name(file) || e.size() > 4_000_000_000 {
             continue;
         }
         if dst.exists() && std::fs::metadata(&dst).map(|m| m.len() == e.size()).unwrap_or(false) {

@@ -68,32 +68,19 @@ and photos came across, and anything that could not be carried over. Your origin
 
 ## Install
 
-Download the installer for your system from the
-[Releases](../../releases) page (or from the **Actions → Build installers** run artifacts):
+Download the file for your system from the [Releases](../../releases) page. There is one download per system,
+plus a [README](../../releases/latest/download/README.txt) explaining how to open it:
 
-| System | File |
-| --- | --- |
-| Windows | `GildedRoots-Setup.exe` |
-| macOS (Apple Silicon / Intel) | `GildedRoots-apple-silicon.dmg` / `GildedRoots-intel.dmg` |
-| Linux | `GildedRoots-linux-amd64.deb` |
+| System | File | Portable copy (USB drive) |
+| --- | --- | --- |
+| Windows 10 / 11 | `GildedRoots-Windows-Setup.exe` | The installer asks: **Install on this computer** or **Portable** (pick your USB drive) |
+| macOS 11+ (Apple chip and Intel, one app) | `GildedRoots-Mac.dmg` | Drag the **Portable (USB drive)** folder from the dmg onto your drive |
+| Linux 64-bit | `GildedRoots-Linux.tar.gz` | Unpack, then run `./install.sh`, or copy the **Portable (USB drive)** folder onto your drive |
 
-### Portable (runs from a USB drive)
-
-| System | File |
-| --- | --- |
-| Windows | `GildedRoots-portable-windows.zip` |
-| macOS (Apple Silicon / Intel) | `GildedRoots-portable-mac-apple-silicon.zip` / `GildedRoots-portable-mac-intel.zip` |
-| Linux | `GildedRoots-portable-linux-x86_64.tar.gz` |
-
-Unzip the **Gilded Roots** folder onto a USB stick or external drive. It holds the program and a
-`FamilyTreeData` folder; everything (trees, photos, backups, settings) is kept there and nothing is written to the
-computer it is plugged into. Keep the two side by side. On a Mac, if the program says portable mode cannot be used,
-run `xattr -dr com.apple.quarantine` on the app once (details in the README inside the zip). An installed copy can
-also be made portable with **Tools > Make portable**.
-
-The installers are unsigned. On Windows choose **More info → Run anyway**. On a Mac, open the app once, click
-**Done** when macOS warns about it, then go to **System Settings → Privacy & Security** and click **Open Anyway**
-(on macOS 14 or older you can instead right-click the app and choose **Open**). You only need to do this once.
+A portable copy keeps everything (trees, photos, backups, settings) in a `FamilyTreeData` folder next to the
+program, and nothing is written to the computer it is plugged into. Keep the two side by side. On a Mac, if the
+program says portable mode cannot be used, run `xattr -dr com.apple.quarantine` on the app once (details in the
+README). An installed copy can also be made portable with **Tools > Make portable**.
 
 ## Build from source
 

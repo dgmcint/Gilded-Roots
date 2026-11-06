@@ -154,7 +154,9 @@ pub fn first_number(s: &str) -> Option<f32> {
 pub fn percent_in(s: &str) -> Option<f32> {
     let i = s.find('%')?;
     let before = &s[..i];
-    let start = before.rfind(|c: char| !(c.is_ascii_digit() || c == '.' || c == ',' || c == ' ')).map(|j| j + 1).unwrap_or(0);
+    // start just after the last character that is not part of the number (that character may be
+    // several bytes long, e.g. a non-breaking space or a dash pasted from a website)
+    let start = before.char_indices().rev().find(|(_, c)| !(c.is_ascii_digit() || *c == '.' || *c == ',' || c.is_whitespace())).map(|(j, c)| j + c.len_utf8()).unwrap_or(0);
     let n = first_number(&before[start..])?;
     if before[..start].trim_end().ends_with('<') && n <= 1.0 {
         return Some(0.5);
@@ -566,9 +568,9 @@ pub fn parse_regions(text: &str) -> Vec<Region> {
                 // the name is whatever is left once the percent is taken out
                 let i = line.find('%').unwrap_or(line.len());
                 let before = &line[..i];
-                let num_start = before.rfind(|c: char| !(c.is_ascii_digit() || c == '.' || c == ',' || c == ' ' || c == '<')).map(|j| j + 1).unwrap_or(0);
+                let num_start = before.char_indices().rev().find(|(_, c)| !(c.is_ascii_digit() || *c == '.' || *c == ',' || c.is_whitespace() || *c == '<')).map(|(j, c)| j + c.len_utf8()).unwrap_or(0);
                 let mut name = format!("{} {}", &line[..num_start], &line[i + 1..]);
-                name = name.trim().trim_matches(|c: char| c == ':' || c == '-' || c == '|' || c == '\t' || c == '\u{2013}' || c == '(' || c == ')' || c.is_whitespace()).to_string();
+                name = name.trim().trim_matches(|c: char| c == ':' || c == '-' || c == '|' || c == '\t' || c == '\u{2013}' || c == '\u{2014}' || c == '(' || c == ')' || c.is_whitespace()).to_string();
                 if name.is_empty() {
                     if let Some(n) = pending.take() {
                         out.push(Region { name: n, pct: p });
@@ -1557,6 +1559,18 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn percent_after_non_ascii_characters() {
+        assert_eq!(percent_in("Sweden\u{2014}45%"), Some(45.0));
+        assert_eq!(percent_in("Norway 12\u{a0}%"), Some(12.0));
+        assert_eq!(percent_in("\u{e9}<1%"), Some(0.5));
+        assert_eq!(percent_in("\u{fffd}%"), None);
+        let r = parse_regions("Sweden\u{2014}45%\nNorway 12\u{a0}%");
+        assert_eq!(r.len(), 2);
+        assert_eq!(r[0].name, "Sweden");
+        assert_eq!(r[1].pct, 12.0);
+    }
 
     #[test]
     fn relationship_groups_by_shared_cm() {
