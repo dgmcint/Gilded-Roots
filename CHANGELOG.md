@@ -2,7 +2,7 @@
 
 Major work so far, in the order it was done.
 
-## 1.0.1 (not released yet)
+## 1.0.1 (6 November 2026)
 
 - Downloads: one per system, plus a README. Windows: one installer that installs on the computer or sets up a
   portable copy on a USB drive. Mac: one app for both Apple chip and Intel Macs, with a portable folder in the
