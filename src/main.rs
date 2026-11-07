@@ -1861,6 +1861,9 @@ struct Settings {
     box_places: bool,
     #[serde(default)]
     box_ids: bool,
+    /// Pedigree and descendant charts: the hand tool is on (drag to move the chart around)
+    #[serde(default)]
+    hand: bool,
     /// Profile photo size on the Individual page: 0 small, 1 normal, 2 large, 3 extra large.
     #[serde(default = "default_photo_size")]
     photo_size: u8,
@@ -1971,7 +1974,7 @@ fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None }
+        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None }
     }
 }
 
@@ -2327,6 +2330,8 @@ enum Action {
     Highlight(u32),
     AddFor(u32, Kind),
     SetGens(usize),
+    /// Turn the hand tool on the charts on or off
+    SetHand(bool),
     Back,
     Forward,
     PrintPedigree,
@@ -3680,6 +3685,32 @@ fn desc_ul(db: &Db, id: u32, depth: usize, max: usize, seen: &mut Vec<u32>, out:
         out.push_str("</ul>");
     }
     out.push_str("</li>");
+}
+
+/// The Select / Hand choice on the chart toolbars. Select: click people as usual. Hand: drag to
+/// move the chart around (the chart can also be moved by its scroll bars or the mouse wheel).
+fn hand_switch(ui: &mut egui::Ui, hand: bool, act: &mut Option<Action>) {
+    if ui.selectable_label(!hand, "Select").on_hover_text("Click a person to go to them (H switches to the hand)").clicked() && hand {
+        *act = Some(Action::SetHand(false));
+    }
+    if ui.selectable_label(hand, "Hand").on_hover_text("Drag the chart to move around it (H switches back to Select)").clicked() && !hand {
+        *act = Some(Action::SetHand(true));
+    }
+    // H flips between the two, unless someone is typing
+    if !ui.ctx().wants_keyboard_input() && ui.input(|i| i.key_pressed(egui::Key::H) && i.modifiers.is_none()) {
+        *act = Some(Action::SetHand(!hand));
+    }
+}
+
+/// The hand tool itself: everything under `rect` becomes a surface to grab and drag.
+fn hand_overlay(ui: &mut egui::Ui, rect: Rect, id: &str) {
+    let r = ui.interact(rect, egui::Id::new(("hand_tool", id)), Sense::click_and_drag());
+    if r.dragged() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+        ui.scroll_with_delta(r.drag_delta());
+    } else if r.hovered() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+    }
 }
 
 fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>) {
@@ -5548,6 +5579,8 @@ impl App {
             ui.separator();
             zoom_controls(ui, z, act);
             ui.separator();
+            hand_switch(ui, self.settings.hand, act);
+            ui.separator();
             if ui.button("Print").clicked() {
                 *act = Some(Action::PrintDescendants);
             }
@@ -5648,6 +5681,11 @@ impl App {
                 } else if r2.clicked() {
                     *act = Some(Action::Highlight(nid));
                 }
+            }
+            // hand tool: a layer over the whole chart that takes every click and drag, so dragging
+            // anywhere moves the chart and nothing is selected by accident
+            if self.settings.hand {
+                hand_overlay(ui, resp.rect, "desc");
             }
         });
     }
@@ -7654,6 +7692,8 @@ impl App {
             ui.separator();
             zoom_controls(ui, z, act);
             ui.separator();
+            hand_switch(ui, self.settings.hand, act);
+            ui.separator();
             if ui.button("Print").clicked() {
                 *act = Some(Action::PrintPedigree);
             }
@@ -7845,6 +7885,11 @@ impl App {
                         }
                     }
                 }
+            }
+            // hand tool: a layer over the whole chart that takes every click and drag, so dragging
+            // anywhere moves the chart and nothing is selected by accident
+            if self.settings.hand {
+                hand_overlay(ui, resp.rect, "ped");
             }
         });
     }
@@ -9869,6 +9914,7 @@ impl eframe::App for App {
                             ("Home", "Go to the home person"),
                             ("Ctrl/Cmd+1..9", "Family, Pedigree, Descendants, Individual, Gallery, Charts, People, Map, Memories"),
                             ("Ctrl/Cmd + / -", "Zoom the chart"),
+                            ("H", "Pedigree and descendants: switch between Select and the hand"),
                         ] {
                             ui.horizontal(|ui| {
                                 ui.add_sized([170.0, 18.0], egui::Label::new(RichText::new(k).strong()));
@@ -11455,6 +11501,10 @@ impl eframe::App for App {
                 }
                 Action::SetGens(n) => {
                     self.settings.gens = n.clamp(3, 8);
+                    save_settings(&self.settings);
+                }
+                Action::SetHand(on) => {
+                    self.settings.hand = on;
                     save_settings(&self.settings);
                 }
                 Action::AddFor(target, k) => {

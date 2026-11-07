@@ -2,6 +2,12 @@
 
 Major work so far, in the order it was done.
 
+## 1.0.3 (not released yet)
+
+- Pedigree and descendant charts: a **Select / Hand** choice on the toolbar. With the hand on, drag anywhere on the
+  chart to move it around, without selecting anyone by accident. **H** switches between the two, and the choice is
+  remembered.
+
 ## 1.0.2 (7 November 2026)
 
 - Colours: 25 colour schemes in five groups (tree pictures, genealogy sites, earth tones, popular colours and

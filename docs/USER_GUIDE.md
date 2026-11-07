@@ -206,6 +206,10 @@ the right; right-clicking a box opens the same menu:
 - **Show which parents** (when someone has more than one set, such as birth and adoptive parents)
 - **Centre chart on this person**, **Make this the home person** and **Bookmark this person**
 
+**Select and Hand:** the toolbar above the pedigree and descendant charts has **Select** (click people as usual)
+and **Hand**. With the hand on, drag anywhere on the chart to move it around (the pointer becomes a hand), and
+clicks never change who is selected by accident. Press **H** to switch between the two; the choice is remembered.
+
 Under the main person (generation 1) there are two drop-downs: **Spouse & children** and **Siblings**. Pick a
 name to move the chart to them, or use the Add entries at the bottom. The descendants chart has the same
 right-click menu.
