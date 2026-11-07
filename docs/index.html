@@ -337,20 +337,18 @@ footer .wrap{display:grid;gap:10px}
   <div class="wrap">
     <div class="eyebrow">Download</div>
     <h2>Free for Windows, Mac and Linux.</h2>
-    <p class="note" id="verLine">Always the latest version. <a class="js-releases" href="#">See all releases and what changed</a>.</p>
+    <p class="note" id="verLine">Always the latest version. <a class="js-readme" href="#">Read me</a> · <a class="js-releases" href="#">See all releases and what changed</a>.</p>
     <a class="js-releases" href="#" title="Total downloads of every release"><img class="dlcount" id="dlCount" alt="" hidden></a>
 
     <div class="dl-grid">
       <div class="os" data-os="mac">
         <span class="badge">Your computer</span>
         <h3>Mac</h3>
-        <a class="btn btn-primary js-file" data-file="GildedRoots-apple-silicon.dmg" href="#">Download for Apple chip</a>
-        <a class="btn btn-ghost js-file" data-file="GildedRoots-intel.dmg" href="#">Download for Intel Mac</a>
-        <p class="alt">Apple chip means M1 or newer (most Macs since 2021). Not sure? Apple menu › About This Mac: “Chip: Apple M…” means Apple chip; “Processor: Intel” means Intel.<br>
-          Portable: <a class="js-file" data-file="GildedRoots-portable-mac-apple-silicon.zip" href="#">Apple chip</a> · <a class="js-file" data-file="GildedRoots-portable-mac-intel.zip" href="#">Intel</a></p>
+        <a class="btn btn-primary js-file" data-file="GildedRoots-Mac.dmg" href="#">Download for Mac</a>
+        <p class="alt">One download for every Mac, Apple chip or Intel. macOS 11 or newer.<br>Includes a portable copy for a USB drive.</p>
         <details class="help"><summary>Opening it the first time</summary>
           <ol>
-            <li>Open the downloaded file and drag <b>Gilded Roots</b> into <b>Applications</b>.</li>
+            <li>Open the downloaded file and drag <b>Gilded Roots</b> into <b>Applications</b>. For a portable copy, drag the <b>Portable (USB drive)</b> folder onto your USB drive instead.</li>
             <li>Open it. macOS says it can't check the developer, because the app isn't signed by Apple. Click <b>Done</b>.</li>
             <li>Open <b>System Settings › Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b> next to Gilded Roots, then confirm.</li>
           </ol>
@@ -361,13 +359,13 @@ footer .wrap{display:grid;gap:10px}
       <div class="os" data-os="win">
         <span class="badge">Your computer</span>
         <h3>Windows</h3>
-        <a class="btn btn-primary js-file" data-file="GildedRoots-Setup.exe" href="#">Download for Windows</a>
-        <p class="alt">Windows 10 or 11, 64-bit.<br>Portable: <a class="js-file" data-file="GildedRoots-portable-windows.zip" href="#">zip for a USB drive</a></p>
+        <a class="btn btn-primary js-file" data-file="GildedRoots-Windows-Setup.exe" href="#">Download for Windows</a>
+        <p class="alt">Windows 10 or 11, 64-bit.<br>The installer can also set up a portable copy for a USB drive.</p>
         <details class="help"><summary>Opening it the first time</summary>
           <ol>
-            <li>Run <b>GildedRoots-Setup.exe</b>.</li>
+            <li>Run <b>GildedRoots-Windows-Setup.exe</b>.</li>
             <li>If Windows shows “Windows protected your PC”, click <b>More info</b>, then <b>Run anyway</b>. This appears because the installer isn't signed.</li>
-            <li>Follow the installer. Gilded Roots appears in the Start menu.</li>
+            <li>Choose <b>Install on this computer</b>, or <b>Portable</b> and pick your USB drive. An installed copy appears in the Start menu.</li>
           </ol>
         </details>
       </div>
@@ -375,12 +373,13 @@ footer .wrap{display:grid;gap:10px}
       <div class="os" data-os="linux">
         <span class="badge">Your computer</span>
         <h3>Linux</h3>
-        <a class="btn btn-primary js-file" data-file="GildedRoots-linux-amd64.deb" href="#">Download .deb</a>
-        <p class="alt">Ubuntu, Debian, Mint and similar, 64-bit.<br>Portable: <a class="js-file" data-file="GildedRoots-portable-linux-x86_64.tar.gz" href="#">tar.gz for a USB drive</a></p>
+        <a class="btn btn-primary js-file" data-file="GildedRoots-Linux.tar.gz" href="#">Download for Linux</a>
+        <p class="alt">64-bit Ubuntu, Debian, Mint, Fedora and similar.<br>Includes a portable copy for a USB drive.</p>
         <details class="help"><summary>Installing</summary>
           <ol>
-            <li>Double-click the <code>.deb</code> to open it in your software centre, or run<br><code>sudo apt install ./GildedRoots-linux-amd64.deb</code></li>
-            <li>Gilded Roots appears with your other applications.</li>
+            <li>Unpack the download (double-click it, or <code>tar -xzf GildedRoots-Linux.tar.gz</code>).</li>
+            <li>In the <b>Gilded Roots</b> folder, run <code>./install.sh</code>. It installs for you only, with a menu entry, and needs no administrator password.</li>
+            <li>For a portable copy, copy the <b>Portable (USB drive)</b> folder onto your USB drive instead.</li>
           </ol>
         </details>
       </div>
@@ -439,6 +438,7 @@ footer .wrap{display:grid;gap:10px}
   }
   set(".js-repo", base);
   set(".js-releases", base && base + "/releases");
+  set(".js-readme", base && base + "/releases/latest/download/README.pdf");
   set(".js-issues", base && base + "/issues");
   set(".js-guide", base && base + "/blob/main/docs/USER_GUIDE.md");
   // Download counter: GitHub counts every download of the release files; shields.io turns
@@ -479,8 +479,8 @@ footer .wrap{display:grid;gap:10px}
     var label = { mac: "Download for Mac", win: "Download for Windows", linux: "Download for Linux" }[os];
     var hero = document.getElementById("heroBtn");
     hero.textContent = label;
-    // Macs: send people to the download section, so they can choose Apple chip or Intel.
-    if (os !== "mac") { var first = card.querySelector(".js-file"); if (first && base) hero.href = first.href; }
+    // one download per system now (Macs too), so the top button can start it directly
+    var first = card.querySelector(".js-file"); if (first && base) hero.href = first.href;
   }
 })();
 </script>

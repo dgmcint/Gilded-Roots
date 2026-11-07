@@ -66,6 +66,12 @@ and photos came across, and anything that could not be carried over. Your origin
 - **Map** in a clean flat style that can match the app's colours, and wraps around the world.
 - **Portable versions** for Windows, Mac and Linux that run from a USB drive with the data beside them.
 
+## Planned
+
+- Automatic updates: when a new version is released, ask whether to update, then download it, verify it and restart
+- Open Ancestral Quest databases (.aq, including the newer AQ 16 format) directly, alongside GEDCOM import from Ancestral Quest
+- Optional online features, such as working with FamilySearch, that stay off until you turn them on yourself
+
 ## Install
 
 Download the file for your system from the [Releases](../../releases) page. There is one download per system,

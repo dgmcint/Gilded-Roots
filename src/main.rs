@@ -1891,6 +1891,12 @@ struct Settings {
     /// Map colours: 0 matches the app (charcoal or paper), then the styles in mapview::MAP_STYLES.
     #[serde(default)]
     map_style: u8,
+    /// Background for the light theme. Colour schemes change it; the default is the original grey.
+    #[serde(default = "default_light_bg")]
+    light_bg: [u8; 3],
+    /// Text colour set by a colour scheme. None keeps the theme's own text colour.
+    #[serde(default)]
+    ink: Option<[u8; 3]>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -1965,7 +1971,7 @@ fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0 }
+        Settings { dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None }
     }
 }
 
@@ -2006,6 +2012,92 @@ const BG_PRESETS: [(&str, [u8; 3]); 8] = [
     ("Espresso", [38, 30, 26]),
     ("Aubergine", [36, 26, 40]),
 ];
+
+/// A full colour scheme: whether it is dark, the background, the accent and the text colour.
+/// Picking one under View > Colours sets all four; the swatches below still change them one by one.
+struct Scheme {
+    name: &'static str,
+    group: &'static str,
+    dark: bool,
+    bg: [u8; 3],
+    accent: [u8; 3],
+    ink: [u8; 3],
+}
+
+const SCHEMES: &[Scheme] = &[
+    Scheme { name: "Slate Blue", group: "Tree pictures", dark: true, bg: [67, 82, 106], accent: [135, 141, 151], ink: [246, 238, 226] },
+    Scheme { name: "Navy", group: "Tree pictures", dark: true, bg: [30, 52, 99], accent: [115, 129, 158], ink: [255, 255, 255] },
+    Scheme { name: "Parchment", group: "Tree pictures", dark: false, bg: [226, 201, 162], accent: [140, 88, 42], ink: [66, 40, 18] },
+    Scheme { name: "Blue Linen", group: "Tree pictures", dark: true, bg: [88, 110, 142], accent: [144, 155, 171], ink: [236, 231, 220] },
+    Scheme { name: "Leather", group: "Tree pictures", dark: true, bg: [104, 52, 24], accent: [156, 117, 86], ink: [242, 224, 188] },
+    Scheme { name: "Leaf Green", group: "Genealogy sites", dark: false, bg: [243, 240, 232], accent: [104, 134, 28], ink: [52, 48, 44] },
+    Scheme { name: "Fresh Green", group: "Genealogy sites", dark: false, bg: [242, 243, 240], accent: [80, 132, 34], ink: [51, 51, 51] },
+    Scheme { name: "Deep Green", group: "Genealogy sites", dark: true, bg: [48, 88, 38], accent: [124, 150, 117], ink: [250, 252, 246] },
+    Scheme { name: "Sage", group: "Earth tones", dark: false, bg: [199, 208, 184], accent: [88, 110, 74], ink: [40, 52, 36] },
+    Scheme { name: "Olive", group: "Earth tones", dark: true, bg: [85, 90, 52], accent: [143, 145, 113], ink: [240, 236, 214] },
+    Scheme { name: "Moss", group: "Earth tones", dark: true, bg: [66, 82, 50], accent: [131, 142, 114], ink: [238, 240, 220] },
+    Scheme { name: "Forest Green", group: "Earth tones", dark: true, bg: [36, 66, 48], accent: [111, 132, 115], ink: [234, 240, 226] },
+    Scheme { name: "Terracotta", group: "Earth tones", dark: true, bg: [150, 78, 52], accent: [188, 138, 116], ink: [250, 236, 222] },
+    Scheme { name: "Clay", group: "Earth tones", dark: false, bg: [214, 180, 156], accent: [150, 80, 50], ink: [70, 40, 28] },
+    Scheme { name: "Burgundy", group: "Popular colors", dark: true, bg: [110, 28, 40], accent: [163, 107, 114], ink: [250, 236, 236] },
+    Scheme { name: "Teal", group: "Popular colors", dark: true, bg: [22, 92, 100], accent: [101, 150, 154], ink: [232, 246, 244] },
+    Scheme { name: "Plum", group: "Popular colors", dark: true, bg: [82, 46, 88], accent: [143, 117, 148], ink: [244, 234, 246] },
+    Scheme { name: "Charcoal", group: "Popular colors", dark: true, bg: [52, 54, 58], accent: [121, 123, 124], ink: [236, 236, 232] },
+    Scheme { name: "Midnight", group: "Popular colors", dark: true, bg: [20, 24, 40], accent: [98, 102, 116], ink: [226, 230, 240] },
+    Scheme { name: "Sky", group: "Popular colors", dark: false, bg: [200, 222, 240], accent: [40, 100, 170], ink: [20, 44, 70] },
+    Scheme { name: "Rose", group: "Popular colors", dark: false, bg: [236, 210, 212], accent: [160, 60, 80], ink: [80, 30, 40] },
+    Scheme { name: "Ivory", group: "Neutrals", dark: false, bg: [246, 242, 228], accent: [110, 104, 80], ink: [40, 38, 30] },
+    Scheme { name: "Linen", group: "Neutrals", dark: false, bg: [236, 230, 218], accent: [120, 100, 70], ink: [50, 44, 36] },
+    Scheme { name: "Stone", group: "Neutrals", dark: false, bg: [214, 212, 206], accent: [90, 94, 100], ink: [40, 40, 38] },
+    Scheme { name: "Taupe", group: "Neutrals", dark: false, bg: [200, 190, 178], accent: [110, 92, 76], ink: [50, 42, 36] },
+];
+
+/// The light background used before colour schemes existed.
+fn default_light_bg() -> [u8; 3] {
+    [233, 234, 236]
+}
+
+impl Settings {
+    fn use_scheme(&mut self, s: &Scheme) {
+        self.dark = s.dark;
+        self.accent = s.accent;
+        self.ink = Some(s.ink);
+        if s.dark {
+            self.bg = s.bg;
+        } else {
+            self.light_bg = s.bg;
+        }
+    }
+
+    fn is_scheme(&self, s: &Scheme) -> bool {
+        self.dark == s.dark && self.accent == s.accent && self.ink == Some(s.ink) && (if s.dark { self.bg } else { self.light_bg }) == s.bg
+    }
+}
+
+/// The schemes in their groups; returns true when one was picked.
+fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
+    let mut picked = false;
+    for (i, s) in SCHEMES.iter().enumerate() {
+        if i == 0 || SCHEMES[i - 1].group != s.group {
+            if i > 0 {
+                ui.separator();
+            }
+            ui.label(RichText::new(s.group).small().weak());
+        }
+        ui.horizontal(|ui| {
+            let (rect, _) = ui.allocate_exact_size(vec2(28.0, 16.0), Sense::hover());
+            let bg = Color32::from_rgb(s.bg[0], s.bg[1], s.bg[2]);
+            ui.painter().rect(rect, 3.0_f32, bg, Stroke::new(1.0_f32, Color32::GRAY));
+            let dot = Rect::from_center_size(rect.center(), vec2(10.0, 8.0));
+            ui.painter().rect_filled(dot, 2.0_f32, Color32::from_rgb(s.ink[0], s.ink[1], s.ink[2]));
+            if ui.selectable_label(settings.is_scheme(s), s.name).clicked() {
+                settings.use_scheme(s);
+                picked = true;
+            }
+        });
+    }
+    picked
+}
 
 /// A grid of large colour swatches with their names; returns true when one was picked.
 fn swatch_grid(ui: &mut egui::Ui, list: &[(&str, [u8; 3])], cur: &mut [u8; 3], outline: bool) -> bool {
@@ -9490,6 +9582,15 @@ impl eframe::App for App {
                     ui.separator();
                     let mut changed = false;
                     ui.menu_button("Colours", |ui| {
+                        ui.menu_button("Colour schemes", |ui| {
+                            egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
+                                if scheme_list(ui, &mut self.settings) {
+                                    changed = true;
+                                    ui.close_menu();
+                                }
+                            });
+                        });
+                        ui.separator();
                         ui.label(RichText::new("Accent colour").strong());
                         if swatch_grid(ui, &PRESETS, &mut self.settings.accent, false) {
                             changed = true;
@@ -9556,7 +9657,7 @@ impl eframe::App for App {
                     }
                     if changed {
                         save_settings(&self.settings);
-                        apply_theme(ctx, self.settings.dark, self.settings.accent, self.settings.bg);
+                        apply_theme(ctx, &self.settings);
                     }
                     ui.separator();
                     if ui.button("Appearance...").clicked() {
@@ -10496,12 +10597,23 @@ impl eframe::App for App {
                 ui.horizontal(|ui| {
                     if ui.selectable_label(self.settings.dark, "Dark").clicked() {
                         self.settings.dark = true;
+                        self.settings.ink = None;
                         changed = true;
                     }
                     if ui.selectable_label(!self.settings.dark, "Light").clicked() {
                         self.settings.dark = false;
+                        self.settings.ink = None;
+                        self.settings.light_bg = default_light_bg();
                         changed = true;
                     }
+                });
+                ui.add_space(8.0);
+                ui.collapsing(RichText::new("Colour schemes").strong(), |ui| {
+                    egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                        if scheme_list(ui, &mut self.settings) {
+                            changed = true;
+                        }
+                    });
                 });
                 ui.add_space(8.0);
                 ui.label(RichText::new("Accent colour").strong());
@@ -10537,7 +10649,7 @@ impl eframe::App for App {
             });
             self.show_look = open;
             if changed {
-                apply_theme(ctx, self.settings.dark, self.settings.accent, self.settings.bg);
+                apply_theme(ctx, &self.settings);
                 save_settings(&self.settings);
             }
         }
@@ -11506,7 +11618,8 @@ fn shift(bg: [u8; 3], d: i16) -> Color32 {
     Color32::from_rgb(f(bg[0]), f(bg[1]), f(bg[2]))
 }
 
-fn apply_theme(ctx: &egui::Context, dark: bool, acc: [u8; 3], bg: [u8; 3]) {
+fn apply_theme(ctx: &egui::Context, settings: &Settings) {
+    let (dark, acc, bg) = (settings.dark, settings.accent, settings.bg);
     let rgb = |r: u8, g: u8, b: u8| Color32::from_rgb(r, g, b);
     let mut v = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
     let accent = Color32::from_rgb(acc[0], acc[1], acc[2]);
@@ -11522,11 +11635,32 @@ fn apply_theme(ctx: &egui::Context, dark: bool, acc: [u8; 3], bg: [u8; 3]) {
         v.widgets.active.bg_fill = shift(bg, 40);
         v.widgets.active.weak_bg_fill = shift(bg, 40);
         v.hyperlink_color = lighten(accent);
-    } else {
+    } else if settings.light_bg == default_light_bg() {
         v.panel_fill = rgb(233, 234, 236);
         v.window_fill = rgb(245, 245, 246);
         v.extreme_bg_color = Color32::WHITE;
         v.hyperlink_color = accent;
+    } else {
+        // A light colour scheme: the same steps as the dark theme, going darker instead of lighter.
+        let lb = settings.light_bg;
+        v.panel_fill = shift(lb, 0);
+        v.window_fill = shift(lb, 10);
+        v.extreme_bg_color = shift(lb, 22);
+        v.faint_bg_color = shift(lb, 6);
+        v.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, shift(lb, -40));
+        v.widgets.inactive.bg_fill = shift(lb, -12);
+        v.widgets.inactive.weak_bg_fill = shift(lb, -12);
+        v.widgets.hovered.bg_fill = shift(lb, -22);
+        v.widgets.hovered.weak_bg_fill = shift(lb, -22);
+        v.widgets.active.bg_fill = shift(lb, -32);
+        v.widgets.active.weak_bg_fill = shift(lb, -32);
+        v.hyperlink_color = accent;
+    }
+    if let Some(ink) = settings.ink {
+        let ink = Color32::from_rgb(ink[0], ink[1], ink[2]);
+        for w in [&mut v.widgets.noninteractive, &mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active, &mut v.widgets.open] {
+            w.fg_stroke.color = ink;
+        }
     }
     v.selection.bg_fill = accent;
     let r = Rounding::same(6.0);
@@ -11581,7 +11715,7 @@ fn main() -> eframe::Result<()> {
         Box::new(|cc| {
             let app = App::new();
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            apply_theme(&cc.egui_ctx, app.settings.dark, app.settings.accent, app.settings.bg);
+            apply_theme(&cc.egui_ctx, &app.settings);
             Ok(Box::new(app))
         }),
     )

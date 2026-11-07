@@ -2,6 +2,12 @@
 
 Major work so far, in the order it was done.
 
+## 1.0.2 (7 November 2026)
+
+- Colours: 25 colour schemes in five groups (tree pictures, genealogy sites, earth tones, popular colours and
+  neutrals), under View > Colours > Colour schemes and in the Appearance window. A scheme sets the background,
+  accent and text colour together; the swatches still change each one on its own.
+
 ## 1.0.1 (6 November 2026)
 
 - Downloads: one per system, plus a README. Windows: one installer that installs on the computer or sets up a
