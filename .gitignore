@@ -4,3 +4,6 @@ dist/
 *.damaged-*
 *.prev
 .DS_Store
+
+# Claude Code local settings (may contain passwords or tokens)
+.claude/
