@@ -7,7 +7,7 @@ Major work so far, in the order it was done.
 - Downloads: one per system, plus a README. Windows: one installer that installs on the computer or sets up a
   portable copy on a USB drive. Mac: one app for both Apple chip and Intel Macs, with a portable folder in the
   dmg. Linux: a tar.gz with `install.sh` (for this user, no password) and a portable folder, built to run on
-  older Linux versions too.
+  older Linux versions too. The README is a PDF, so it always opens as a normal white page, even in dark mode.
 - Gallery: new photos show their preview straight away, always open in the built-in viewer, and several can be
   selected and removed at once (Undo brings them back).
 - Fan chart: no more faint stripes across the coloured sections.

@@ -55,9 +55,9 @@ Name: "{app}\FamilyTreeData"; Check: IsPortable
 Source: "..\target\release\gilded-roots.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "..\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "DOWNLOAD-README.txt"; DestDir: "{app}"; DestName: "README.txt"; Flags: ignoreversion; Check: not IsPortable
-Source: "PORTABLE-README.txt"; DestDir: "{app}"; DestName: "README.txt"; Flags: ignoreversion; Check: IsPortable
-Source: "PORTABLE-README.txt"; DestDir: "{app}\FamilyTreeData"; DestName: "ABOUT-THIS-FOLDER.txt"; Flags: ignoreversion onlyifdoesntexist; Check: IsPortable
+Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion; Check: not IsPortable
+Source: "PORTABLE-README.pdf"; DestDir: "{app}"; DestName: "README.pdf"; Flags: ignoreversion; Check: IsPortable
+Source: "PORTABLE-README.pdf"; DestDir: "{app}\FamilyTreeData"; DestName: "ABOUT-THIS-FOLDER.pdf"; Flags: ignoreversion onlyifdoesntexist; Check: IsPortable
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; Check: not IsPortable

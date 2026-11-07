@@ -14,7 +14,8 @@ jobs:
   #   GildedRoots-Windows-Setup.exe  installer that asks: install on this computer, or portable
   #   GildedRoots-Mac.dmg            one app for Apple chip and Intel Macs, plus a portable folder
   #   GildedRoots-Linux.tar.gz       install.sh for this user, plus a portable folder
-  #   README.txt                     what to download and how to open it
+  #   README.pdf                     what to download and how to open it (a PDF, so it always
+  #                                  shows as a normal white page, even in dark mode)
 
   windows:
     runs-on: windows-latest
@@ -34,7 +35,9 @@ jobs:
           files: dist/GildedRoots-Windows-Setup.exe
 
   macos:
-    runs-on: macos-latest
+    # macos-15 rather than macos-latest: the newest Mac machines are often busy, and jobs waiting
+    # for them can fail with "The job was not acquired by Runner"
+    runs-on: macos-15
     env:
       # the oldest macOS the app runs on (both chips)
       MACOSX_DEPLOYMENT_TARGET: "11.0"
@@ -69,9 +72,9 @@ jobs:
           cp -R "universal/Gilded Roots.app" stage/
           ln -s /Applications stage/Applications
           cp -R "universal/Gilded Roots.app" "stage/Portable (USB drive)/"
-          cp packaging/PORTABLE-README.txt "stage/Portable (USB drive)/README.txt"
-          cp packaging/PORTABLE-README.txt "stage/Portable (USB drive)/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
-          cp packaging/DOWNLOAD-README.txt stage/README.txt
+          cp packaging/PORTABLE-README.pdf "stage/Portable (USB drive)/README.pdf"
+          cp packaging/PORTABLE-README.pdf "stage/Portable (USB drive)/FamilyTreeData/ABOUT-THIS-FOLDER.pdf"
+          cp packaging/README.pdf stage/README.pdf
           hdiutil create -volname "Gilded Roots" -srcfolder stage -ov -format UDZO dist/GildedRoots-Mac.dmg
       - uses: actions/upload-artifact@v5
         with:
@@ -102,25 +105,25 @@ jobs:
           cp target/release/gilded-roots "$D/gilded-roots"
           cp icons/256x256.png "$D/gilded-roots.png"
           cp packaging/install-linux.sh "$D/install.sh"
-          cp packaging/DOWNLOAD-README.txt "$D/README.txt"
+          cp packaging/README.pdf "$D/README.pdf"
           cp target/release/gilded-roots "$D/Portable (USB drive)/gilded-roots"
           cp icons/256x256.png "$D/Portable (USB drive)/gilded-roots.png"
-          cp packaging/PORTABLE-README.txt "$D/Portable (USB drive)/README.txt"
-          cp packaging/PORTABLE-README.txt "$D/Portable (USB drive)/FamilyTreeData/ABOUT-THIS-FOLDER.txt"
+          cp packaging/PORTABLE-README.pdf "$D/Portable (USB drive)/README.pdf"
+          cp packaging/PORTABLE-README.pdf "$D/Portable (USB drive)/FamilyTreeData/ABOUT-THIS-FOLDER.pdf"
           chmod 755 "$D/gilded-roots" "$D/install.sh" "$D/Portable (USB drive)/gilded-roots"
           cp LICENSE "$D/LICENSE.txt"
           cp THIRD_PARTY_LICENSES.txt "$D/"
           tar -C pkg -czf dist/GildedRoots-Linux.tar.gz "Gilded Roots"
-          cp packaging/DOWNLOAD-README.txt dist/README.txt
+          cp packaging/README.pdf dist/README.pdf
       - uses: actions/upload-artifact@v5
         with:
           name: linux-and-readme
           path: |
             dist/GildedRoots-Linux.tar.gz
-            dist/README.txt
+            dist/README.pdf
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/GildedRoots-Linux.tar.gz
-            dist/README.txt
+            dist/README.pdf

@@ -50,7 +50,7 @@ includes a GitHub workflow that builds them in the cloud for free.
 4. After about 20 minutes, open the finished run and download:
      windows          -> GildedRoots-Windows-Setup.exe (installs, or sets up a portable copy)
      mac              -> GildedRoots-Mac.dmg (one app for Apple chip and Intel, plus a portable folder)
-     linux-and-readme -> GildedRoots-Linux.tar.gz (./install.sh, plus a portable folder) and README.txt
+     linux-and-readme -> GildedRoots-Linux.tar.gz (./install.sh, plus a portable folder) and README.pdf
 To publish a downloadable release page instead, push a tag such as v1.0.0.
 The installers are unsigned: Windows may show a SmartScreen warning (More info > Run anyway)
 and on Mac, open the app once, then choose System Settings > Privacy & Security > Open Anyway

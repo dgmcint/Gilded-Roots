@@ -61,7 +61,7 @@ the installers to the release by itself. After about 20 to 30 minutes the releas
 | `GildedRoots-Windows-Setup.exe` | Windows: installs on the computer, or sets up a portable copy |
 | `GildedRoots-Mac.dmg` | Every Mac (Apple chip and Intel), with a portable folder inside |
 | `GildedRoots-Linux.tar.gz` | Linux: `install.sh` for this user, with a portable folder inside |
-| `README.txt` | What to download and how to open it |
+| `README.pdf` | What to download and how to open it |
 
 If no run appears under **Actions** a few minutes after publishing: **Actions > Build installers > Run
 workflow**, set **Use workflow from** to **Tags > v1.0.0**, and run it. Started from a tag, it still attaches
@@ -112,7 +112,7 @@ Which file do I download?
 - Windows: GildedRoots-Windows-Setup.exe (install, or portable on a USB drive)
 - Mac: GildedRoots-Mac.dmg (every Mac, Apple chip or Intel; portable folder inside)
 - Linux: GildedRoots-Linux.tar.gz (./install.sh, or the portable folder)
-- README.txt: how to open each one
+- README.pdf: how to open each one
 - To run from a USB drive: the matching "portable" file.
 
 The installers are not signed. Windows: choose More info > Run anyway. Mac: open the app once, click Done at
@@ -124,3 +124,10 @@ burials, LDS ordinances, notes and sources, export a GEDCOM from PAF (File > Exp
 
 Full list of changes: CHANGELOG.md. How to use it: docs/USER_GUIDE.md.
 ```
+
+## Changing the READMEs
+
+The READMEs that ship with the downloads are PDFs, so they always open as a normal white page (a .txt file
+shows white-on-black in dark mode). Edit the text versions, `packaging/DOWNLOAD-README.txt` and
+`packaging/PORTABLE-README.txt`, then run `python3 tools/make_readme_pdf.py` (needs `pip install reportlab`)
+and commit the new `packaging/README.pdf` and `packaging/PORTABLE-README.pdf` with them.

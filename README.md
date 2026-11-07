@@ -69,7 +69,7 @@ and photos came across, and anything that could not be carried over. Your origin
 ## Install
 
 Download the file for your system from the [Releases](../../releases) page. There is one download per system,
-plus a [README](../../releases/latest/download/README.txt) explaining how to open it:
+plus a [README](../../releases/latest/download/README.pdf) explaining how to open it:
 
 | System | File | Portable copy (USB drive) |
 | --- | --- | --- |

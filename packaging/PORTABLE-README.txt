@@ -4,7 +4,7 @@ This copy keeps everything in the FamilyTreeData folder next to the program, so 
 on a USB stick or external drive and be used on any computer of the same kind (Windows, Mac
 or Linux). Nothing is written to the computer you plug it into.
 
-  Gilded Roots program      (GildedRoots.exe on Windows, Gilded Roots.app on Mac,
+  Gilded Roots program      (gilded-roots.exe on Windows, Gilded Roots.app on Mac,
                              gilded-roots on Linux)
   FamilyTreeData/           your tree, photos, documents, backups and settings
 
@@ -15,7 +15,7 @@ Mac: it is not signed by Apple, so the first time, open Gilded Roots.app, click 
 then choose System Settings > Privacy & Security > Open Anyway. (On macOS 14 or older, right-click
 the app and choose Open instead.)
 If the program says it is not running in portable mode, open Terminal and run, once:
-    xattr -dr com.apple.quarantine "/Volumes/YOUR DRIVE/Gilded Roots/Gilded Roots.app"
+    xattr -dr com.apple.quarantine "/Volumes/YOUR DRIVE/Portable (USB drive)/Gilded Roots.app"
 (drag the app onto the Terminal window to fill in its path). macOS otherwise runs downloaded
 programs from a hidden temporary place, away from the FamilyTreeData folder.
 
