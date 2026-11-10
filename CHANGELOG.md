@@ -2,7 +2,7 @@
 
 Major work so far, in the order it was done.
 
-## 1.0.3 (not released yet)
+## 1.0.3 (9 November 2026)
 
 - Pedigree and descendant charts: a **Select / Hand** choice on the toolbar. With the hand on, drag anywhere on the
   chart to move it around, without selecting anyone by accident. **H** switches between the two, and the choice is
