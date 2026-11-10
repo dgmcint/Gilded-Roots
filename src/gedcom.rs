@@ -1519,9 +1519,25 @@ pub fn parse_ged_report(text: &str) -> (Db, ImportReport) {
                         cx.rep.gedcom_version = v.val.clone();
                     }
                 }
+                // the home person, as Gilded Roots marks it when exporting
+                "_HOME" => {
+                    if let Some(id) = cx.rm.get(k.val.trim().trim_matches('@')).and_then(|c| c.strip_prefix('I')).and_then(|n| n.parse::<u32>().ok()) {
+                        db.home = Some(id);
+                    }
+                }
                 _ => {}
             }
         }
+    }
+    // Otherwise the home person is the first person in the file, as most programs (PAF,
+    // Ancestry, FamilySearch...) put the home person first.
+    if db.home.is_none() {
+        db.home = roots
+            .iter()
+            .zip(canon_of.iter())
+            .find(|(r, c)| r.tag == "INDI" && !c.is_empty())
+            .and_then(|(_, c)| c.strip_prefix('I'))
+            .and_then(|n| n.parse::<u32>().ok());
     }
     // Sources, shared notes and media objects first, because everything else points to them.
     let mut obj_records: Vec<(String, String, String)> = Vec::new();
@@ -2033,7 +2049,11 @@ pub fn to_ged_full(db: &Db, opts: &ExportOpts) -> Export {
             }
         }
     }
-    for (id, p) in &db.people {
+    // The home person goes first: most programs take the first person in a file as its home
+    // person. (The header also names them, for programs that read that.)
+    let home = db.home.filter(|h| db.people.contains_key(h));
+    let order: Vec<(&u32, &Person)> = home.and_then(|h| db.people.get_key_value(&h)).into_iter().chain(db.people.iter().filter(|(id, _)| Some(**id) != home)).collect();
+    for (id, p) in order {
         let o = &mut body;
         putp_rec(o, &format!("I{}", id), "INDI");
         // Names
@@ -2287,7 +2307,10 @@ pub fn to_ged_full(db: &Db, opts: &ExportOpts) -> Export {
 
     let mut out = String::new();
     let subm = records.iter().find_map(|(k, _)| k.as_ref().and_then(|k| k.strip_prefix("SUBM\u{0}")).map(|s| s.to_string()));
-    out.push_str("0 HEAD\n1 SOUR GildedRoots\n2 NAME Gilded Roots\n2 VERS 1.0\n1 GEDC\n2 VERS 5.5.1\n2 FORM LINEAGE-LINKED\n1 CHAR UTF-8\n");
+    let _ = write!(out, "0 HEAD\n1 SOUR GildedRoots\n2 NAME Gilded Roots\n2 VERS {}\n1 GEDC\n2 VERS 5.5.1\n2 FORM LINEAGE-LINKED\n1 CHAR UTF-8\n", env!("CARGO_PKG_VERSION"));
+    if let Some(h) = home {
+        let _ = writeln!(out, "1 _HOME @I{}@", h);
+    }
     let subm_x = subm.clone().unwrap_or_else(|| "SUBM".to_string());
     let _ = writeln!(out, "1 SUBM @{}@", subm_x);
     if subm.is_none() {
@@ -2489,6 +2512,197 @@ pub fn replace_pointer(db: &mut Db, from: &str, to: Option<&str>) {
             }
         }
     }
+}
+
+/// How "Renumber people" puts people in order.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum RenumberOrder {
+    /// The home person first, then their family outwards: parents and grandparents first,
+    /// then spouses and children, then everyone else in their present order.
+    Family,
+    /// Everyone keeps their present order; only the gaps between numbers close up.
+    Present,
+    /// Alphabetical by surname, then given names, then birth year.
+    Alphabetical,
+}
+
+/// The order people would get, as a list of their present numbers.
+pub fn renumber_order(db: &Db, how: RenumberOrder) -> Vec<u32> {
+    let all: Vec<u32> = db.people.keys().copied().collect();
+    match how {
+        RenumberOrder::Present => all,
+        RenumberOrder::Alphabetical => {
+            let mut v = all;
+            let key = |id: &u32| {
+                let p = &db.people[id];
+                let (g, s) = if p.given.is_empty() && p.surname.is_empty() { split_name(&p.name) } else { (p.given.clone(), p.surname.clone()) };
+                // people with no name at all go at the end
+                (s.trim().is_empty() && g.trim().is_empty(), s.to_lowercase(), g.to_lowercase(), year(&p.bd).parse::<i32>().unwrap_or(i32::MAX), *id)
+            };
+            v.sort_by_cached_key(key);
+            v
+        }
+        RenumberOrder::Family => {
+            // parents of each person (preferred family first), partners and children
+            let mut parents: HashMap<u32, Vec<u32>> = HashMap::new();
+            let mut partners: HashMap<u32, Vec<u32>> = HashMap::new();
+            let mut kids: HashMap<u32, Vec<u32>> = HashMap::new();
+            for (fid, f) in &db.fams {
+                let couple: Vec<u32> = f.h.iter().chain(f.w.iter()).copied().collect();
+                for c in &f.kids {
+                    let pref = db.people.get(c).and_then(|p| p.pref_parents) == Some(*fid);
+                    let v = parents.entry(*c).or_default();
+                    if pref {
+                        for (i, x) in couple.iter().enumerate() {
+                            v.insert(i, *x);
+                        }
+                    } else {
+                        v.extend(couple.iter().copied());
+                    }
+                }
+                for x in &couple {
+                    partners.entry(*x).or_default().extend(couple.iter().filter(|y| *y != x));
+                    kids.entry(*x).or_default().extend(f.kids.iter().copied());
+                }
+            }
+            let mut seen: HashSet<u32> = HashSet::new();
+            let mut out: Vec<u32> = Vec::with_capacity(all.len());
+            let start = db.home.filter(|h| db.people.contains_key(h)).or_else(|| all.first().copied());
+            if let Some(h) = start {
+                // ancestors first, a generation at a time (father before mother), as on a pedigree
+                let mut gen = vec![h];
+                seen.insert(h);
+                out.push(h);
+                while !gen.is_empty() {
+                    let mut next = Vec::new();
+                    for x in &gen {
+                        for p in parents.get(x).into_iter().flatten() {
+                            if db.people.contains_key(p) && seen.insert(*p) {
+                                out.push(*p);
+                                next.push(*p);
+                            }
+                        }
+                    }
+                    gen = next;
+                }
+                // then everyone joined to them, nearest first: partners, children, and onwards
+                let mut q: std::collections::VecDeque<u32> = out.iter().copied().collect();
+                while let Some(x) = q.pop_front() {
+                    for y in partners.get(&x).into_iter().flatten().chain(kids.get(&x).into_iter().flatten()).chain(parents.get(&x).into_iter().flatten()) {
+                        if db.people.contains_key(y) && seen.insert(*y) {
+                            out.push(*y);
+                            q.push_back(*y);
+                        }
+                    }
+                }
+            }
+            out.extend(all.into_iter().filter(|x| !seen.contains(x)));
+            out
+        }
+    }
+}
+
+/// Give people new numbers 1, 2, 3... in `order` (from renumber_order), and families new
+/// numbers 1, 2, 3... in the order their people now come. Every link is updated: families,
+/// preferred parents, associations, face tags, profile pictures, bookmarks, the journal, DNA,
+/// the home person and the GEDCOM details kept as text. Each person keeps their old number as a
+/// reference (REFN, type "Old ID"), so older printouts and notes can still be matched.
+/// Returns the new number of each person (old -> new).
+pub fn renumber(db: &mut Db, order: &[u32]) -> HashMap<u32, u32> {
+    let mut pm: HashMap<u32, u32> = HashMap::new();
+    for id in order.iter().chain(db.people.keys()) {
+        if db.people.contains_key(id) && !pm.contains_key(id) {
+            let n = pm.len() as u32 + 1;
+            pm.insert(*id, n);
+        }
+    }
+    // families in the order their first member now comes
+    let mut fams: Vec<(u32, u32)> = db
+        .fams
+        .iter()
+        .map(|(fid, f)| {
+            let first = f.h.iter().chain(f.w.iter()).chain(f.kids.iter()).chain(f.more.iter().map(|(_, x)| x)).filter_map(|x| pm.get(x)).min().copied().unwrap_or(u32::MAX);
+            (first, *fid)
+        })
+        .collect();
+    fams.sort();
+    let fm: HashMap<u32, u32> = fams.iter().enumerate().map(|(i, (_, f))| (*f, i as u32 + 1)).collect();
+    let p = |x: u32| pm.get(&x).copied().unwrap_or(x);
+    let f = |x: u32| fm.get(&x).copied().unwrap_or(x);
+    // GEDCOM details kept as text
+    let mut xm: HashMap<String, String> = HashMap::new();
+    for (o, n) in &pm {
+        xm.insert(format!("I{}", o), format!("I{}", n));
+    }
+    for (o, n) in &fm {
+        xm.insert(format!("F{}", o), format!("F{}", n));
+    }
+    let none: HashMap<u32, u32> = HashMap::new();
+    walk(db, &mut Remap { xm: &xm, nmap: &none, smap: &none, rmap: &none });
+    for r in db.records.iter_mut() {
+        if r.contains('@') {
+            *r = remap_text(r, &xm);
+        }
+    }
+    // people
+    let old_people = std::mem::take(&mut db.people);
+    for (old, mut person) in old_people {
+        person.pref_parents = person.pref_parents.map(f);
+        for a in person.assoc.iter_mut() {
+            a.other = p(a.other);
+        }
+        for m in person.media.iter_mut() {
+            for fc in m.faces.iter_mut() {
+                fc.who = p(fc.who);
+            }
+        }
+        if let Some(fp) = person.face_portrait.as_mut() {
+            fp.owner = p(fp.owner);
+        }
+        let new = p(old);
+        if new != old {
+            // keep one "Old ID": the number before this renumbering
+            person.extra.retain(|r| !(r.at.is_empty() && r.text.starts_with("0 REFN ") && r.text.contains("\n1 TYPE Old ID")));
+            person.extra.push(Raw { at: String::new(), text: format!("0 REFN {}\n1 TYPE Old ID\n", old) });
+        }
+        db.people.insert(new, person);
+    }
+    // families
+    let old_fams = std::mem::take(&mut db.fams);
+    for (old, mut fam) in old_fams {
+        fam.h = fam.h.map(p);
+        fam.w = fam.w.map(p);
+        for k in fam.kids.iter_mut() {
+            *k = p(*k);
+        }
+        for (_, x) in fam.more.iter_mut() {
+            *x = p(*x);
+        }
+        fam.pedi = std::mem::take(&mut fam.pedi).into_iter().map(|(k, v)| (p(k), v)).collect();
+        fam.frel = std::mem::take(&mut fam.frel).into_iter().map(|(k, v)| (p(k), v)).collect();
+        fam.mrel = std::mem::take(&mut fam.mrel).into_iter().map(|(k, v)| (p(k), v)).collect();
+        db.fams.insert(f(old), fam);
+    }
+    // everything else that names a person
+    for b in db.bookmarks.iter_mut() {
+        *b = p(*b);
+    }
+    for j in db.journal.iter_mut() {
+        for x in j.people.iter_mut() {
+            *x = p(*x);
+        }
+    }
+    for t in db.dna.iter_mut() {
+        t.person = t.person.map(p);
+        for m in t.matches.iter_mut() {
+            m.link = m.link.map(p);
+        }
+    }
+    db.home = db.home.map(p);
+    // new records continue after the highest number in use (people, families, sources...)
+    let top = [db.people.keys().max(), db.fams.keys().max(), db.sources.keys().max(), db.repos.keys().max(), db.notes.keys().max()].into_iter().flatten().max().copied().unwrap_or(0);
+    db.next = db.next.max(top);
+    pm
 }
 
 fn add_unique<T: Clone>(dst: &mut Vec<T>, src: &[T], same: impl Fn(&T, &T) -> bool) {
@@ -3155,6 +3369,131 @@ pub fn loss_check(original: &str, exported: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Everything about each person that does not depend on their number: name, parents,
+    /// partners, children, associations, face tags, and the whole exported record with the
+    /// numbers taken out.
+    fn shape(db: &Db) -> Vec<String> {
+        let name = |x: &u32| db.people.get(x).map(|p| p.name.clone()).unwrap_or_else(|| format!("?{}", x));
+        let mut v: Vec<String> = db
+            .people
+            .iter()
+            .map(|(id, p)| {
+                let mut par: Vec<String> = db.fams.values().filter(|f| f.kids.contains(id)).map(|f| format!("{}+{}", f.h.map(|x| name(&x)).unwrap_or_default(), f.w.map(|x| name(&x)).unwrap_or_default())).collect();
+                par.sort();
+                let mut kids: Vec<String> = db.fams.values().filter(|f| f.h == Some(*id) || f.w == Some(*id)).flat_map(|f| f.kids.iter().map(name)).collect();
+                kids.sort();
+                let assoc: Vec<String> = p.assoc.iter().map(|a| format!("{}:{}", name(&a.other), a.role)).collect();
+                let faces: Vec<String> = p.media.iter().flat_map(|m| m.faces.iter().map(|f| name(&f.who))).collect();
+                let pref = p.pref_parents.and_then(|f| db.fams.get(&f)).map(|f| f.h.map(|x| name(&x)).unwrap_or_default());
+                format!("{} | {:?} | {:?} | {:?} | {:?} | {:?} | {} src", p.name, par, kids, assoc, faces, pref, p.sources.len())
+            })
+            .collect();
+        v.sort();
+        v
+    }
+
+    #[test]
+    fn renumbering_keeps_every_link() {
+        let mut db = crate::sample::sample_family();
+        let before = shape(&db);
+        let home_name = db.people[&db.home.unwrap()].name.clone();
+        let bookmarked: Vec<String> = db.bookmarks.iter().map(|b| db.people[b].name.clone()).collect();
+        let journal: Vec<Vec<String>> = db.journal.iter().map(|j| j.people.iter().map(|x| db.people[x].name.clone()).collect()).collect();
+        for how in [RenumberOrder::Family, RenumberOrder::Alphabetical, RenumberOrder::Present] {
+            let order = renumber_order(&db, how);
+            assert_eq!(order.len(), db.people.len());
+            renumber(&mut db, &order);
+            assert_eq!(shape(&db), before, "{:?}", how);
+            let ids: Vec<u32> = db.people.keys().copied().collect();
+            assert_eq!(ids, (1..=ids.len() as u32).collect::<Vec<_>>(), "people are numbered 1, 2, 3...");
+            let fids: Vec<u32> = db.fams.keys().copied().collect();
+            assert_eq!(fids, (1..=fids.len() as u32).collect::<Vec<_>>());
+            assert_eq!(db.people[&db.home.unwrap()].name, home_name);
+            assert_eq!(db.bookmarks.iter().map(|b| db.people[b].name.clone()).collect::<Vec<_>>(), bookmarked);
+            assert_eq!(db.journal.iter().map(|j| j.people.iter().map(|x| db.people[x].name.clone()).collect::<Vec<_>>()).collect::<Vec<_>>(), journal);
+            if how == RenumberOrder::Family {
+                assert_eq!(db.people[&1].name, home_name, "the home person becomes number 1");
+            }
+            // the exported file still reads back to the same tree, with no broken links
+            // (face tags are Gilded Roots' own and are not part of a GEDCOM file)
+            let no_faces = |d: &Db| {
+                let mut d = d.clone();
+                for p in d.people.values_mut() {
+                    for m in p.media.iter_mut() {
+                        m.faces.clear();
+                    }
+                }
+                shape(&d)
+            };
+            let (back, rep) = parse_ged_report(&to_ged(&db));
+            assert_eq!(shape(&back), no_faces(&db));
+            assert!(!rep.warnings.iter().any(|w| w.contains("no such") || w.contains("missing")), "{:?}", rep.warnings);
+            // new people get numbers after everything in use
+            let n = db.alloc();
+            assert!(!db.people.contains_key(&n) && !db.fams.contains_key(&n) && !db.sources.contains_key(&n));
+        }
+        // each person carries one "Old ID", not one per renumbering
+        let olds = db.people.values().map(|p| p.extra.iter().filter(|r| r.text.contains("TYPE Old ID")).count()).max().unwrap();
+        assert!(olds <= 1);
+    }
+
+    #[test]
+    fn renumbering_updates_links_kept_as_gedcom_text() {
+        let t = "0 HEAD\n0 @I50@ INDI\n1 NAME Kid /A/\n1 FAMC @F70@\n2 _FOO bar\n1 ASSO @I60@\n2 RELA friend\n1 _CUSTOM @I60@\n0 @I60@ INDI\n1 NAME Dad /A/\n1 FAMS @F70@\n0 @F70@ FAM\n1 HUSB @I60@\n1 CHIL @I50@\n0 @X1@ _PLAN\n1 _WHO @I60@\n0 TRLR\n";
+        let (mut db, _) = parse_ged_report(t);
+        let order = renumber_order(&db, RenumberOrder::Alphabetical);
+        renumber(&mut db, &order);
+        let out = to_ged(&db);
+        let (back, rep) = parse_ged_report(&out);
+        assert_eq!(back.people.len(), 2);
+        let dad = back.people.iter().find(|(_, p)| p.name == "Dad A").map(|(k, _)| *k).unwrap();
+        let kid = back.people.iter().find(|(_, p)| p.name == "Kid A").map(|(k, _)| *k).unwrap();
+        assert!(back.fams.values().any(|f| f.h == Some(dad) && f.kids.contains(&kid)));
+        assert!(out.contains("_CUSTOM @I1@") || out.contains("_CUSTOM @I"), "{}", out);
+        // every pointer in the file goes somewhere
+        for line in out.lines() {
+            if let Some(i) = line.find(" @") {
+                let x = line[i + 2..].trim_end_matches('@');
+                if line.starts_with("0 ") { continue; }
+                assert!(out.contains(&format!("0 @{}@ ", x)), "dangling {} in {}", x, line);
+            }
+        }
+        assert!(rep.warnings.is_empty(), "{:?}", rep.warnings);
+    }
+
+
+    #[test]
+    fn home_person_comes_from_the_file_and_survives_export() {
+        // like an Ancestry file: the home person is first, and the IDs are big numbers
+        let t = "0 HEAD\n1 SOUR Ancestry.com Family Trees\n0 @I262317410388@ INDI\n1 NAME Doyle /McIntosh/\n1 FAMC @F9@\n\
+                 0 @I331709105@ INDI\n1 NAME John /Cooper/\n0 @I_1005789154@ INDI\n1 NAME Gene /McIntosh/\n1 FAMS @F9@\n\
+                 0 @F9@ FAM\n1 HUSB @I_1005789154@\n1 CHIL @I262317410388@\n0 TRLR\n";
+        let (mut db, _) = parse_ged_report(t);
+        let home = db.home.expect("a home person");
+        assert_eq!(db.people[&home].name, "Doyle McIntosh");
+        // exported: home person first and named in the header
+        let out = to_ged(&db);
+        let first = out.lines().find(|l| l.ends_with(" INDI")).unwrap().to_string();
+        assert_eq!(first, format!("0 @I{}@ INDI", home));
+        assert!(out.contains(&format!("1 _HOME @I{}@", home)));
+        let (back, _) = parse_ged_report(&out);
+        assert_eq!(back.people[&back.home.unwrap()].name, "Doyle McIntosh");
+        // a home person chosen later is kept too, even though they are not first in the tree
+        let john = *db.people.iter().find(|(_, p)| p.name == "John Cooper").unwrap().0;
+        db.home = Some(john);
+        let (again, _) = parse_ged_report(&to_ged(&db));
+        assert_eq!(again.people[&again.home.unwrap()].name, "John Cooper");
+    }
+
+    #[test]
+    fn a_file_without_people_has_no_home() {
+        let (db, _) = parse_ged_report("0 HEAD\n0 @S1@ SOUR\n1 TITL x\n0 TRLR\n");
+        assert!(db.home.is_none());
+        let (db, _) = parse_ged_report("0 HEAD\n1 _HOME @I77@\n0 @I1@ INDI\n1 NAME A /B/\n0 TRLR\n");
+        assert_eq!(db.people[&db.home.unwrap()].name, "A B", "a _HOME that points nowhere falls back to the first person");
+    }
+
 
     fn rt(text: &str) -> (Db, ImportReport, String) {
         let (db, mut rep) = parse_ged_report(text);

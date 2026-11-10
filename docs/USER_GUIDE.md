@@ -96,7 +96,8 @@ the buttons above the cards (or "Show this family") to switch. In a narrow windo
 Ancestry's GEDCOM files contain links to the photos on Ancestry's website, not the photos themselves. Gilded
 Roots keeps every link, writes it back when you export, and shows **Open online** next to it (photos appear in
 the Gallery as "Photo stored online"). To have the pictures on your computer, download them from Ancestry and add
-them with **Add photos or documents**. Dates Ancestry writes in other styles (such as "FEB 8 1891" or
+them with **Add photos or documents**. If you don't want the links, **Remove online links...** in the Gallery takes
+them all off at once. Dates Ancestry writes in other styles (such as "FEB 8 1891" or
 "13 SEPTEMBER, 1713") are tidied into standard form.
 
 ## Sources and citations
@@ -252,7 +253,9 @@ The **Map** tab shows pins where people were born (green), married (purple), die
 or had other events (blue). It works without the internet: the world map and about 170,000 town names are built in.
 - **Show:** this person, their ancestors, their descendants, or everyone. Tick or untick each kind of event.
 - **Up to the year:** drag the slider, or press **Play** to watch the family move over the years.
-- Drag to move the map, scroll (or pinch) to zoom, **Fit to pins** to see them all.
+- The map first opens on everyone's places. **Fit to pins** shows all the pins, but never closer than about a
+  continent, so one or two pins don't fill the screen with an empty close-up. Drag to move the map and scroll (or
+  pinch) to zoom in further.
 - The map wraps around: keep dragging east or west and the world carries on, so Pacific moves (to Hawaii, Samoa or
   New Zealand) show without a break.
 - **Map style:** Match the app (follows the background and accent colours under View → Colours), Charcoal, Warm
@@ -274,6 +277,13 @@ the person's page.
 The **Gallery** tab (Ctrl/Cmd+5) shows every photo in the tree in one grid. **+ Add** adds photos for the selected person. Filter by name or caption, or tick
 **Only the selected person** (this includes photos they are tagged in). Click a photo to view it, or the name under it
 to open that person's page.
+- **Removing several at once:** click **Select...**, click the photos (or tick them), then **Remove selected...**. If
+  some of the files are not used by anyone else in the tree, you can also tick **Also take the files out of the media
+  folder**: they are moved to a **Removed files** folder in your Gilded Roots folder (not deleted), so you can put one
+  back or delete them yourself later. Undo (Ctrl/Cmd+Z) brings the items back.
+- **Remove online links:** a tree from Ancestry or MyHeritage brings links to photos on their websites rather than the
+  pictures. **Remove online links...** takes them all off in one go. Nothing on your computer is deleted, and Undo
+  brings them back.
 
 ## Tagging faces in photos
 Open a photo and press **Tag faces**. Drag a box around someone's face, then type their name (the photo owner's close
@@ -304,6 +314,15 @@ The Photos panel's **Open media folder** button opens it.
   Zoom goes down to 25%.
 - **Centre on a person:** right-click a box and choose **Centre chart on this person**, or use **Search → Find individual…**.
 - **Home person:** choose **Tools → Home person...** and search for anyone in the tree (or right-click a person in a chart and choose **Make this the home person**). Then use the **Home** button, **View → Go to home person**, or the Home key.
+  Each tree keeps its own home person. When you import a GEDCOM file, its home person comes with it (Gilded Roots
+  uses the person the file marks as home, or else the first person in the file, which is where PAF, Ancestry and
+  FamilySearch put the home person). Exported GEDCOM files list the home person first and name them in the header,
+  so they stay the home person in Gilded Roots and other programs.
+- **Renumber people:** **Tools → Renumber people...** gives everyone new ID numbers 1, 2, 3... with no gaps, and
+  renumbers families too. Choose the order: the home person first and then their family (parents and grandparents,
+  then partners and children), the present order with the gaps closed, or alphabetical by surname. A preview shows
+  the first few before anything changes. Each person keeps their old number as an **Old ID** (shown next to their
+  Person ID and kept in exported GEDCOM files), and Undo (Ctrl/Cmd+Z) puts the old numbers back.
 - **Trail:** the line above the chart lists people you have visited. Click a name to return to it.
 - **Recent** (above the chart) lists the last 15 people you looked at.
 - **Bookmarks:** mark people you come back to often (Bookmarks → Bookmark this person, or right-click a box). They are

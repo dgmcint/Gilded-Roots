@@ -7,6 +7,21 @@ Major work so far, in the order it was done.
 - Pedigree and descendant charts: a **Select / Hand** choice on the toolbar. With the hand on, drag anywhere on the
   chart to move it around, without selecting anyone by accident. **H** switches between the two, and the choice is
   remembered.
+- **Home person kept with each tree.** Importing a GEDCOM file keeps its home person (the person the file marks as
+  home, or else the first person in the file, as PAF, Ancestry and FamilySearch do), and exported files list the home
+  person first and name them in the header (`1 _HOME`), so re-importing keeps them. Each tree now has its own home
+  person; a home person chosen in an older version moves into the tree that was open. Trees open at their home person.
+- **Tools → Renumber people:** new ID numbers 1, 2, 3... for everyone and for families, in family order from the
+  home person, the present order, or alphabetical; preview first, Undo afterwards, and each person keeps an **Old ID**.
+- **Map:** opens on everyone's places, and never zooms closer than about a continent when fitting the pins (one or two
+  pins no longer fill the screen). Switching between This person, Ancestors, Descendants and Everyone now fits the
+  newly chosen pins rather than the previous ones.
+- **Gallery and Memories:** when removing items, files nobody else uses can also be taken out of the media folder
+  (moved to a **Removed files** folder, not deleted), and **Remove online links...** takes off every link to a photo
+  stored on Ancestry, MyHeritage or a similar site in one go.
+- The sample family's home person is Emily Rose Harwood. Exported GEDCOM headers carry the program's real version.
+- Behind the scenes: the program's largest file was split into smaller files by topic, to make it easier to work
+  on. Nothing changes in how the program works.
 
 ## 1.0.2 (7 November 2026)
 

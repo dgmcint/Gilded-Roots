@@ -444,7 +444,12 @@ impl App {
             self.x.map_center = [-30.0, 35.0];
             self.x.map_types = [true; 5];
             self.x.map_fit = true;
+            // the first time the map opens it shows the whole family's places, not one person's
+            self.x.map_who = 3;
         }
+        // a fit asked for by a button below happens on the next frame, once the pins match the
+        // new choice (these pins were worked out before the buttons were drawn)
+        let fit_now = self.x.map_fit;
         let pins = self.map_pins();
         let years: Vec<i32> = pins.iter().filter_map(|p| p.year).collect();
         let (y0, y1) = (years.iter().min().copied().unwrap_or(1800), years.iter().max().copied().unwrap_or(2000).max(years.iter().min().copied().unwrap_or(1800) + 1));
@@ -591,15 +596,22 @@ impl App {
             let (resp, painter) = ui.allocate_painter(ui.available_size(), Sense::click_and_drag());
             let rect = resp.rect;
             let dark = ui.visuals().dark_mode;
-            if self.x.map_fit && !placed.is_empty() {
+            if self.x.map_fit && !fit_now {
+                ui.ctx().request_repaint();
+            }
+            if fit_now && self.x.map_fit && !placed.is_empty() {
                 self.x.map_fit = false;
                 let (mut a, mut b) = ([f32::MAX, f32::MAX], [f32::MIN, f32::MIN]);
                 for (_, ll, _) in &placed {
                     a = [a[0].min(ll[0]), a[1].min(merc(ll[1]))];
                     b = [b[0].max(ll[0]), b[1].max(merc(ll[1]))];
                 }
-                let w = (b[0] - a[0]).max(4.0) * 1.25;
-                let h = (b[1] - a[1]).max(3.0) * 1.25;
+                // never closer than about a continent (North America or Europe fill the view),
+                // so one or two pins don't blow the map up to a blank close-up
+                const MIN_W: f32 = 75.0;
+                const MIN_H: f32 = 45.0;
+                let w = ((b[0] - a[0]) * 1.25).max(MIN_W);
+                let h = ((b[1] - a[1]) * 1.25).max(MIN_H);
                 self.x.map_zoom = (rect.width() / w).min(rect.height() / h).clamp(1.5, 400.0);
                 self.x.map_center = [(a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0];
             }

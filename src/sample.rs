@@ -187,6 +187,7 @@ pub fn sample_family() -> Db {
     db.journal.push(Journal { date: "3 Feb 2026".into(), goal: "Margaret Ellis's birth record".into(), place: "Idaho state birth index, 1900-1905 (online)".into(), sid: None, result: "nothing".into(), notes: "Not indexed under Ellis or Elis. Try the Ada County delayed birth registers next.".into(), people: vec![margaret] });
     db.journal.push(Journal { date: "20 Feb 2026".into(), goal: "James Harwood's arrival in America".into(), place: "Passenger lists, New York, 1868".into(), sid: Some(s_ship), result: "partial".into(), notes: "A James Harwood, 30, labourer, on the Minnesota. Wife and son listed. Age fits; need a second source.".into(), people: vec![james] });
     db.bookmarks.push(thomas);
+    db.home = Some(emily);
     let _ = (claraj, niels, karen, samuel, ida, george, susan, linda, daniel, helen);
     fix_names(&mut db);
     db

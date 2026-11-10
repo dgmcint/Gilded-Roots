@@ -19,7 +19,22 @@ Each file should report `LOST 0`.
 
 | Path | Purpose |
 | --- | --- |
-| `src/main.rs` | App, data model (`Db`, `Person`, `Family`), views, reports, saving and backups, tests |
+| `src/main.rs` | Start-up, and the list of the files below |
+| `src/model.rs` | The data model: `Db`, `Person`, `Family`, events, sources, media |
+| `src/genealogy.rs` | Names, dates, relationship words, merging people, places |
+| `src/app.rs` | The `App` struct, dialogs, actions, undo and redo |
+| `src/settings.rs` | Settings, colour schemes, the theme |
+| `src/storage.rs` | Folders, saving and loading, atomic writes, backups, reading and writing GEDCOM files |
+| `src/files.rs` | Import, export, archives, backups and switching trees (the menu actions) |
+| `src/media.rs` | Photos, recordings, the Gallery and Memories |
+| `src/reports.rs` | Printable reports (HTML) |
+| `src/views.rs` | Menus, navigation, pedigree and family views |
+| `src/person.rs` | The Individual page |
+| `src/windows.rs` | Pop-up windows (renumber, versions, history, to-do, welcome, trees, places) |
+| `src/jump.rs` | Keyboard shortcuts and quick jump |
+| `src/update.rs` | The frame loop that draws the program |
+| `src/help.rs` | The built-in User Guide |
+| `src/tests.rs` | Tests for the files above |
 | `src/gedcom.rs` | GEDCOM reader/writer, lossless raw blocks, merge engine, data migrations |
 | `src/review.rs` | Merge review screens and import-merge confirmation |
 | `packaging/` | Windows installer script and Linux `.desktop` file |
