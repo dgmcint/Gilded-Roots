@@ -1538,3 +1538,178 @@ mod edit_tests {
         let _ = b;
     }
 }
+
+#[cfg(test)]
+mod lds_tests {
+    use super::*;
+
+    const PAF: &str = "0 HEAD\n1 SOUR PAF\n1 CHAR ANSEL\n0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 BAPL\n2 DATE 1 JAN 1880\n2 TEMP SLAKE\n2 STAT COMPLETED\n1 SLGC\n2 FAMC @F1@\n2 DATE 3 JAN 1880\n2 TEMP LOGAN\n1 FAMS @F2@\n1 FAMC @F1@\n0 @I2@ INDI\n1 NAME Jane /Doe/\n1 SEX F\n1 FAMS @F2@\n0 @I3@ INDI\n1 NAME Old /Smith/\n1 SEX M\n1 FAMS @F1@\n0 @F1@ FAM\n1 HUSB @I3@\n1 CHIL @I1@\n0 @F2@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 SLGS\n2 DATE 5 JUL 1875\n2 TEMP MANTI\n0 TRLR\n";
+
+    #[test]
+    fn ordinances_from_a_paf_file_land_on_their_lines() {
+        let db = gedcom::parse_ged(PAF);
+        let john = *db.people.iter().find(|(_, p)| p.given.starts_with("John")).unwrap().0;
+        let app = App::for_test(db);
+        let rows = app.lds_rows(john);
+        let get = |label: &str| rows.iter().find(|r| r.label.starts_with(label)).unwrap();
+        assert_eq!(get("Baptism").event.as_ref().unwrap().temp, "SLAKE");
+        assert!(get("Endowment").event.is_none());
+        let parents = get("Sealed to parents");
+        assert!(parents.label.contains("Old Smith"), "{}", parents.label);
+        assert_eq!(parents.event.as_ref().unwrap().temp, "LOGAN");
+        let spouse = get("Sealed to spouse");
+        assert!(spouse.label.contains("Jane Doe"), "{}", spouse.label);
+        assert_eq!(spouse.event.as_ref().unwrap().temp, "MANTI");
+        assert_eq!(temples::temple_label("MANTI"), "Manti, Utah, USA (MANTI)");
+    }
+
+    #[test]
+    fn adding_ordinances_writes_them_to_gedcom() {
+        let db = gedcom::parse_ged(PAF);
+        let john = *db.people.iter().find(|(_, p)| p.given.starts_with("John")).unwrap().0;
+        let mut app = App::for_test(db);
+        // Take the sealing to parents away, then add it back from its line, as the panel does.
+        let row = app.lds_rows(john).into_iter().find(|r| r.kind == "LDS child sealing").unwrap();
+        app.lds_remove(john, &row);
+        let row = app.lds_rows(john).into_iter().find(|r| r.kind == "LDS child sealing").unwrap();
+        assert!(row.event.is_none());
+        app.lds_add(john, &row);
+        let row = app.lds_rows(john).into_iter().find(|r| r.kind == "LDS child sealing").unwrap();
+        let e = app.lds_event_mut(john, &row).unwrap();
+        e.temp = "SGEOR".into();
+        e.stat = "COMPLETED".into();
+        let endow = app.lds_rows(john).into_iter().find(|r| r.label == "Endowment").unwrap();
+        app.lds_add(john, &endow);
+        let out = gedcom::to_ged(&app.db);
+        let fam = app.lds_rows(john).into_iter().find(|r| r.kind == "LDS child sealing").unwrap().fam.unwrap();
+        assert!(out.contains(&format!("1 SLGC\n2 FAMC @F{fam}@\n2 TEMP SGEOR\n2 STAT COMPLETED")) || out.contains(&format!("1 SLGC\n2 TEMP SGEOR\n2 STAT COMPLETED\n2 FAMC @F{fam}@")), "{out}");
+        assert!(out.contains("1 ENDL"), "{out}");
+        // And it reads back onto the same line.
+        let back = App::for_test(gedcom::parse_ged(&out));
+        let john = *back.db.people.iter().find(|(_, p)| p.given.starts_with("John")).unwrap().0;
+        let r = back.lds_rows(john).into_iter().find(|r| r.kind == "LDS child sealing").unwrap();
+        assert_eq!(r.event.unwrap().temp, "SGEOR");
+    }
+}
+
+#[cfg(test)]
+mod order_tests {
+    use super::*;
+
+    // Pat married Bea (1960) after Ann (1950), but the file lists Bea first.
+    const T: &str = "0 HEAD\n0 @I1@ INDI\n1 NAME Pat /Lee/\n1 SEX M\n1 FAMS @F2@\n1 FAMS @F1@\n0 @I2@ INDI\n1 NAME Ann /Fox/\n1 SEX F\n1 FAMS @F1@\n0 @I3@ INDI\n1 NAME Bea /Roe/\n1 SEX F\n1 FAMS @F2@\n0 @I4@ INDI\n1 NAME Cal /Lee/\n1 BIRT\n2 DATE 1958\n1 FAMC @F1@\n0 @I5@ INDI\n1 NAME Dee /Lee/\n1 FAMC @F1@\n0 @I6@ INDI\n1 NAME Eve /Lee/\n1 BIRT\n2 DATE 12 MAR 1952\n1 FAMC @F1@\n0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 1950\n1 CHIL @I4@\n1 CHIL @I5@\n1 CHIL @I6@\n0 @F2@ FAM\n1 HUSB @I1@\n1 WIFE @I3@\n1 MARR\n2 DATE 1960\n0 TRLR\n";
+
+    fn find(db: &Db, given: &str) -> u32 {
+        *db.people.iter().find(|(_, p)| p.given == given).unwrap().0
+    }
+    fn spouse_names(db: &Db, id: u32) -> Vec<String> {
+        db.fams_of(id).iter().map(|f| { let fm = &db.fams[f]; db.people[&fm.w.unwrap()].given.clone() }).collect()
+    }
+    fn kid_names(db: &Db, f: u32) -> Vec<String> {
+        db.fams[&f].kids.iter().map(|k| db.people[k].given.clone()).collect()
+    }
+
+    #[test]
+    fn spouse_order_comes_from_the_file_and_can_be_changed() {
+        let mut db = gedcom::parse_ged(T);
+        let pat = find(&db, "Pat");
+        assert_eq!(spouse_names(&db, pat), ["Bea", "Ann"], "the file's order is kept");
+        assert_eq!(db.fams_of_ix(&db.index(), pat).iter().map(|f| db.people[&db.fams[f].w.unwrap()].given.clone()).collect::<Vec<_>>(), ["Bea", "Ann"]);
+        let ann_fam = db.fams_of(pat)[1];
+        assert!(db.move_family(pat, ann_fam, true));
+        assert_eq!(spouse_names(&db, pat), ["Ann", "Bea"]);
+        assert!(!db.move_family(pat, ann_fam, true), "already first");
+        // The order goes out in the file and comes back.
+        let out = gedcom::to_ged(&db);
+        let back = gedcom::parse_ged(&out);
+        assert_eq!(spouse_names(&back, find(&back, "Pat")), ["Ann", "Bea"]);
+        // In date order, nothing extra is kept.
+        assert!(back.people[&find(&back, "Pat")].fam_order.is_empty());
+    }
+
+    #[test]
+    fn children_move_and_sort_by_birth() {
+        let mut db = gedcom::parse_ged(T);
+        let pat = find(&db, "Pat");
+        let f = *db.fams_of(pat).iter().find(|f| db.fams[f].kids.len() == 3).unwrap();
+        assert_eq!(kid_names(&db, f), ["Cal", "Dee", "Eve"]);
+        let eve = find(&db, "Eve");
+        assert!(db.move_child(f, eve, true));
+        assert_eq!(kid_names(&db, f), ["Cal", "Eve", "Dee"]);
+        assert!(!db.move_child(f, eve, false) || kid_names(&db, f) == ["Cal", "Dee", "Eve"]);
+        // Eve (1952) before Cal (1958); Dee has no date and stays after the child she followed.
+        db.fams.get_mut(&f).unwrap().kids = vec![find(&db, "Cal"), find(&db, "Dee"), eve];
+        assert!(db.sort_children(f));
+        assert_eq!(kid_names(&db, f), ["Eve", "Cal", "Dee"]);
+        assert!(!db.sort_children(f), "already in order");
+        let out = gedcom::to_ged(&db);
+        let back = gedcom::parse_ged(&out);
+        let bf = *back.fams.iter().find(|(_, x)| x.kids.len() == 3).unwrap().0;
+        assert_eq!(kid_names(&back, bf), ["Eve", "Cal", "Dee"]);
+    }
+
+    #[test]
+    fn renumbering_keeps_the_spouse_order() {
+        let mut db = gedcom::parse_ged(T);
+        let pat = find(&db, "Pat");
+        let before = spouse_names(&db, pat);
+        let order = gedcom::renumber_order(&db, gedcom::RenumberOrder::Alphabetical);
+        gedcom::renumber(&mut db, &order);
+        assert_eq!(spouse_names(&db, find(&db, "Pat")), before);
+    }
+}
+
+#[cfg(test)]
+mod find_tests {
+    use super::*;
+
+    const T: &str = "0 HEAD\n0 @I1@ INDI\n1 NAME John /Smith/\n1 SEX M\n1 FAMS @F1@\n0 @I2@ INDI\n1 NAME Mary /Jones/\n1 SEX F\n1 FAMS @F1@\n0 @I3@ INDI\n1 NAME John /Brown/\n1 SEX M\n1 FAMS @F2@\n0 @I4@ INDI\n1 NAME Ann /Jones/\n1 SEX F\n1 FAMS @F2@\n0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 MARR\n2 DATE 1900\n0 @F2@ FAM\n1 HUSB @I3@\n1 WIFE @I4@\n0 TRLR\n";
+
+    #[test]
+    fn find_a_couple_in_either_order() {
+        let db = gedcom::parse_ged(T);
+        let who = |f: &u32| db.people[&db.fams[f].h.unwrap()].name.clone();
+        let r = db.find_couples("john", "mary");
+        assert_eq!(r.iter().map(who).collect::<Vec<_>>(), ["John Smith"]);
+        assert_eq!(db.find_couples("mary", "john smith"), r, "either order");
+        assert_eq!(db.find_couples("john", "").len(), 2, "one box empty: every spouse");
+        assert!(db.find_couples("john", "zelda").is_empty());
+        assert!(db.find_couples(" ", "").is_empty());
+    }
+
+    #[test]
+    fn find_by_id_number_and_old_id() {
+        let mut db = gedcom::parse_ged(T);
+        let mary = *db.people.iter().find(|(_, p)| p.given == "Mary").unwrap().0;
+        assert_eq!(db.find_by_number(&format!("#{mary}")), vec![(mary, false)]);
+        assert_eq!(db.find_by_number(&format!("I{mary}")), vec![(mary, false)]);
+        assert!(db.find_by_number("999").is_empty());
+        // After renumbering alphabetically, Mary's old number still finds her.
+        let order = gedcom::renumber_order(&db, gedcom::RenumberOrder::Alphabetical);
+        let map = gedcom::renumber(&mut db, &order);
+        let now = map[&mary];
+        let hits = db.find_by_number(&mary.to_string());
+        assert!(hits.contains(&(now, true)), "{hits:?}");
+    }
+}
+
+#[cfg(test)]
+mod contact_tests {
+    use super::*;
+
+    #[test]
+    fn contact_details_round_trip_and_stay_out_of_private_copies() {
+        let t = "0 HEAD\n0 @I1@ INDI\n1 NAME Liv /Ing/\n1 ADDR 12 Elm St\n2 CONT Twin Falls, Idaho\n1 PHON 208-555-0100\n1 EMAIL liv@example.com\n1 WWW https://example.com\n0 TRLR\n";
+        let db = gedcom::parse_ged(t);
+        let p = db.people.values().next().unwrap();
+        assert_eq!(p.contact.addr, "12 Elm St\nTwin Falls, Idaho");
+        assert_eq!(p.contact.phone, "208-555-0100");
+        assert_eq!(p.contact.email, "liv@example.com");
+        assert_eq!(p.contact.url, "https://example.com");
+        let out = gedcom::to_ged(&db);
+        assert!(out.contains("1 ADDR 12 Elm St\n2 CONT Twin Falls, Idaho\n1 PHON 208-555-0100\n1 EMAIL liv@example.com\n1 WWW https://example.com"), "{out}");
+        let back = gedcom::parse_ged(&out);
+        assert!(back.people.values().next().unwrap().contact == p.contact);
+        assert!(back.people.values().next().unwrap().extra.iter().all(|r| !r.text.contains("PHON")), "not kept twice");
+    }
+}

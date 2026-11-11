@@ -1090,13 +1090,26 @@ fn parse_indi(cx: &mut Cx, id: u32, n: &Node) -> Person {
                 }
                 p.todos.push(t);
             }
+            "ADDR" if p.contact.addr.is_empty() && k.kids.is_empty() => p.contact.addr = txt(&k.val),
+            "PHON" if p.contact.phone.is_empty() && k.kids.is_empty() => p.contact.phone = txt(&k.val),
+            "EMAIL" | "_EMAIL" if p.contact.email.is_empty() && k.kids.is_empty() => p.contact.email = txt(&k.val),
+            "WWW" | "_URL" if p.contact.url.is_empty() && k.kids.is_empty() => p.contact.url = txt(&k.val),
             "ASSO" if assoc_of(cx, k).is_some() => {
                 let a = assoc_of(cx, k).unwrap();
                 p.assoc.push(a);
             }
-            "FAMS" if k.kids.is_empty() => {}
+            "FAMS" if k.kids.is_empty() => {
+                if let Some(fid) = cx.id_of(&k.val, 'F') {
+                    if !p.fam_order.contains(&fid) {
+                        p.fam_order.push(fid);
+                    }
+                }
+            }
             "FAMS" => match cx.id_of(&k.val, 'F') {
                 Some(fid) => {
+                    if !p.fam_order.contains(&fid) {
+                        p.fam_order.push(fid);
+                    }
                     let mut rest = String::new();
                     for c in &k.kids {
                         node_text(cx, c, 0, &mut rest);
@@ -1657,8 +1670,34 @@ pub fn parse_ged_report(text: &str) -> (Db, ImportReport) {
     cx.rep.notes = db.notes.len();
     cx.rep.media = n_media_before;
     db.ver = 4;
+    tidy_fam_order(&mut db);
     fix_names(&mut db);
     (db, cx.rep)
+}
+
+/// Keep a person's family order from the file only where it matters: two or more families of
+/// their own, in an order other than by marriage date.
+pub(crate) fn tidy_fam_order(db: &mut Db) {
+    let ix = db.index();
+    let mut changes: Vec<(u32, Vec<u32>)> = Vec::new();
+    for (id, p) in &db.people {
+        if p.fam_order.is_empty() {
+            continue;
+        }
+        let mine = db.fams_of_ix(&ix, *id);
+        let kept: Vec<u32> = p.fam_order.iter().copied().filter(|f| mine.contains(f)).collect();
+        let mut by_date = mine.to_vec();
+        by_date.sort_by_key(|f| (parse_date(&db.fams[f].md).0.unwrap_or(i32::MAX), *f));
+        let mut chosen = kept.clone();
+        chosen.extend(by_date.iter().filter(|f| !kept.contains(f)));
+        let keep = mine.len() > 1 && chosen != by_date;
+        changes.push((*id, if keep { kept } else { Vec::new() }));
+    }
+    for (id, v) in changes {
+        if let Some(p) = db.people.get_mut(&id) {
+            p.fam_order = v;
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -2049,6 +2088,9 @@ pub fn to_ged_full(db: &Db, opts: &ExportOpts) -> Export {
             }
         }
     }
+    for (p, v) in as_partner.iter_mut() {
+        v.sort_by_key(|f| db.fam_rank(*p, *f));
+    }
     // The home person goes first: most programs take the first person in a file as its home
     // person. (The header also names them, for programs that read that.)
     let home = db.home.filter(|h| db.people.contains_key(h));
@@ -2123,6 +2165,11 @@ pub fn to_ged_full(db: &Db, opts: &ExportOpts) -> Export {
                 put(o, 2, "_PREF", "Y");
             }
             emit_raw(o, &p.extra, &format!("FAMC@F{}", fid), 2);
+        }
+        for (tag, v) in [("ADDR", &p.contact.addr), ("PHON", &p.contact.phone), ("EMAIL", &p.contact.email), ("WWW", &p.contact.url)] {
+            if !v.trim().is_empty() {
+                puttxt(o, 1, tag, v.trim());
+            }
         }
         for a in p.assoc.iter().filter(|a| db.people.contains_key(&a.other) && a.other != *id) {
             putp(o, 1, "ASSO", &format!("I{}", a.other));
@@ -2510,6 +2557,11 @@ pub fn replace_pointer(db: &mut Db, from: &str, to: Option<&str>) {
             if p.pref_parents == Some(n) {
                 p.pref_parents = to_id;
             }
+            if p.fam_order.contains(&n) {
+                p.fam_order = p.fam_order.iter().filter_map(|f| if *f == n { to_id } else { Some(*f) }).collect();
+                let mut seen = HashSet::new();
+                p.fam_order.retain(|f| seen.insert(*f));
+            }
         }
     }
 }
@@ -2648,6 +2700,7 @@ pub fn renumber(db: &mut Db, order: &[u32]) -> HashMap<u32, u32> {
     let old_people = std::mem::take(&mut db.people);
     for (old, mut person) in old_people {
         person.pref_parents = person.pref_parents.map(f);
+        person.fam_order = person.fam_order.iter().map(|x| f(*x)).collect();
         for a in person.assoc.iter_mut() {
             a.other = p(a.other);
         }
@@ -3044,6 +3097,7 @@ pub fn merge_into_pairs(dst: &mut Db, inc: Db, pairs: &HashMap<u32, u32>) -> (us
         }
         p.assoc.retain(|a| a.other != 0 && a.other != k);
         p.pref_parents = p.pref_parents.and_then(|f| fmap.get(&f).copied());
+        p.fam_order = p.fam_order.iter().filter_map(|f| fmap.get(f).copied()).collect();
         for m in p.media.iter_mut() {
             for f in m.faces.iter_mut() {
                 f.who = pmap.get(&f.who).copied().unwrap_or(0);
@@ -3087,6 +3141,12 @@ pub fn merge_into_pairs(dst: &mut Db, inc: Db, pairs: &HashMap<u32, u32>) -> (us
         add_unique(&mut q.assoc, &p.assoc, |a, b| a.other == b.other && a.role == b.role);
         if q.pref_parents.is_none() {
             q.pref_parents = p.pref_parents;
+        }
+        if q.fam_order.is_empty() {
+            q.fam_order = p.fam_order.clone();
+        }
+        if q.contact.is_empty() {
+            q.contact = p.contact.clone();
         }
         add_unique(&mut q.alt_names, &p.alt_names, |a, b| a.kind == b.kind && a.given == b.given && a.surname == b.surname);
         add_unique(&mut q.events, &p.events, same_event);

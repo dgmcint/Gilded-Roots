@@ -412,8 +412,8 @@ impl Db {
                 }
             }
         }
-        for v in ix.partner_in.values_mut() {
-            v.sort_by_key(|f| (parse_date(&self.fams[f].md).0.unwrap_or(i32::MAX), *f));
+        for (p, v) in ix.partner_in.iter_mut() {
+            v.sort_by_key(|f| self.fam_rank(*p, *f));
         }
         ix
     }
@@ -452,14 +452,76 @@ impl Db {
     /// Families the person is a partner in, in the order of the partnerships (by marriage year,
     /// those without a date last).
     pub(crate) fn fams_of(&self, id: u32) -> Vec<u32> {
-        let mut v: Vec<(i32, u32)> = self
+        let mut v: Vec<((usize, i32, u32), u32)> = self
             .fams
             .iter()
             .filter(|(_, f)| f.h == Some(id) || f.w == Some(id) || f.more.iter().any(|(_, x)| *x == id))
-            .map(|(k, f)| (parse_date(&f.md).0.unwrap_or(i32::MAX), *k))
+            .map(|(k, _)| (self.fam_rank(id, *k), *k))
             .collect();
         v.sort();
         v.into_iter().map(|(_, k)| k).collect()
+    }
+    /// Where a family comes in a person's list of spouses: the order chosen by hand (or from the
+    /// file) first, then by marriage date, then by number.
+    pub(crate) fn fam_rank(&self, person: u32, fid: u32) -> (usize, i32, u32) {
+        let pos = self.people.get(&person).and_then(|p| p.fam_order.iter().position(|f| *f == fid)).unwrap_or(usize::MAX);
+        let y = self.fams.get(&fid).and_then(|f| parse_date(&f.md).0).unwrap_or(i32::MAX);
+        (pos, y, fid)
+    }
+    /// Move a person's family (spouse) one place earlier or later in their list.
+    pub(crate) fn move_family(&mut self, person: u32, fid: u32, earlier: bool) -> bool {
+        let mut v = self.fams_of(person);
+        let Some(i) = v.iter().position(|f| *f == fid) else { return false };
+        let j = if earlier { i.checked_sub(1) } else { Some(i + 1).filter(|j| *j < v.len()) };
+        let Some(j) = j else { return false };
+        v.swap(i, j);
+        match self.people.get_mut(&person) {
+            Some(p) => {
+                p.fam_order = v;
+                true
+            }
+            None => false,
+        }
+    }
+    /// Move a child one place earlier or later among the family's children.
+    pub(crate) fn move_child(&mut self, fid: u32, kid: u32, earlier: bool) -> bool {
+        let Some(f) = self.fams.get_mut(&fid) else { return false };
+        let Some(i) = f.kids.iter().position(|k| *k == kid) else { return false };
+        let j = if earlier { i.checked_sub(1) } else { Some(i + 1).filter(|j| *j < f.kids.len()) };
+        let Some(j) = j else { return false };
+        f.kids.swap(i, j);
+        true
+    }
+    /// Put a family's children in order of birth. Children with no birth date keep their place
+    /// after the ones before them.
+    pub(crate) fn sort_children(&mut self, fid: u32) -> bool {
+        let Some(f) = self.fams.get(&fid) else { return false };
+        let key = |k: &u32| -> (i32, u32, u32) {
+            let Some(p) = self.people.get(k) else { return (i32::MAX, 13, 32) };
+            let d = if p.bd.trim().is_empty() { &p.chd } else { &p.bd };
+            let (y, m, dd) = parse_date(d);
+            (y.unwrap_or(i32::MAX), m.unwrap_or(13), dd.unwrap_or(32))
+        };
+        // Undated children stay just after the dated child they followed.
+        let mut last = (i32::MIN, 0, 0);
+        let mut keyed: Vec<((i32, u32, u32), usize, u32)> = Vec::new();
+        for (i, k) in f.kids.iter().enumerate() {
+            let mut kk = key(k);
+            if kk.0 == i32::MAX {
+                kk = last;
+            } else {
+                last = kk;
+            }
+            keyed.push((kk, i, *k));
+        }
+        keyed.sort();
+        let new: Vec<u32> = keyed.into_iter().map(|(_, _, k)| k).collect();
+        let f = self.fams.get_mut(&fid).unwrap();
+        if f.kids == new {
+            return false;
+        }
+        f.kids = new;
+        true
     }
     /// Everyone who is a parent of `id` through any family, with how: (parent, relationship word).
     /// Brothers and sisters (full and half) in the order of the parents' family lists.
@@ -1092,6 +1154,52 @@ impl Db {
         let l = life(p);
         if l.is_empty() { name } else { format!("{} ({})", name, l) }
     }
+    /// People whose ID number (or Old ID from before renumbering) is the number typed.
+    /// "#12", "12" and "I12" all work.
+    pub(crate) fn find_by_number(&self, q: &str) -> Vec<(u32, bool)> {
+        let n = q.trim().trim_start_matches('#').trim_start_matches(['I', 'i']).trim_start_matches('@').trim_end_matches('@').trim();
+        if n.is_empty() {
+            return vec![];
+        }
+        let mut out = vec![];
+        if let Ok(v) = n.parse::<u32>() {
+            if self.people.contains_key(&v) {
+                out.push((v, false));
+            }
+        }
+        for (id, p) in &self.people {
+            if old_id(p).map_or(false, |o| o.trim_start_matches('I').trim_matches('@') == n || o == n) && !out.iter().any(|x| x.0 == *id) {
+                out.push((*id, true));
+            }
+        }
+        out
+    }
+    /// Families whose two partners match the two names typed, in either order. Each name may
+    /// be part of a name ("john", "smi"); an empty box matches anyone.
+    pub(crate) fn find_couples(&self, a: &str, b: &str) -> Vec<u32> {
+        let words = |s: &str| s.to_lowercase().split_whitespace().map(|w| w.to_string()).collect::<Vec<_>>();
+        let (wa, wb) = (words(a), words(b));
+        if wa.is_empty() && wb.is_empty() {
+            return vec![];
+        }
+        let hit = |id: Option<u32>, w: &[String]| -> bool {
+            if w.is_empty() {
+                return true;
+            }
+            let Some(p) = id.and_then(|i| self.people.get(&i)) else { return false };
+            let hay = format!("{} {} {}", p.name, p.maiden, p.nick).to_lowercase();
+            w.iter().all(|x| hay.contains(x.as_str()))
+        };
+        let mut out: Vec<(String, u32)> = self
+            .fams
+            .iter()
+            .filter(|(_, f)| f.h.is_some() || f.w.is_some())
+            .filter(|(_, f)| (hit(f.h, &wa) && hit(f.w, &wb)) || (hit(f.w, &wa) && hit(f.h, &wb)))
+            .map(|(k, f)| (f.h.or(f.w).and_then(|x| self.people.get(&x)).map(|p| p.name.to_lowercase()).unwrap_or_default(), *k))
+            .collect();
+        out.sort();
+        out.into_iter().map(|(_, k)| k).collect()
+    }
     pub(crate) fn sorted(&self, filter: &str) -> Vec<u32> {
         let f = filter.to_lowercase();
         let mut v: Vec<u32> = self
@@ -1273,6 +1381,13 @@ impl Db {
             if k.pref_parents.is_none() {
                 k.pref_parents = d.pref_parents;
             }
+            if k.fam_order.is_empty() {
+                k.fam_order = d.fam_order;
+            }
+            fill(&mut k.contact.addr, &d.contact.addr);
+            fill(&mut k.contact.phone, &d.contact.phone);
+            fill(&mut k.contact.email, &d.contact.email);
+            fill(&mut k.contact.url, &d.contact.url);
             for a in d.alt_names {
                 if !k.alt_names.iter().any(|x| x.kind == a.kind && x.given == a.given && x.surname == a.surname) {
                     k.alt_names.push(a);

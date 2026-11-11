@@ -6,6 +6,7 @@ use super::*;
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut act: Option<Action> = None;
+        self.type_pending_letter(ctx);
         NAME_STYLE.store(self.settings.name_style, Ordering::Relaxed);
         DATE_STYLE.store(self.settings.date_style, Ordering::Relaxed);
         MAP_STYLE.store(self.settings.map_style, Ordering::Relaxed);
@@ -80,6 +81,11 @@ impl eframe::App for App {
                     }
                     if ui.add_enabled(!self.redo.is_empty(), egui::Button::new("Redo")).clicked() {
                         self.redo_action();
+                        ui.close_menu();
+                    }
+                    ui.separator();
+                    if ui.button("Special letters (é, ñ, ß...)...").on_hover_text("Accented letters and symbols to put into names and places").clicked() {
+                        self.x.letters_open = true;
                         ui.close_menu();
                     }
                     ui.separator();
@@ -232,6 +238,17 @@ impl eframe::App for App {
                 ui.menu_button("Search", |ui| {
                     if ui.button("Find individual...").clicked() {
                         self.find_open = true;
+                        self.x.find_mode = 0;
+                        ui.close_menu();
+                    }
+                    if ui.button("Find by ID number...").clicked() {
+                        self.find_open = true;
+                        self.x.find_mode = 1;
+                        ui.close_menu();
+                    }
+                    if ui.button("Find a couple...").clicked() {
+                        self.find_open = true;
+                        self.x.find_mode = 2;
                         ui.close_menu();
                     }
                     if ui.button("Relationship finder...").clicked() {
@@ -730,16 +747,16 @@ impl eframe::App for App {
                         });
                         ui.end_row();
                         ui.label("Born");
-                        ui.add(egui::TextEdit::singleline(&mut q.bd).desired_width(260.0));
+                        ditto(ui, &mut q.bd, |t| t.desired_width(260.0), &mut self.x.ditto_date);
                         ui.end_row();
                         ui.label("Birthplace");
-                        ui.add(egui::TextEdit::singleline(&mut q.bp).desired_width(260.0));
+                        ditto(ui, &mut q.bp, |t| t.desired_width(260.0), &mut self.x.ditto_place);
                         ui.end_row();
                         ui.label("Died");
-                        ui.add(egui::TextEdit::singleline(&mut q.dd).desired_width(260.0));
+                        ditto(ui, &mut q.dd, |t| t.desired_width(260.0), &mut self.x.ditto_date);
                         ui.end_row();
                         ui.label("Place of death");
-                        ui.add(egui::TextEdit::singleline(&mut q.dp).desired_width(260.0));
+                        ditto(ui, &mut q.dp, |t| t.desired_width(260.0), &mut self.x.ditto_place);
                         ui.end_row();
                         ui.label("Living");
                         ui.checkbox(&mut q.living, "Living (kept private when printing or exporting)");
@@ -780,23 +797,79 @@ impl eframe::App for App {
 
         if self.find_open {
             let mut open = true;
-            egui::Window::new("Find Individual").open(&mut open).default_width(300.0).show(ctx, |ui| {
-                ui.add(egui::TextEdit::singleline(&mut self.search).hint_text("Name or place").desired_width(f32::INFINITY));
-                ui.label(format!("{} people", self.db.people.len()));
-                egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-                    for id in self.db.sorted(&self.search) {
-                        let txt = self.db.label(id);
-                        if ui.selectable_label(self.sel == Some(id), txt).clicked() {
-                            act = Some(Action::Select(id));
+            let mut couple: Option<(u32, u32)> = None;
+            egui::Window::new("Find Individual").open(&mut open).default_width(320.0).show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.selectable_value(&mut self.x.find_mode, 0, "Name or place");
+                    ui.selectable_value(&mut self.x.find_mode, 1, "ID number");
+                    ui.selectable_value(&mut self.x.find_mode, 2, "A couple");
+                });
+                ui.separator();
+                match self.x.find_mode {
+                    1 => {
+                        let r = ui.add(egui::TextEdit::singleline(&mut self.x.find_id).hint_text("ID number, e.g. 12").desired_width(f32::INFINITY));
+                        if r.changed() {
+                            self.x.find_id.retain(|c| c.is_ascii_alphanumeric() || c == '#' || c == '@');
+                        }
+                        ui.label(RichText::new("Also finds the old number of someone renumbered with Tools > Renumber people.").small().weak());
+                        let found = self.db.find_by_number(&self.x.find_id);
+                        if found.is_empty() && !self.x.find_id.trim().is_empty() {
+                            ui.weak("Nobody has that number.");
+                        }
+                        for (id, old) in found {
+                            let txt = if old { format!("{}   (Old ID; now #{})", self.db.label(id), id) } else { format!("#{}  {}", id, self.db.label(id)) };
+                            if ui.selectable_label(self.sel == Some(id), txt).clicked() {
+                                act = Some(Action::Select(id));
+                            }
                         }
                     }
-                });
+                    2 => {
+                        ui.add(egui::TextEdit::singleline(&mut self.x.find_a).hint_text("One partner's name, e.g. John Smith").desired_width(f32::INFINITY));
+                        ui.add(egui::TextEdit::singleline(&mut self.x.find_b).hint_text("The other partner's name, e.g. Mary").desired_width(f32::INFINITY));
+                        ui.label(RichText::new("Part of a name is enough; either order works. Leave one box empty to see every spouse of the other person.").small().weak());
+                        let fams = self.db.find_couples(&self.x.find_a, &self.x.find_b);
+                        if fams.is_empty() && !(self.x.find_a.trim().is_empty() && self.x.find_b.trim().is_empty()) {
+                            ui.weak("No couple matches.");
+                        }
+                        egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                            for f in fams.iter().take(200) {
+                                let fm = &self.db.fams[f];
+                                let nm = |x: Option<u32>| x.and_then(|i| self.db.people.get(&i)).map(display_name).unwrap_or_else(|| "(not recorded)".into());
+                                let y = year(&fm.md);
+                                let txt = format!("{}  &  {}{}", nm(fm.h), nm(fm.w), if y.is_empty() { String::new() } else { format!("   (married {y})") });
+                                if ui.selectable_label(false, txt).clicked() {
+                                    if let Some(p) = fm.h.or(fm.w) {
+                                        couple = Some((p, *f));
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    _ => {
+                        ui.add(egui::TextEdit::singleline(&mut self.search).hint_text("Name or place").desired_width(f32::INFINITY));
+                        ui.label(format!("{} people", self.db.people.len()));
+                        egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                            for id in self.db.sorted(&self.search) {
+                                let txt = self.db.label(id);
+                                if ui.selectable_label(self.sel == Some(id), txt).clicked() {
+                                    act = Some(Action::Select(id));
+                                }
+                            }
+                        });
+                    }
+                }
             });
+            if let Some((p, f)) = couple {
+                self.goto(p);
+                self.view = View::Family;
+                self.fx = self.db.fams_of(p).iter().position(|x| *x == f).unwrap_or(0);
+            }
             self.find_open = open;
         }
 
         self.review_window(ctx);
         self.import_merge_window(ctx);
+        self.letters_window(ctx);
         if let Some(id) = self.src_pick.take() {
             if self.db.sources.contains_key(&id) {
                 self.src_open = true;
@@ -1759,22 +1832,22 @@ impl eframe::App for App {
                         });
                         ui.end_row();
                         ui.label("Born");
-                        ui.add(egui::TextEdit::singleline(&mut d.bd).hint_text("e.g. 12 Mar 1921, about 1850").desired_width(300.0));
+                        ditto(ui, &mut d.bd, |t| t.hint_text("e.g. 12 Mar 1921, about 1850").desired_width(300.0), &mut self.x.ditto_date);
                         ui.end_row();
                         ui.label("Birthplace");
-                        ui.add(egui::TextEdit::singleline(&mut d.bp).desired_width(300.0));
+                        ditto(ui, &mut d.bp, |t| t.desired_width(300.0), &mut self.x.ditto_place);
                         ui.end_row();
                         ui.label("Died");
-                        ui.add(egui::TextEdit::singleline(&mut d.dd).desired_width(300.0));
+                        ditto(ui, &mut d.dd, |t| t.desired_width(300.0), &mut self.x.ditto_date);
                         ui.end_row();
                         ui.label("Place of death");
-                        ui.add(egui::TextEdit::singleline(&mut d.dp).desired_width(300.0));
+                        ditto(ui, &mut d.dp, |t| t.desired_width(300.0), &mut self.x.ditto_place);
                         ui.end_row();
                         ui.label("Buried");
-                        ui.add(egui::TextEdit::singleline(&mut d.bud).desired_width(300.0));
+                        ditto(ui, &mut d.bud, |t| t.desired_width(300.0), &mut self.x.ditto_date);
                         ui.end_row();
                         ui.label("Burial place");
-                        ui.add(egui::TextEdit::singleline(&mut d.bup).desired_width(300.0));
+                        ditto(ui, &mut d.bup, |t| t.desired_width(300.0), &mut self.x.ditto_place);
                         ui.end_row();
                         ui.label("Living");
                         ui.checkbox(&mut d.living, "Living (kept private when printing or exporting)");
@@ -1870,6 +1943,28 @@ impl eframe::App for App {
                     self.confirm = false;
                 }
                 Action::Fx(i) => self.fx = i,
+                Action::MoveChild(f, k, up) => {
+                    if self.db.move_child(f, k, up) {
+                        self.x.next_label = Some("Changed the order of children".into());
+                        self.dirty = true;
+                    }
+                }
+                Action::SortChildren(f) => {
+                    if self.db.sort_children(f) {
+                        self.x.next_label = Some("Put children in order of birth".into());
+                        self.dirty = true;
+                        self.status = "Children put in order of birth.".into();
+                    } else {
+                        self.status = "The children are already in order of birth.".into();
+                    }
+                }
+                Action::MoveFamily(who, f, up) => {
+                    if self.db.move_family(who, f, up) {
+                        self.fx = self.db.fams_of(who).iter().position(|x| *x == f).unwrap_or(0);
+                        self.x.next_label = Some("Changed the order of spouses".into());
+                        self.dirty = true;
+                    }
+                }
                 Action::Highlight(i) => self.hl = Some(i),
                 Action::AttachFiles => {
                     if let Some(id) = self.sel {
@@ -2136,5 +2231,6 @@ impl eframe::App for App {
             ctx.request_repaint_after(std::time::Duration::from_millis(500));
         }
         ctx.request_repaint_after(std::time::Duration::from_secs(if self.save_error.is_some() { 3 } else { 10 }));
+        self.note_text_focus(ctx);
     }
 }

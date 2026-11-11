@@ -2,6 +2,20 @@
 
 Major work so far, in the order it was done.
 
+## Next version (not released yet)
+
+- **LDS ordinances panel** on the Individual page: baptism, confirmation, initiatory, endowment, sealing to
+  each set of parents and to each spouse, with date, temple (chosen from a searchable list of temple codes,
+  including PAF's older two-letter codes) and status. Read from and written to GEDCOM files as PAF does.
+- **Reorder children and spouses** in the Family view (^ v for children, < > for spouses), and **Sort children
+  by birth**. Spouse order is kept in GEDCOM files and read from PAF and other programs' files.
+- **Find by ID number** (also finds the old number after renumbering) and **Find a couple** (Search menu and the
+  Find window); a number typed in quick jump finds that ID first.
+- **Ditto:** Ctrl+D (Cmd+D) in an empty date or place box fills in the last date or place typed.
+- **Special letters** window (Edit menu): accented letters and symbols, put straight into the box being typed in.
+- **Contact details** for living relatives: address, phone, email and web page, kept in GEDCOM files and left out
+  of private copies.
+
 ## 1.0.3 (9 November 2026)
 
 - Pedigree and descendant charts: a **Select / Hand** choice on the toolbar. With the hand on, drag anywhere on the

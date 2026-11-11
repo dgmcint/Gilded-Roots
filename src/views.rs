@@ -33,6 +33,27 @@ pub(crate) fn old_id(p: &Person) -> Option<String> {
     p.extra.iter().filter(|r| r.at.is_empty() && r.text.contains("\n1 TYPE Old ID")).find_map(|r| r.text.lines().next().and_then(|l| l.strip_prefix("0 REFN ")).map(|v| v.trim().to_string()))
 }
 
+/// A date or place box with "ditto": Ctrl+D (Cmd+D on a Mac) fills it with the last date or
+/// place typed anywhere, as PAF users are used to. Whatever is typed becomes the new "last".
+pub(crate) fn ditto(ui: &mut egui::Ui, text: &mut String, style: impl FnOnce(egui::TextEdit) -> egui::TextEdit, last: &mut String) -> egui::Response {
+    let mut r = ui.add(style(egui::TextEdit::singleline(text)));
+    if r.has_focus() && !last.trim().is_empty() && ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::D)) {
+        *text = last.clone();
+        if let Some(mut st) = egui::TextEdit::load_state(ui.ctx(), r.id) {
+            let end = egui::text::CCursor::new(text.chars().count());
+            st.cursor.set_char_range(Some(egui::text::CCursorRange::one(end)));
+            st.store(ui.ctx(), r.id);
+        }
+        r.mark_changed();
+    } else if r.changed() && !text.trim().is_empty() {
+        *last = text.trim().to_string();
+    }
+    if r.has_focus() && text.is_empty() && !last.trim().is_empty() {
+        r = r.on_hover_text(format!("Ctrl+D (Cmd+D on a Mac): same as last, \"{}\"", last.trim()));
+    }
+    r
+}
+
 pub(crate) fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>) {
     ui.label("Zoom:");
     if ui.add_enabled(z > 0.26, egui::Button::new("-")).clicked() {
@@ -868,6 +889,13 @@ pub(crate)     fn family_main(&self, ui: &mut egui::Ui, act: &mut Option<Action>
                         *act = Some(Action::Fx(i));
                     }
                 }
+                ui.separator();
+                if ui.add_enabled(fx > 0, egui::Button::new("<").small()).on_hover_text("Move this spouse earlier in the list").clicked() {
+                    *act = Some(Action::MoveFamily(id, fid, true));
+                }
+                if ui.add_enabled(fx + 1 < ids.len(), egui::Button::new(">").small()).on_hover_text("Move this spouse later in the list").clicked() {
+                    *act = Some(Action::MoveFamily(id, fid, false));
+                }
             });
             ui.add_space(4.0);
         }
@@ -908,14 +936,27 @@ pub(crate)     fn family_main(&self, ui: &mut egui::Ui, act: &mut Option<Action>
         if f.kids.is_empty() {
             ui.weak("No children recorded");
         } else {
-            egui::Grid::new("kids").num_columns(4).spacing([22.0, 5.0]).show(ui, |ui| {
+            let many = f.kids.len() > 1;
+            egui::Grid::new("kids").num_columns(5).spacing([22.0, 5.0]).show(ui, |ui| {
+                ui.label(RichText::new("Order").small().weak());
                 ui.label(RichText::new("Name").small().weak());
                 ui.label(RichText::new("Born").small().weak());
                 ui.label(RichText::new("Died").small().weak());
                 ui.label(RichText::new("Parent link").small().weak());
                 ui.end_row();
-                for k in &f.kids {
+                for (i, k) in f.kids.iter().enumerate() {
                     let Some(c) = self.db.people.get(k) else { continue };
+                    ui.horizontal(|ui| {
+                        if !many {
+                            return;
+                        }
+                        if ui.add_enabled(i > 0, egui::Button::new("^").small()).on_hover_text("Move up").clicked() {
+                            *act = Some(Action::MoveChild(fid, *k, true));
+                        }
+                        if ui.add_enabled(i + 1 < f.kids.len(), egui::Button::new("v").small()).on_hover_text("Move down").clicked() {
+                            *act = Some(Action::MoveChild(fid, *k, false));
+                        }
+                    });
                     ui.horizontal(|ui| {
                         if ui.link(display_name(c)).clicked() {
                             *act = Some(Action::Select(*k));
@@ -937,6 +978,9 @@ pub(crate)     fn family_main(&self, ui: &mut egui::Ui, act: &mut Option<Action>
         ui.horizontal(|ui| {
             if ui.button("Add child").clicked() {
                 *act = Some(Action::Add(Kind::Child(Some(fid))));
+            }
+            if f.kids.len() > 1 && ui.button("Sort children by birth").on_hover_text("Put the children in order of birth (or christening) date. Undo puts them back.").clicked() {
+                *act = Some(Action::SortChildren(fid));
             }
             if ui.button("Print family group sheet").clicked() {
                 *act = Some(Action::PrintFamily);

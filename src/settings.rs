@@ -104,7 +104,7 @@ pub(crate) struct DockItem {
 
 pub(crate) fn default_dock() -> Vec<DockItem> {
     let d = |sec: &str, on: bool| DockItem { sec: sec.to_string(), on, float: false };
-    vec![d("relationships", true), d("todo", true), d("journal", false), d("events", false), d("sources", false), d("notes", true), d("names", false), d("media", false), d("more", false)]
+    vec![d("relationships", true), d("todo", true), d("journal", false), d("events", false), d("sources", false), d("notes", true), d("names", false), d("media", false), d("lds", false), d("contact", false), d("more", false)]
 }
 
 pub(crate) fn default_keep() -> usize {
@@ -130,6 +130,8 @@ pub(crate) fn dock_title(sec: &str) -> &'static str {
         "more" => "Merge and delete",
         "todo" => "Research to-do",
         "journal" => "Research journal",
+        "lds" => "LDS ordinances",
+        "contact" => "Contact details",
         _ => "",
     }
 }

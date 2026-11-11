@@ -355,6 +355,22 @@ pub(crate) struct AltName {
 
 pub(crate) const FACTS: [&str; 6] = ["General", "Birth", "Christening", "Death", "Burial", "Marriage"];
 
+/// How to reach a living relative.
+#[derive(Clone, Default, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
+pub(crate) struct Contact {
+    pub(crate) addr: String,
+    pub(crate) phone: String,
+    pub(crate) email: String,
+    pub(crate) url: String,
+}
+
+impl Contact {
+    pub(crate) fn is_empty(&self) -> bool {
+        [&self.addr, &self.phone, &self.email, &self.url].iter().all(|s| s.trim().is_empty())
+    }
+}
+
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Person {
@@ -391,6 +407,13 @@ pub(crate) struct Person {
     pub(crate) fx: BTreeMap<String, Event>,
     /// The family whose parents the chart shows, when the person belongs to more than one.
     pub(crate) pref_parents: Option<u32>,
+    /// The order of this person's own families (spouses), when it has been chosen by hand or came
+    /// from a file. Empty means by marriage date. Families not listed come after, by date.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub(crate) fam_order: Vec<u32>,
+    /// Address, phone, email and web page, for living relatives (GEDCOM ADDR, PHON, EMAIL, WWW).
+    #[serde(skip_serializing_if = "Contact::is_empty")]
+    pub(crate) contact: Contact,
     /// Ties to other people outside the family structure: guardian, godparent, witness...
     pub(crate) assoc: Vec<Assoc>,
     /// Research tasks for this person.

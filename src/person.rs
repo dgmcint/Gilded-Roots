@@ -223,6 +223,58 @@ pub(crate)     fn person_read(&mut self, ui: &mut egui::Ui, act: &mut Option<Act
                     }
                 }
             }
+            "contact" => {
+                let c = &p.contact;
+                if c.is_empty() {
+                    none(ui, "No contact details. Press Edit to add an address, phone or email.");
+                } else {
+                    egui::Grid::new("read_contact").num_columns(2).spacing([18.0, 4.0]).show(ui, |ui| {
+                        for (label, v) in [("Address", &c.addr), ("Phone", &c.phone), ("Email", &c.email), ("Web page", &c.url)] {
+                            if v.trim().is_empty() {
+                                continue;
+                            }
+                            ui.label(RichText::new(label).weak());
+                            if label == "Email" {
+                                ui.hyperlink_to(v.trim(), format!("mailto:{}", v.trim()));
+                            } else if label == "Web page" && (v.starts_with("http://") || v.starts_with("https://")) {
+                                ui.hyperlink_to(v.trim(), v.trim());
+                            } else {
+                                val(ui, v.trim());
+                            }
+                            ui.end_row();
+                        }
+                    });
+                    if !p.living {
+                        ui.label(RichText::new("This person is not marked as living.").small().weak());
+                    }
+                }
+            }
+            "lds" => {
+                let rows = self.lds_rows(id);
+                if rows.iter().all(|r| r.event.is_none()) {
+                    none(ui, "No ordinances recorded. Press Edit to add them.");
+                }
+                egui::Grid::new("read_lds").num_columns(2).striped(true).spacing([18.0, 6.0]).show(ui, |ui| {
+                    for r in &rows {
+                        let Some(e) = &r.event else { continue };
+                        ui.label(RichText::new(&r.label).size(14.0).strong());
+                        ui.vertical(|ui| {
+                            let mut parts = vec![];
+                            if !e.date.trim().is_empty() {
+                                parts.push(show_date(&e.date));
+                            }
+                            if !e.temp.trim().is_empty() {
+                                parts.push(temples::temple_label(&e.temp));
+                            }
+                            val(ui, if parts.is_empty() { "-".to_string() } else { parts.join("  -  ") }.as_str());
+                            if !e.stat.trim().is_empty() {
+                                ui.label(RichText::new(temples::status_label(&e.stat)).small().weak());
+                            }
+                        });
+                        ui.end_row();
+                    }
+                });
+            }
             "events" => {
                 if p.events.is_empty() {
                     none(ui, "No other events.");
@@ -425,7 +477,7 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                     ui.end_row();
                     ui.label("Born");
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut p.bd).hint_text("e.g. 12 Mar 1921, about 1850").desired_width(320.0));
+                        ditto(ui, &mut p.bd, |t| t.hint_text("e.g. 12 Mar 1921, about 1850").desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("BIRT").map(|e| e.conf.clone()).unwrap_or_default();
                         if conf_combo(ui, ("cf", "BIRT"), &mut c) {
                             p.fx.entry("BIRT".to_string()).or_default().conf = c;
@@ -433,11 +485,11 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                     });
                     ui.end_row();
                     ui.label("Birthplace");
-                    ui.add(egui::TextEdit::singleline(&mut p.bp).desired_width(320.0));
+                    ditto(ui, &mut p.bp, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
                     ui.label("Christened");
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut p.chd).desired_width(320.0));
+                        ditto(ui, &mut p.chd, |t| t.desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("CHR").map(|e| e.conf.clone()).unwrap_or_default();
                         if conf_combo(ui, ("cf", "CHR"), &mut c) {
                             p.fx.entry("CHR".to_string()).or_default().conf = c;
@@ -445,11 +497,11 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                     });
                     ui.end_row();
                     ui.label("Christening place");
-                    ui.add(egui::TextEdit::singleline(&mut p.chp).desired_width(320.0));
+                    ditto(ui, &mut p.chp, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
                     ui.label("Died");
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut p.dd).desired_width(320.0));
+                        ditto(ui, &mut p.dd, |t| t.desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("DEAT").map(|e| e.conf.clone()).unwrap_or_default();
                         if conf_combo(ui, ("cf", "DEAT"), &mut c) {
                             p.fx.entry("DEAT".to_string()).or_default().conf = c;
@@ -457,11 +509,11 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                     });
                     ui.end_row();
                     ui.label("Place of death");
-                    ui.add(egui::TextEdit::singleline(&mut p.dp).desired_width(320.0));
+                    ditto(ui, &mut p.dp, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
                     ui.label("Buried");
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut p.bud).desired_width(320.0));
+                        ditto(ui, &mut p.bud, |t| t.desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("BURI").map(|e| e.conf.clone()).unwrap_or_default();
                         if conf_combo(ui, ("cf", "BURI"), &mut c) {
                             p.fx.entry("BURI".to_string()).or_default().conf = c;
@@ -469,7 +521,7 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                     });
                     ui.end_row();
                     ui.label("Burial place");
-                    ui.add(egui::TextEdit::singleline(&mut p.bup).desired_width(320.0));
+                    ditto(ui, &mut p.bup, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
                     if !p.dd.trim().is_empty() || !p.bud.trim().is_empty() {
                         ui.label("");
@@ -614,10 +666,10 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                     if let Some(f) = self.db.fams.get_mut(fid) {
                         egui::Grid::new(("mg", *fid)).num_columns(2).show(ui, |ui| {
                             ui.label("Married");
-                            ui.text_edit_singleline(&mut f.md);
+                            ditto(ui, &mut f.md, |t| t, &mut self.x.ditto_date);
                             ui.end_row();
                             ui.label("Place");
-                            ui.text_edit_singleline(&mut f.mp);
+                            ditto(ui, &mut f.mp, |t| t, &mut self.x.ditto_place);
                             ui.end_row();
                             ui.label("Partnership");
                             let shown = if f.kind.is_empty() { "Not stated" } else { f.kind.as_str() };
@@ -691,8 +743,8 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                                             ui.selectable_value(&mut e.kind, k.to_string(), *k);
                                         }
                                     });
-                                    ui.add(egui::TextEdit::singleline(&mut e.date).hint_text("date").desired_width(100.0));
-                                    ui.add(egui::TextEdit::singleline(&mut e.place).hint_text("place").desired_width(130.0));
+                                    ditto(ui, &mut e.date, |t| t.hint_text("date").desired_width(100.0), &mut self.x.ditto_date);
+                                    ditto(ui, &mut e.place, |t| t.hint_text("place").desired_width(130.0), &mut self.x.ditto_place);
                                     ui.add(egui::TextEdit::singleline(&mut e.note).hint_text("note").desired_width(130.0));
                                     if ui.button("Remove").clicked() {
                                         remove = Some(i);
@@ -862,6 +914,61 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                 }
             }
             }
+            "contact" => {
+                ui.label(RichText::new("How to reach a living relative. Living people, and these details, are left out of private copies and printouts that keep the living private.").small().weak());
+                let p = self.db.people.get_mut(&id).unwrap();
+                egui::Grid::new("edit_contact").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
+                    ui.label("Address");
+                    ui.add(egui::TextEdit::multiline(&mut p.contact.addr).desired_rows(2).desired_width(260.0));
+                    ui.end_row();
+                    ui.label("Phone");
+                    ui.add(egui::TextEdit::singleline(&mut p.contact.phone).desired_width(260.0));
+                    ui.end_row();
+                    ui.label("Email");
+                    ui.add(egui::TextEdit::singleline(&mut p.contact.email).desired_width(260.0));
+                    ui.end_row();
+                    ui.label("Web page");
+                    ui.add(egui::TextEdit::singleline(&mut p.contact.url).hint_text("https://").desired_width(260.0));
+                    ui.end_row();
+                });
+            }
+            "lds" => {
+                ui.label(RichText::new("Baptism, confirmation, initiatory, endowment and sealings, with the temple and status, as in PAF. Choose a temple from the list, or search it by place or code.").small().weak());
+                let rows = self.lds_rows(id);
+                let mut add: Option<LdsRow> = None;
+                let mut remove: Option<LdsRow> = None;
+                {
+                    for (i, r) in rows.iter().enumerate() {
+                        ui.add_space(4.0);
+                        ui.label(RichText::new(&r.label).strong());
+                        let mut search = std::mem::take(&mut self.x.temple_search);
+                        let mut last_date = std::mem::take(&mut self.x.ditto_date);
+                        ui.horizontal_wrapped(|ui| match self.lds_event_mut(id, r) {
+                            Some(e) => {
+                                ditto(ui, &mut e.date, |t| t.hint_text("date").desired_width(110.0), &mut last_date);
+                                temples::temple_picker(ui, ("lds_t", i), &mut e.temp, &mut search);
+                                temples::status_picker(ui, ("lds_s", i), &mut e.stat);
+                                if ui.small_button("Remove").clicked() {
+                                    remove = Some(r.clone());
+                                }
+                            }
+                            None => {
+                                if ui.button("Add").clicked() {
+                                    add = Some(r.clone());
+                                }
+                            }
+                        });
+                        self.x.temple_search = search;
+                        self.x.ditto_date = last_date;
+                    }
+                }
+                if let Some(r) = add {
+                    self.lds_add(id, &r);
+                }
+                if let Some(r) = remove {
+                    self.lds_remove(id, &r);
+                }
+            }
             "events" => {
             {
                 let p = self.db.people.get_mut(&id).unwrap();
@@ -873,8 +980,8 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
                                 ui.selectable_value(&mut e.kind, k.to_string(), *k);
                             }
                         });
-                        ui.add(egui::TextEdit::singleline(&mut e.date).hint_text("date").desired_width(110.0));
-                        ui.add(egui::TextEdit::singleline(&mut e.place).hint_text("place").desired_width(150.0));
+                        ditto(ui, &mut e.date, |t| t.hint_text("date").desired_width(110.0), &mut self.x.ditto_date);
+                        ditto(ui, &mut e.place, |t| t.hint_text("place").desired_width(150.0), &mut self.x.ditto_place);
                         ui.add(egui::TextEdit::singleline(&mut e.val).hint_text("details").desired_width(150.0));
                         conf_combo(ui, ("evcf", i), &mut e.conf);
                         if ui.button("Remove").clicked() {
@@ -1277,6 +1384,112 @@ pub(crate)     fn dock_bar(&mut self, ui: &mut egui::Ui) {
         }
         if changed {
             save_settings(&self.settings);
+        }
+    }
+}
+
+/// One line of the LDS ordinances panel: which ordinance, and where its event is kept.
+#[derive(Clone)]
+pub(crate) struct LdsRow {
+    pub(crate) label: String,
+    /// The event kind ("LDS baptism", "LDS child sealing", "LDS spouse sealing"...).
+    pub(crate) kind: &'static str,
+    /// For a sealing: the family (the parents' family, or the couple's family).
+    pub(crate) fam: Option<u32>,
+    /// Where the event is now: its place in the person's events, or the family's for a spouse sealing.
+    pub(crate) at: Option<usize>,
+    pub(crate) event: Option<Event>,
+}
+
+/// The family a "sealed to parents" event is for, from its FAMC line.
+pub(crate) fn sealing_family(e: &Event) -> Option<u32> {
+    e.extra.iter().flat_map(|r| r.text.lines()).find_map(|l| {
+        let rest = l.trim().strip_prefix("0 FAMC @F")?;
+        rest.trim_end_matches('@').parse().ok()
+    })
+}
+
+impl App {
+    /// The ordinances shown for a person: the four personal ones, a sealing to each set of
+    /// parents, and a sealing to each spouse.
+    pub(crate) fn lds_rows(&self, id: u32) -> Vec<LdsRow> {
+        let Some(p) = self.db.people.get(&id) else { return vec![] };
+        let mut rows = vec![];
+        for (kind, label) in [("LDS baptism", "Baptism"), ("LDS confirmation", "Confirmation"), ("LDS initiatory", "Initiatory"), ("LDS endowment", "Endowment")] {
+            let at = p.events.iter().position(|e| e.kind == kind);
+            rows.push(LdsRow { label: label.into(), kind, fam: None, at, event: at.map(|i| p.events[i].clone()) });
+        }
+        let name = |x: Option<u32>| x.and_then(|x| self.db.people.get(&x)).map(display_name);
+        let parents = self.db.parent_families(id);
+        let sealings: Vec<usize> = p.events.iter().enumerate().filter(|(_, e)| e.kind == "LDS child sealing").map(|(i, _)| i).collect();
+        for f in &parents {
+            let fam = &self.db.fams[f];
+            let who: Vec<String> = [name(fam.h), name(fam.w)].into_iter().flatten().collect();
+            let label = if who.is_empty() { "Sealed to parents".to_string() } else { format!("Sealed to parents: {}", who.join(" and ")) };
+            // The sealing that names this family, or the only unnamed one when there is one set of parents.
+            let at = sealings
+                .iter()
+                .copied()
+                .find(|i| sealing_family(&p.events[*i]) == Some(*f))
+                .or_else(|| if parents.len() == 1 { sealings.iter().copied().find(|i| sealing_family(&p.events[*i]).is_none()) } else { None });
+            rows.push(LdsRow { label, kind: "LDS child sealing", fam: Some(*f), at, event: at.map(|i| p.events[i].clone()) });
+        }
+        if parents.is_empty() {
+            let at = sealings.first().copied();
+            rows.push(LdsRow { label: "Sealed to parents".into(), kind: "LDS child sealing", fam: None, at, event: at.map(|i| p.events[i].clone()) });
+        }
+        for f in self.db.fams_of(id) {
+            let fam = &self.db.fams[&f];
+            let spouse = if fam.h == Some(id) { fam.w } else { fam.h };
+            let label = match name(spouse) {
+                Some(n) => format!("Sealed to spouse: {n}"),
+                None => "Sealed to spouse".to_string(),
+            };
+            let at = fam.events.iter().position(|e| e.kind == "LDS spouse sealing");
+            rows.push(LdsRow { label, kind: "LDS spouse sealing", fam: Some(f), at, event: at.map(|i| fam.events[i].clone()) });
+        }
+        rows
+    }
+
+    pub(crate) fn lds_event_mut(&mut self, id: u32, r: &LdsRow) -> Option<&mut Event> {
+        let i = r.at?;
+        if r.kind == "LDS spouse sealing" {
+            self.db.fams.get_mut(&r.fam?)?.events.get_mut(i)
+        } else {
+            self.db.people.get_mut(&id)?.events.get_mut(i)
+        }
+    }
+
+    pub(crate) fn lds_add(&mut self, id: u32, r: &LdsRow) {
+        let mut e = Event { kind: r.kind.to_string(), ..Default::default() };
+        if r.kind == "LDS spouse sealing" {
+            if let Some(f) = r.fam.and_then(|f| self.db.fams.get_mut(&f)) {
+                f.events.push(e);
+            }
+            return;
+        }
+        if r.kind == "LDS child sealing" {
+            if let Some(f) = r.fam {
+                e.extra.push(Raw { at: String::new(), text: format!("0 FAMC @F{f}@\n") });
+            }
+        }
+        if let Some(p) = self.db.people.get_mut(&id) {
+            p.events.push(e);
+        }
+    }
+
+    pub(crate) fn lds_remove(&mut self, id: u32, r: &LdsRow) {
+        let Some(i) = r.at else { return };
+        if r.kind == "LDS spouse sealing" {
+            if let Some(f) = r.fam.and_then(|f| self.db.fams.get_mut(&f)) {
+                if i < f.events.len() {
+                    f.events.remove(i);
+                }
+            }
+        } else if let Some(p) = self.db.people.get_mut(&id) {
+            if i < p.events.len() {
+                p.events.remove(i);
+            }
         }
     }
 }

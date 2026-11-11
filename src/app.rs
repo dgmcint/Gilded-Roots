@@ -34,9 +34,9 @@ pub(crate) struct LinkReq {
 }
 
 /// Drop-down for how a child is related to one parent. Returns the new GEDCOM word when changed.
-pub(crate) fn rel_combo(ui: &mut egui::Ui, salt: impl std::hash::Hash, cur: &str) -> Option<String> {
+pub(crate) fn rel_combo(ui: &mut egui::Ui, id_key: impl std::hash::Hash, cur: &str) -> Option<String> {
     let mut out = None;
-    egui::ComboBox::from_id_salt(salt).selected_text(rel_name(cur)).width(120.0).show_ui(ui, |ui| {
+    egui::ComboBox::from_id_salt(id_key).selected_text(rel_name(cur)).width(120.0).show_ui(ui, |ui| {
         for (w, lbl) in PARENT_RELS {
             if ui.selectable_label(rel_name(cur) == *lbl, *lbl).clicked() {
                 out = Some(if *w == "Natural" { String::new() } else { w.to_string() });
@@ -109,6 +109,23 @@ pub(crate) struct Extra {
     /// Tools > Renumber people: open, the order chosen (0 family, 1 present, 2 alphabetical),
     /// and the preview for that order (first few people: old number, new number, name)
     pub(crate) renum_open: bool,
+    /// LDS ordinances panel: the text typed into a temple list's search box
+    pub(crate) temple_search: String,
+    /// Find Individual: how to search (0 name or place, 1 ID number, 2 a couple), and the
+    /// ID number and the two names typed for the other ways
+    pub(crate) find_mode: u8,
+    /// Ditto: the last date and the last place typed, for Ctrl+D (Cmd+D) in an empty box
+    pub(crate) ditto_date: String,
+    /// Special letters window: open, capitals, the text box last typed in, and a letter to
+    /// type into it next frame
+    pub(crate) letters_open: bool,
+    pub(crate) letters_caps: bool,
+    pub(crate) last_text_focus: Option<egui::Id>,
+    pub(crate) pending_letter: Option<(String, egui::Id)>,
+    pub(crate) ditto_place: String,
+    pub(crate) find_id: String,
+    pub(crate) find_a: String,
+    pub(crate) find_b: String,
     pub(crate) renum_how: u8,
     pub(crate) renum_preview: Option<(u8, Vec<(u32, u32, String)>, usize)>,
     /// Gallery/Memories: choosing several items to remove at once
@@ -282,6 +299,12 @@ pub(crate) enum Action {
     PrintDescendants,
     PrintChart,
     Bookmark(u32),
+    /// Move a child earlier (true) or later in a family's list: (family, child, earlier)
+    MoveChild(u32, u32, bool),
+    /// Put a family's children in order of birth
+    SortChildren(u32),
+    /// Move one of a person's families (spouses) earlier or later: (person, family, earlier)
+    MoveFamily(u32, u32, bool),
 }
 
 pub(crate) struct App {

@@ -104,6 +104,9 @@ pub(crate)     fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
             ("Relationship calculator", Jump::Window("rel")),
             ("Home person (choose)", Jump::Window("home")),
             ("Renumber people", Jump::Window("renum")),
+            ("Special letters: accents and symbols (é, ñ, ß, †)", Jump::Window("letters")),
+            ("Find by ID number", Jump::Window("find_id")),
+            ("Find a couple", Jump::Window("find_couple")),
             ("Import tree", Jump::Window("import")),
             ("Export GEDCOM", Jump::Window("export")),
             ("User guide / help", Jump::Window("help")),
@@ -140,6 +143,14 @@ pub(crate)     fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
                 }
             }
             people.sort_by(|a, b| a.0.cmp(&b.0).then(a.2.cmp(&b.2)));
+            // A number typed on its own finds that ID number first.
+            if words.len() == 1 {
+                for (id, old) in self.db.find_by_number(words[0]).into_iter().rev() {
+                    people.retain(|x| x.1 != id);
+                    let tag = if old { format!("Old ID {}", words[0].trim_start_matches('#')) } else { format!("#{id}") };
+                    people.insert(0, (0, id, format!("{}   {}", self.db.label(id), tag)));
+                }
+            }
             for (_, id, label) in people.into_iter().take(30) {
                 out.push((label, "person".into(), Jump::Act(Action::Select(id))));
             }
@@ -189,6 +200,15 @@ pub(crate)     fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
                 }
                 "rel" => self.rel_open = true,
                 "home" => self.home_pick = Some(String::new()),
+                "letters" => self.x.letters_open = true,
+                "find_id" => {
+                    self.find_open = true;
+                    self.x.find_mode = 1;
+                }
+                "find_couple" => {
+                    self.find_open = true;
+                    self.x.find_mode = 2;
+                }
                 "renum" => {
                     self.x.renum_open = true;
                     self.x.renum_preview = None;

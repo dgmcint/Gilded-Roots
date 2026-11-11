@@ -168,7 +168,7 @@ pub(crate) fn desc_lines(db: &Db, id: u32) -> (String, Option<String>) {
 /// or holds typed text, and carries its own page, quality, transcription, web address and access date.
 pub(crate) fn cite_list(
     ui: &mut egui::Ui,
-    salt: impl std::hash::Hash + Copy,
+    id_key: impl std::hash::Hash + Copy,
     cites: &mut Vec<Source>,
     about: Option<&[&str]>,
     new_about: &str,
@@ -183,7 +183,7 @@ pub(crate) fn cite_list(
     for (i, c) in cites.iter_mut().enumerate() {
         ui.horizontal(|ui| {
             if let Some(list) = about {
-                egui::ComboBox::from_id_salt((salt, i, "about")).selected_text(if c.about.is_empty() { "General" } else { c.about.as_str() }).width(100.0).show_ui(ui, |ui| {
+                egui::ComboBox::from_id_salt((id_key, i, "about")).selected_text(if c.about.is_empty() { "General" } else { c.about.as_str() }).width(100.0).show_ui(ui, |ui| {
                     for f in list {
                         ui.selectable_value(&mut c.about, f.to_string(), *f);
                     }
@@ -194,7 +194,7 @@ pub(crate) fn cite_list(
                 None if c.text.is_empty() => "Choose a source...".to_string(),
                 None => format!("{} (typed)", c.text),
             };
-            egui::ComboBox::from_id_salt((salt, i, "src")).selected_text(shown).width(300.0).show_ui(ui, |ui| {
+            egui::ComboBox::from_id_salt((id_key, i, "src")).selected_text(shown).width(300.0).show_ui(ui, |ui| {
                 egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
                     if ui.selectable_label(false, "+ New source...").clicked() {
                         new_for = Some(i);
@@ -229,7 +229,7 @@ pub(crate) fn cite_list(
                 ui.add(egui::TextEdit::singleline(&mut c.text).hint_text("source name, e.g. 1940 US Census").desired_width(230.0));
             }
             ui.add(egui::TextEdit::singleline(&mut c.page).hint_text("page, line or entry").desired_width(200.0));
-            egui::ComboBox::from_id_salt((salt, i, "quay")).selected_text(quality_label(&c.quality)).width(170.0).show_ui(ui, |ui| {
+            egui::ComboBox::from_id_salt((id_key, i, "quay")).selected_text(quality_label(&c.quality)).width(170.0).show_ui(ui, |ui| {
                 for q in ["", "0", "1", "2", "3"] {
                     ui.selectable_value(&mut c.quality, q.to_string(), quality_label(q));
                 }
@@ -239,7 +239,7 @@ pub(crate) fn cite_list(
         ui.horizontal(|ui| {
             ui.add_space(20.0);
             egui::CollapsingHeader::new(if has_more { "Transcription, web address, notes (filled in)" } else { "Transcription, web address, notes" })
-                .id_salt((salt, i, "more"))
+                .id_salt((id_key, i, "more"))
                 .show(ui, |ui| {
                     ui.label("Text from the source (copy it exactly as written)");
                     ui.add(egui::TextEdit::multiline(&mut c.data).desired_rows(3).desired_width(f32::INFINITY));
@@ -285,14 +285,14 @@ pub(crate) fn cite_list(
 /// A collapsible "Sources (n)" block for one fact or event.
 pub(crate) fn cites_section(
     ui: &mut egui::Ui,
-    salt: impl std::hash::Hash + Copy,
+    id_key: impl std::hash::Hash + Copy,
     cites: &mut Vec<Source>,
     sources: &mut BTreeMap<u32, SourceRec>,
     next: &mut u32,
     open_src: &mut Option<u32>,
 ) {
-    egui::CollapsingHeader::new(format!("Sources ({})", cites.len())).id_salt((salt, "sec")).show(ui, |ui| {
-        cite_list(ui, salt, cites, None, "", sources, next, open_src);
+    egui::CollapsingHeader::new(format!("Sources ({})", cites.len())).id_salt((id_key, "sec")).show(ui, |ui| {
+        cite_list(ui, id_key, cites, None, "", sources, next, open_src);
     });
 }
 

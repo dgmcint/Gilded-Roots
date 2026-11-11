@@ -55,6 +55,14 @@ your tree. Press **Edit** to unlock it, make your changes, then press **Save**. 
 as they were. While locked, the page reads like a profile: portrait, name and dates at the top, then only the
 facts that are filled in, with relatives as clickable links. If you move to another person or tab with unsaved changes, you are asked to Save, Discard or Keep editing.
 
+**Ditto (repeat the last date or place).** In any empty date or place box, press **Ctrl+D** (**Cmd+D** on a Mac)
+to fill in the last date or place you typed, for example the same town for a whole family of children. Hover over
+an empty box to see what it would fill in.
+
+**Special letters.** For accented letters and symbols (é, ñ, ø, ß, ł, †...), choose **Edit → Special letters**.
+Click in the box you are typing in, then click a letter: it goes in where you were typing and is also copied, so it
+can be pasted elsewhere. Tick **Capitals** for capital letters.
+
 ## Parents, partners and complex families
 - A person's page lists **each set of parents** separately. Pick how each parent is related (Biological,
   Adopted, Step-parent, Foster, Guardian, Sealed) from the drop-downs.
@@ -76,7 +84,8 @@ exports as `_TODO`, which RootsMagic and Legacy also read.
 
 ## Panels on the Individual page
 The left side of the Individual page holds the core facts and a timeline. Everything else is in panels on the right:
-**Relationships, Events, Sources, Notes, Other names, Photos and recordings, Merge and delete**. Use the **Panels**
+**Relationships, Events, Sources, Notes, Other names, Photos and recordings, LDS ordinances, Contact details, Merge
+and delete**. Use the **Panels**
 row above the page to show or hide each one. Each panel's title bar has **^ / v** to move it, **Float** to pop it out
 into its own window, and **x** to hide it; click the title to fold it up, and drag the dock's edge to resize it.
 Your layout is remembered, and **Reset layout** restores the defaults. In a narrow window the panels move below.
@@ -85,12 +94,28 @@ Your layout is remembered, and **Reset layout** restores the defaults. In a narr
 to-do, sources, notes), **Photos and stories**, **Family** and **Everything**. To keep your own, arrange the panels,
 type a name under Layouts and press **Save current**.
 
+**LDS ordinances** (turn it on in the Panels row) lists baptism, confirmation, initiatory, endowment, the sealing
+to each set of parents and the sealing to each spouse. Press **Edit**, then **Add** on a line to enter its date,
+temple and status. Choose the temple from the list (type part of the place or its code, such as "logan" or
+"SLAKE"); older two-letter codes from PAF files are shown by name too. Ordinances are kept in GEDCOM files the way
+PAF and FamilySearch write them.
+
+**Contact details** (also in the Panels row) holds an address, phone, email and web page for living relatives.
+They go out in GEDCOM files (ADDR, PHON, EMAIL, WWW) but never in a private copy, which leaves living people out.
+
 ## The Family tab
 The left side shows the selected person's family: the couple as compact cards, the marriage line, and a children
 table with Born, Died and Parent link (Birth, Adopted, Step, Foster...). The right side, **Relationships**, lists
 parents (labelled Biological, Adopted, Step...), siblings (half-siblings marked), every partnership with its
 children, and other relationships. Click any card or name to go to that person. With several partnerships, use
 the buttons above the cards (or "Show this family") to switch. In a narrow window the Relationships panel moves below.
+
+**Changing the order.** The **^ v** buttons beside each child move them up or down, and **Sort children by
+birth** puts them in order of birth (children with no date stay after the brother or sister they followed).
+With several spouses, **< >** after the spouse buttons move the chosen spouse earlier or later. The order is
+saved in GEDCOM files, and spouse order is read from files made by PAF and other programs. Undo (Ctrl+Z) puts
+things back. To choose which parents the charts show for someone with more than one set, use **Show these parents
+on the chart** in the Relationships panel while editing.
 
 ## Importing from Ancestry
 Ancestry's GEDCOM files contain links to the photos on Ancestry's website, not the photos themselves. Gilded
@@ -112,7 +137,11 @@ web address and the date you looked. **Reports → Source list** prints a biblio
 - When importing a second file, choose **Add to my tree** and confirm each suspected match as the same or different.
 
 ## Search and relationships
-**Search → Find individual…** and **Search → Relationship finder…**. The finder names blood and legal
+**Search → Find individual…** and **Search → Relationship finder…**. The Find window has three ways to search:
+**Name or place**; **ID number** (finds someone by their ID, and also by their old number if the tree was
+renumbered); and **A couple** (type part of each partner's name, in either order, and click the couple to open
+their family). **Search → Find by ID number** and **Search → Find a couple** open it on those. In quick jump
+(Ctrl/Cmd+K), a number on its own finds that ID first. The finder names blood and legal
 relationships separately (for example, adoptive versus birth parent).
 
 ## Printing
