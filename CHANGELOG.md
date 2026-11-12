@@ -13,6 +13,11 @@ Major work so far, in the order it was done.
   Find window); a number typed in quick jump finds that ID first.
 - **Ditto:** Ctrl+D (Cmd+D) in an empty date or place box fills in the last date or place typed.
 - **Special letters** window (Edit menu): accented letters and symbols, put straight into the box being typed in.
+- **Groups (focus and filter)** (Search menu): named sets of people kept with the tree, built by relationship
+  (ancestors, descendants, everyone connected, with spouses and brothers and sisters, any number of generations)
+  and by what is recorded (for example "Birthplace contains Idaho", "Born before 1900", "Has no sources"). A group
+  can be shown in the People tab, printed as a list, exported as a GEDCOM file of only those people, or copied into
+  a new tree. Right-click anyone to add them to a group.
 - **Contact details** for living relatives: address, phone, email and web page, kept in GEDCOM files and left out
   of private copies.
 

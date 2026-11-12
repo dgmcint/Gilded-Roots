@@ -251,6 +251,11 @@ impl eframe::App for App {
                         self.x.find_mode = 2;
                         ui.close_menu();
                     }
+                    ui.separator();
+                    if ui.button("Groups (focus and filter)...").on_hover_text("Pick out a set of people by relationship or by what is recorded, then show, print, export or split them off").clicked() {
+                        self.x.groups_open = true;
+                        ui.close_menu();
+                    }
                     if ui.button("Relationship finder...").clicked() {
                         self.rel_open = true;
                         if self.rel_a.is_none() {
@@ -870,6 +875,7 @@ impl eframe::App for App {
         self.review_window(ctx);
         self.import_merge_window(ctx);
         self.letters_window(ctx);
+        self.groups_window(ctx, &mut act);
         if let Some(id) = self.src_pick.take() {
             if self.db.sources.contains_key(&id) {
                 self.src_open = true;
@@ -1948,6 +1954,19 @@ impl eframe::App for App {
                         self.x.next_label = Some("Changed the order of children".into());
                         self.dirty = true;
                     }
+                }
+                Action::GroupToggle(g, id) => {
+                    if let Some(gr) = self.db.groups.get_mut(g) {
+                        if !gr.ids.remove(&id) {
+                            gr.ids.insert(id);
+                        }
+                        self.x.next_label = Some("Changed a group".into());
+                        self.dirty = true;
+                    }
+                }
+                Action::GroupsOpen(id) => {
+                    self.x.group_who = Some(id);
+                    self.x.groups_open = true;
                 }
                 Action::SortChildren(f) => {
                     if self.db.sort_children(f) {

@@ -2752,6 +2752,9 @@ pub fn renumber(db: &mut Db, order: &[u32]) -> HashMap<u32, u32> {
         }
     }
     db.home = db.home.map(p);
+    for g in db.groups.iter_mut() {
+        g.ids = g.ids.iter().map(|x| p(*x)).collect();
+    }
     // new records continue after the highest number in use (people, families, sources...)
     let top = [db.people.keys().max(), db.fams.keys().max(), db.sources.keys().max(), db.repos.keys().max(), db.notes.keys().max()].into_iter().flatten().max().copied().unwrap_or(0);
     db.next = db.next.max(top);

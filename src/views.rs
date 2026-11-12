@@ -232,6 +232,22 @@ pub(crate)     fn person_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Optio
             *act = Some(Action::QuickEdit(id));
             ui.close_menu();
         }
+        ui.menu_button("Groups", |ui| {
+            for (i, g) in self.db.groups.iter().enumerate() {
+                let inside = g.ids.contains(&id);
+                if ui.button(if inside { format!("Take out of \"{}\"", g.name) } else { format!("Add to \"{}\"", g.name) }).clicked() {
+                    *act = Some(Action::GroupToggle(i, id));
+                    ui.close_menu();
+                }
+            }
+            if !self.db.groups.is_empty() {
+                ui.separator();
+            }
+            if ui.button("Groups...").clicked() {
+                *act = Some(Action::GroupsOpen(id));
+                ui.close_menu();
+            }
+        });
         ui.menu_button("Add a relative", |ui| {
             let (f, m) = self.db.parents(id);
             let first_fam = self.db.fams_of(id).first().copied();

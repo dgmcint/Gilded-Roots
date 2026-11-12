@@ -28,6 +28,8 @@ pub enum Only {
     Living,
     Bookmarked,
     Doubtful,
+    /// The people in a saved group (which one is `table_group`)
+    Group,
 }
 
 pub struct Row {
@@ -68,6 +70,7 @@ impl App {
                 Only::OpenTasks => open_tasks > 0,
                 Only::Living => p.living,
                 Only::Bookmarked => self.db.bookmarks.contains(id),
+                Only::Group => self.db.groups.get(self.x.table_group).map_or(false, |g| g.ids.contains(id)),
                 Only::Doubtful => {
                     let weak = |c: &str| c == "uncertain" || c == "disputed";
                     p.fx.values().any(|e| weak(&e.conf)) || p.events.iter().any(|e| weak(&e.conf))
@@ -128,8 +131,9 @@ impl App {
             ui.label(RichText::new(format!("{} of {} people", rows.len(), self.db.people.len())).strong());
             ui.add(egui::TextEdit::singleline(&mut self.x.table_find).hint_text("Filter: name, year, place or #ID").desired_width(240.0));
             ui.label("Show");
+            let group_label = self.db.groups.get(self.x.table_group).map(|g| format!("Group: {}", g.name)).unwrap_or_else(|| "Group".into());
             egui::ComboBox::from_id_salt("table_only")
-                .selected_text(match self.x.table_only {
+                .selected_text(if self.x.table_only == Only::Group { group_label } else { match self.x.table_only {
                     Only::All => "Everyone",
                     Only::NoBirth => "No birth date",
                     Only::NoSources => "No sources",
@@ -137,10 +141,17 @@ impl App {
                     Only::Living => "Living",
                     Only::Bookmarked => "Bookmarked",
                     Only::Doubtful => "Uncertain or disputed facts",
-                })
+                    Only::Group => "",
+                }.to_string() })
                 .show_ui(ui, |ui| {
                     for (v, l) in [(Only::All, "Everyone"), (Only::NoBirth, "No birth date"), (Only::NoSources, "No sources"), (Only::OpenTasks, "Open research tasks"), (Only::Living, "Living"), (Only::Bookmarked, "Bookmarked"), (Only::Doubtful, "Uncertain or disputed facts")] {
                         ui.selectable_value(&mut self.x.table_only, v, l);
+                    }
+                    for (i, g) in self.db.groups.iter().enumerate() {
+                        if ui.selectable_label(self.x.table_only == Only::Group && self.x.table_group == i, format!("Group: {}", g.name)).clicked() {
+                            self.x.table_only = Only::Group;
+                            self.x.table_group = i;
+                        }
                     }
                 });
             if ui.button("Save as spreadsheet (CSV)...").on_hover_text("Opens in Excel, Numbers or Google Sheets").clicked() {
@@ -170,7 +181,7 @@ impl App {
         tb.header(24.0, |mut h| {
             for (c, l, _) in &cols {
                 h.col(|ui| {
-                    let arrow = if self.x.table_col == *c { if self.x.table_desc { " \u{25bc}" } else { " \u{25b2}" } } else { "" };
+                    let arrow = if self.x.table_col == *c { if self.x.table_desc { " v" } else { " ^" } } else { "" };
                     if ui.add(egui::Button::new(RichText::new(format!("{}{}", l, arrow)).strong()).frame(false)).clicked() {
                         sort_click = Some(*c);
                     }

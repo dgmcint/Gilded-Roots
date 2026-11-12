@@ -2,7 +2,7 @@
 use eframe::egui::{self, pos2, vec2, Align2, Color32, FontId, Rect, RichText, Rounding, Sense, Stroke};
 use serde::{Deserialize, Serialize};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::fmt::Write as _;
@@ -48,6 +48,7 @@ mod views;
 mod person;
 mod update;
 mod letters;
+mod groups;
 pub(crate) use model::*;
 pub(crate) use genealogy::*;
 pub(crate) use settings::*;

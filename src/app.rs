@@ -119,6 +119,25 @@ pub(crate) struct Extra {
     /// Special letters window: open, capitals, the text box last typed in, and a letter to
     /// type into it next frame
     pub(crate) letters_open: bool,
+    /// Groups window: open, which group, the person to count from, the relationship rule
+    /// (kind, generations, spouses, brothers and sisters), the field rule (field, test, value),
+    /// a name being typed, and jobs to do (print, export, split off as a tree with its name)
+    pub(crate) groups_open: bool,
+    pub(crate) group_cur: usize,
+    pub(crate) group_who: Option<u32>,
+    pub(crate) group_rel: usize,
+    pub(crate) group_gens: u32,
+    pub(crate) group_spouses: bool,
+    pub(crate) group_sibs: bool,
+    pub(crate) group_field: usize,
+    pub(crate) group_test: usize,
+    pub(crate) group_val: String,
+    pub(crate) group_name: String,
+    pub(crate) group_print: Option<usize>,
+    pub(crate) group_export: Option<usize>,
+    pub(crate) group_split: Option<(usize, String)>,
+    /// The People tab's "Group" filter: which group
+    pub(crate) table_group: usize,
     pub(crate) letters_caps: bool,
     pub(crate) last_text_focus: Option<egui::Id>,
     pub(crate) pending_letter: Option<(String, egui::Id)>,
@@ -305,6 +324,10 @@ pub(crate) enum Action {
     SortChildren(u32),
     /// Move one of a person's families (spouses) earlier or later: (person, family, earlier)
     MoveFamily(u32, u32, bool),
+    /// Add a person to a group, or take them out: (group, person)
+    GroupToggle(usize, u32),
+    /// Open the Groups window counting from this person
+    GroupsOpen(u32),
 }
 
 pub(crate) struct App {

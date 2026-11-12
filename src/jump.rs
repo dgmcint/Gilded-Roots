@@ -107,6 +107,7 @@ pub(crate)     fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
             ("Special letters: accents and symbols (é, ñ, ß, †)", Jump::Window("letters")),
             ("Find by ID number", Jump::Window("find_id")),
             ("Find a couple", Jump::Window("find_couple")),
+            ("Groups: focus and filter", Jump::Window("groups")),
             ("Import tree", Jump::Window("import")),
             ("Export GEDCOM", Jump::Window("export")),
             ("User guide / help", Jump::Window("help")),
@@ -201,6 +202,7 @@ pub(crate)     fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
                 "rel" => self.rel_open = true,
                 "home" => self.home_pick = Some(String::new()),
                 "letters" => self.x.letters_open = true,
+                "groups" => self.x.groups_open = true,
                 "find_id" => {
                     self.find_open = true;
                     self.x.find_mode = 1;

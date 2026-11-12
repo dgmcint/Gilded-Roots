@@ -205,8 +205,32 @@ birthday and source reports.
 ## The People tab (table)
 Everyone in one table, like a spreadsheet: ID, name, sex, birth and death dates and places, and how many sources,
 photos and open tasks each person has. Click a column title to sort (click again to reverse). Filter with the search
-box, or **Show** only people with no birth date, no sources, open research tasks, living people or bookmarks.
-**Save as spreadsheet (CSV)** saves exactly what is shown, for Excel, Numbers or Google Sheets.
+box, or **Show** only people with no birth date, no sources, open research tasks, living people, bookmarks or the
+people in one of your groups. **Save as spreadsheet (CSV)** saves exactly what is shown, for Excel, Numbers or Google
+Sheets.
+
+## Groups (focus and filter)
+**Search → Groups** picks out a set of people and keeps it with the tree under a name, such as "Harwood line" or
+"Born in Idaho". Type a name and press **New group**, then fill it in either way, as often as you like:
+
+- **By relationship:** choose who to start from (the selected person or the home person), then just that person,
+  their ancestors, descendants, both, or everyone connected to them; how many generations (0 for all); and whether
+  to bring in their brothers and sisters and their spouses. **Add to group** or **Take out of group**.
+- **By what is recorded:** choose a field (name, surname, sex, birth or death year and place, any place, notes,
+  living, no sources, photos, no parents, no spouse, no children, open research tasks) and a test, for example
+  *Birthplace contains Idaho* or *Born (year) before 1900*. **Add matches**, **Keep only matches** (to narrow the
+  group down) or **Take out matches**.
+
+The list on the right shows who is in the group; **x** takes one person out. Right-click anyone in the tree and use
+**Groups** to add them to a group or take them out. **How this group was made** lists the steps. Undo works as usual.
+
+With a group you can:
+- **Show in People tab** to see, sort and edit them in the table, or save them as a spreadsheet;
+- **Print list** of everyone in it, with dates, places and parents;
+- **Export GEDCOM...**, a file with only these people, their families, sources and photos (links to anyone left out
+  are taken away);
+- **Start a new tree from them...**, which copies them, with their photos, into a new tree (see Separate family
+  trees). The tree you are in is not changed.
 
 ## Places
 **Tools → Places...** (or **F9**) lists every place in your tree and how often it is used. Pick one to see who was born,

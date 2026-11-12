@@ -1333,6 +1333,11 @@ impl Db {
         if self.home == Some(gone) {
             self.home = Some(keep);
         }
+        for g in self.groups.iter_mut() {
+            if g.ids.remove(&gone) {
+                g.ids.insert(keep);
+            }
+        }
         if let Some(k) = self.people.get_mut(&keep) {
             let fill = |a: &mut String, b: &String| {
                 if a.is_empty() {

@@ -586,11 +586,23 @@ pub(crate) struct Db {
     /// imported, and written back into exported GEDCOM files.
     #[serde(default)]
     pub(crate) home: Option<u32>,
+    /// Saved groups of people (Tools > Groups), kept with the tree.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) groups: Vec<Group>,
+}
+
+/// A named set of people, and the steps it was made with.
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub(crate) struct Group {
+    pub(crate) name: String,
+    pub(crate) ids: BTreeSet<u32>,
+    pub(crate) how: Vec<String>,
 }
 
 impl Default for Db {
     fn default() -> Self {
-        Db { people: BTreeMap::new(), fams: BTreeMap::new(), next: 0, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None }
+        Db { people: BTreeMap::new(), fams: BTreeMap::new(), next: 0, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new() }
     }
 }
 
