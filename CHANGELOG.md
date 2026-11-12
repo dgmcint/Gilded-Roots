@@ -18,6 +18,18 @@ Major work so far, in the order it was done.
   and by what is recorded (for example "Birthplace contains Idaho", "Born before 1900", "Has no sources"). A group
   can be shown in the People tab, printed as a list, exported as a GEDCOM file of only those people, or copied into
   a new tree. Right-click anyone to add them to a group.
+- **Ancestor book** and **Descendant book** (Reports menu): the family written out as numbered paragraphs, generation
+  by generation, with an index of names.
+- **Ready-made lists** (Reports → Lists): everyone alphabetically, marriages, end-of-line ancestors, people linked to
+  nobody, missing LDS ordinances, contact details and possible duplicates.
+- **A4 paper** for every printout (Reports → Paper), as well as US Letter.
+- **Source templates**: fill in a few boxes for a census, certificate, newspaper item, book, website and more, and
+  the source's title, author and publication details are written out for you.
+- **Pictures on citations**: attach a scan of the record itself to a citation; kept in GEDCOM files.
+- **Find and replace in notes** (Edit menu), with every match shown first; **note tags** ("Military: ",
+  "Research: "...); lines starting with **~** are private and left off printouts and private copies.
+- **Date calculator**, **Soundex** and **Search websites for this person** (FamilySearch, Find a Grave, WikiTree,
+  Ancestry, Google) in the Tools menu.
 - **Contact details** for living relatives: address, phone, email and web page, kept in GEDCOM files and left out
   of private copies.
 

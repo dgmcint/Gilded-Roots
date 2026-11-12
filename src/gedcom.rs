@@ -747,6 +747,10 @@ fn cite_of(cx: &mut Cx, c: &Node, path: &str) -> Source {
                     s.extra.push(Raw { at: "DATA".into(), text: rest });
                 }
             }
+            "OBJE" => {
+                let ms = media_of(cx, k, &sub);
+                s.media.extend(ms);
+            }
             "NOTE" => {
                 let (mut t, mut r, mut x) = (std::mem::take(&mut s.note), std::mem::take(&mut s.note_refs), std::mem::take(&mut s.extra));
                 note_into(cx, k, &mut t, &mut r, &mut x, &sub);
@@ -1912,6 +1916,14 @@ fn emit_cite(o: &mut String, db: &Db, lvl: u32, c: &Source, implied_about: &str)
     if !c.about.is_empty() && c.about != "General" && c.about != implied_about {
         puttxt(o, lvl + 1, "_ABOUT", &c.about);
     }
+    if !c.media.is_empty() {
+        CITE_MEDIA_NAMES.with(|n| {
+            let names = n.borrow();
+            for m in &c.media {
+                emit_media(o, lvl + 1, m, &names);
+            }
+        });
+    }
     emit_raw(o, &c.extra, "", lvl + 1);
 }
 
@@ -2039,11 +2051,19 @@ fn emit_media(o: &mut String, lvl: u32, m: &Media, names: &HashMap<String, Strin
     emit_raw(o, &m.extra, "", lvl + 1);
 }
 
+thread_local! {
+    /// The file names chosen for the export now being written, for pictures on citations
+    /// (written deep inside events, where the list is not passed down).
+    static CITE_MEDIA_NAMES: std::cell::RefCell<HashMap<String, String>> = std::cell::RefCell::new(HashMap::new());
+}
+
 fn media_names(db: &Db, dir: &Option<String>) -> (HashMap<String, String>, Vec<(String, String)>) {
     let mut names: HashMap<String, String> = HashMap::new();
     let mut files: Vec<(String, String)> = Vec::new();
     let mut used: HashSet<String> = HashSet::new();
-    let all = db.people.values().flat_map(|p| p.media.iter()).chain(db.fams.values().flat_map(|f| f.media.iter()));
+    let mut cite_media: Vec<Media> = vec![];
+    db.each_cite(&mut |_, _, c| cite_media.extend(c.media.iter().cloned()));
+    let all = db.people.values().flat_map(|p| p.media.iter()).chain(db.fams.values().flat_map(|f| f.media.iter())).chain(cite_media.iter());
     for m in all {
         if m.file.is_empty() || names.contains_key(&m.file) {
             continue;
@@ -2073,6 +2093,7 @@ fn media_names(db: &Db, dir: &Option<String>) -> (HashMap<String, String>, Vec<(
 
 pub fn to_ged_full(db: &Db, opts: &ExportOpts) -> Export {
     let (names, media_files) = media_names(db, &opts.media_dir);
+    CITE_MEDIA_NAMES.with(|n| *n.borrow_mut() = names.clone());
     let mut body = String::new();
     // Which families each person belongs to, worked out once (looking it up per person is far too slow for big trees).
     let mut as_child: HashMap<u32, Vec<u32>> = HashMap::new();

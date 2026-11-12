@@ -494,6 +494,7 @@ pub(crate) fn resolve_media(db: &mut Db, base: &Path, rep: &mut ImportReport) {
             fix(m);
         }
     }
+    db.each_cite_mut(&mut |c| c.media.iter_mut().for_each(&mut fix));
     let online = db.people.values().flat_map(|p| p.media.iter()).chain(db.fams.values().flat_map(|f| f.media.iter())).filter(|m| is_url(&m.path)).count();
     if online > 0 {
         rep.warnings.push(format!(

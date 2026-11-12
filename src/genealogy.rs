@@ -242,6 +242,8 @@ pub(crate) fn fix_names(db: &mut Db) {
 /// stored and exported never changes.
 pub(crate) static NAME_STYLE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 pub(crate) static DATE_STYLE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+/// Printouts on A4 paper (from the settings, read when a page is made)
+pub(crate) static PAPER_A4: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 /// The map colours chosen under Map style (see mapview::MAP_STYLES).
 pub(crate) static MAP_STYLE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 /// The app's background and accent colours (0xRRGGBB), so "Match the app" maps follow them.
@@ -1037,7 +1039,7 @@ impl Db {
                 *f = Family { h: f.h, w: f.w, kids: f.kids.clone(), more: f.more.clone(), ..Default::default() };
             }
         }
-        d
+        notes::without_private_notes(d)
     }
 
     pub(crate) fn ancestors(&self, id: u32) -> HashMap<u32, u32> {

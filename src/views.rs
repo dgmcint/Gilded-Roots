@@ -232,6 +232,17 @@ pub(crate)     fn person_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Optio
             *act = Some(Action::QuickEdit(id));
             ui.close_menu();
         }
+        if let Some(p) = self.db.people.get(&id) {
+            let links = tools::search_links(p);
+            ui.menu_button("Search websites", |ui| {
+                for (site, url) in links {
+                    if ui.button(site).clicked() {
+                        ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+                        ui.close_menu();
+                    }
+                }
+            });
+        }
         ui.menu_button("Groups", |ui| {
             for (i, g) in self.db.groups.iter().enumerate() {
                 let inside = g.ids.contains(&id);

@@ -123,6 +123,24 @@ pub(crate) struct Extra {
     /// (kind, generations, spouses, brothers and sisters), the field rule (field, test, value),
     /// a name being typed, and jobs to do (print, export, split off as a tree with its name)
     pub(crate) groups_open: bool,
+    /// Date calculator (which kind, the two dates, an age) and the Soundex window
+    pub(crate) calc_open: bool,
+    /// Find and replace in notes: open, the words, options, and notes unticked (by place)
+    pub(crate) nfr_open: bool,
+    /// Source templates: which one, and what is typed in its boxes
+    pub(crate) tpl_which: usize,
+    pub(crate) tpl_vals: Vec<String>,
+    pub(crate) nfr_find: String,
+    pub(crate) nfr_with: String,
+    pub(crate) nfr_case: bool,
+    pub(crate) nfr_whole: bool,
+    pub(crate) nfr_skip: HashSet<String>,
+    pub(crate) calc_mode: u8,
+    pub(crate) calc_a: String,
+    pub(crate) calc_b: String,
+    pub(crate) calc_age: String,
+    pub(crate) soundex_open: bool,
+    pub(crate) soundex_q: String,
     pub(crate) group_cur: usize,
     pub(crate) group_who: Option<u32>,
     pub(crate) group_rel: usize,
@@ -314,6 +332,8 @@ pub(crate) enum Action {
     ReportDescendants,
     ReportBirthdays,
     ReportSources,
+    ReportAncestorBook,
+    ReportDescendantBook,
     ReportBook,
     PrintDescendants,
     PrintChart,

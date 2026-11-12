@@ -285,6 +285,9 @@ pub(crate) struct Source {
     pub(crate) quality: String,
     pub(crate) note: String,
     pub(crate) note_refs: Vec<u32>,
+    /// Pictures of the record itself (a census page, a certificate), kept with this citation.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub(crate) media: Vec<Media>,
     pub(crate) extra: Vec<Raw>,
 }
 

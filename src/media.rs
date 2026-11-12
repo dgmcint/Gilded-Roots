@@ -107,6 +107,10 @@ pub(crate) fn media_in_use(db: &Db) -> HashSet<String> {
             }
         }
     }
+    for f in db.fams.values() {
+        used.extend(f.media.iter().filter(|m| !m.file.is_empty()).map(|m| m.file.clone()));
+    }
+    db.each_cite(&mut |_, _, c| used.extend(c.media.iter().filter(|m| !m.file.is_empty()).map(|m| m.file.clone())));
     used
 }
 

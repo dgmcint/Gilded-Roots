@@ -130,6 +130,33 @@ them all off at once. Dates Ancestry writes in other styles (such as "FEB 8 1891
 On a person, event or family, add a citation: choose the source, then enter the page, quality, transcription,
 web address and the date you looked. **Reports → Source list** prints a bibliography.
 
+**Source templates.** In the source window, open **Fill in from a template** and choose the kind of record: census,
+certificate, church register, newspaper item, book, website, gravestone, military record, passenger list, family
+Bible, interview, or letter. Fill in what you know (year, county, certificate number...) and press **Use these for
+this source**: the title, author and publication details are written out the same way every time, and the type of
+source is set. You can still change any of them by hand afterwards.
+
+**Pictures of the record.** Under a citation's **Transcription, web address, notes, pictures**, **Add picture...**
+attaches a scan or photo of the record itself (the census page, the certificate) to that citation. Click its name to
+open it. The pictures go out in GEDCOM files with the citation and come back in.
+
+## Notes
+In a person's notes, **Add a tag** starts a new line with a topic such as "Military: " or "Research: ", so notes read
+in order and are easy to find. A line that starts with **~** is private: it stays in the tree but is left off
+printouts and private copies. **Edit → Find and replace in notes** changes words in every note at once (people,
+families, events, shared notes, sources and repositories). It lists each match first, with the words around it;
+untick any note to leave it alone, then press **Replace**. Undo puts everything back.
+
+## Research tools
+- **Tools → Date calculator**: how old someone was on a given day; when someone was born, from the age a census
+  or record gives (an age of 34 on 1 June 1880 means born between 2 June 1845 and 1 June 1846); and how long
+  between two dates, with the day of the week each fell on.
+- **Tools → Soundex**: the sound-alike code of a surname (used by US census indexes), and the surnames in your
+  tree that share it.
+- **Tools → Search websites for this person** (or right-click a person → **Search websites**): opens FamilySearch,
+  Find a Grave, WikiTree, Ancestry or Google in your web browser, already searching for that person's name and years.
+  Nothing is sent anywhere until you choose a site.
+
 ## Merging duplicates
 - **Tools → Find duplicates** lists possible matches with reasons. Open one to see the review screen.
 - Or use **Merge with another person…** on a person's page (people also have ID numbers, shown as `#123`).
@@ -146,7 +173,8 @@ relationships separately (for example, adoptive versus birth parent).
 
 ## Printing
 Every printout (pedigree, family group sheet, reports, family book, charts) opens as a page in your browser; use
-**Print or save as PDF**. Pages are US Letter with the title, the date and "Page n of N" at the bottom. Long web
+**Print or save as PDF**. Pages are US Letter, or A4 if you choose **Reports → Paper: A4** (choose the same paper in
+the print window), with the title, the date and "Page n of N" at the bottom. Long web
 addresses in sources wrap instead of running off the paper. Dates are printed tidily ("25 Jan 1975") in the style
 chosen under View → Dates. The **family group sheet** shows each spouse's birth, christening, death and burial with
 date and place in separate columns, their parents, the marriage, and children with sex, dates, places and spouses,
@@ -184,13 +212,26 @@ Firefox fit the page by themselves.
   same forms with room for baptism, confirmation, initiatory, endowment and sealing dates and temples, and tick boxes
   on the pedigree.
 
-All of them print on US Letter paper. If your browser prints a wide form upright and it doesn't fit, choose Landscape
+All of them print on the paper chosen under Reports → Paper (US Letter or A4). If your browser prints a wide form upright and it doesn't fit, choose Landscape
 in the print window; a page that is still too wide is shrunk to fit the paper.
 
 ## Charts and reports
 **View** switches between Family, Pedigree, Descendants, Individual, Gallery, Charts and People, and sets the number
 of generations. **File** prints the pedigree chart and the family group sheet. **Reports** has ancestor, descendant,
-birthday and source reports.
+birthday and source reports, and:
+
+- **Family book**: one person's whole record on paper (facts, notes, sources, photos, documents and a timeline).
+- **Ancestor book (with index)**: the selected person's ancestors written as paragraphs, generation by generation.
+  Everyone is numbered the usual genealogy way: the person is 1, a father is twice his child's number and a mother
+  twice plus one, so the parents of number 5 are 10 and 11. Someone who appears on two lines is written once, and the
+  second place says "see number ...". An index of names is at the end.
+- **Descendant book (with index)**: the selected person's descendants, generation by generation. Everyone with a
+  family of their own gets a numbered paragraph, with their marriages and a list of their children; a number after a
+  child's name points to that child's paragraph. An index of names, spouses included, is at the end.
+- **Lists**: ready-made lists to print: everyone in alphabetical order; marriages; end-of-line ancestors (the
+  selected person's ancestors with no parents recorded, where each line stops); people linked to nobody; missing LDS
+  ordinances (people who have died, with the ordinances not yet recorded); contact details of living relatives; and
+  possible duplicates.
 
 ## The Charts tab
 - **Fan chart:** the person in the centre, their father's side in blue and mother's side in rose, each ring one

@@ -108,6 +108,16 @@ pub(crate)     fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
             ("Find by ID number", Jump::Window("find_id")),
             ("Find a couple", Jump::Window("find_couple")),
             ("Groups: focus and filter", Jump::Window("groups")),
+            ("Date calculator", Jump::Window("calc")),
+            ("Find and replace in notes", Jump::Window("nfr")),
+            ("Soundex", Jump::Window("soundex")),
+            ("List: everyone, alphabetical", Jump::Window("list0")),
+            ("List: marriages", Jump::Window("list1")),
+            ("List: end-of-line ancestors", Jump::Window("list2")),
+            ("List: people linked to nobody", Jump::Window("list3")),
+            ("List: missing LDS ordinances", Jump::Window("list4")),
+            ("List: contact details", Jump::Window("list5")),
+            ("List: possible duplicates", Jump::Window("list6")),
             ("Import tree", Jump::Window("import")),
             ("Export GEDCOM", Jump::Window("export")),
             ("User guide / help", Jump::Window("help")),
@@ -203,6 +213,15 @@ pub(crate)     fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
                 "home" => self.home_pick = Some(String::new()),
                 "letters" => self.x.letters_open = true,
                 "groups" => self.x.groups_open = true,
+                "calc" => self.x.calc_open = true,
+                "nfr" => self.x.nfr_open = true,
+                "soundex" => self.x.soundex_open = true,
+                w if w.starts_with("list") => {
+                    if let Ok(i) = w[4..].parse::<usize>() {
+                        let html = self.list_html(i);
+                        self.open_print(html);
+                    }
+                }
                 "find_id" => {
                     self.find_open = true;
                     self.x.find_mode = 1;

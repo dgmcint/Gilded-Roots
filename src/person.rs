@@ -901,6 +901,10 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
             "notes" => {
             {
                 let p = self.db.people.get_mut(&id).unwrap();
+                ui.horizontal(|ui| {
+                    notes::note_tag_menu(ui, &mut p.notes);
+                    ui.label(RichText::new("Lines starting with ~ are private: kept here, left off printouts.").small().weak());
+                });
                 ui.add(egui::TextEdit::multiline(&mut p.notes).desired_rows(6).desired_width(f32::INFINITY));
             }
             {

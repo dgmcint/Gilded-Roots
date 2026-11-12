@@ -9,6 +9,7 @@ impl eframe::App for App {
         self.type_pending_letter(ctx);
         NAME_STYLE.store(self.settings.name_style, Ordering::Relaxed);
         DATE_STYLE.store(self.settings.date_style, Ordering::Relaxed);
+        PAPER_A4.store(self.settings.paper_a4, Ordering::Relaxed);
         MAP_STYLE.store(self.settings.map_style, Ordering::Relaxed);
         let rgb = |c: [u8; 3]| (c[0] as u32) << 16 | (c[1] as u32) << 8 | c[2] as u32;
         APP_BG.store(rgb(self.settings.bg), Ordering::Relaxed);
@@ -84,6 +85,10 @@ impl eframe::App for App {
                         ui.close_menu();
                     }
                     ui.separator();
+                    if ui.button("Find and replace in notes...").on_hover_text("Change words in every note at once, seeing each one first").clicked() {
+                        self.x.nfr_open = true;
+                        ui.close_menu();
+                    }
                     if ui.button("Special letters (é, ñ, ß...)...").on_hover_text("Accented letters and symbols to put into names and places").clicked() {
                         self.x.letters_open = true;
                         ui.close_menu();
@@ -268,6 +273,17 @@ impl eframe::App for App {
                     if ui.checkbox(&mut self.settings.hide_living, "Keep living people private").on_hover_text("Printed charts, sheets and reports show living people as \"Living\" with no dates or places").changed() {
                         save_settings(&self.settings);
                     }
+                    ui.menu_button(if self.settings.paper_a4 { "Paper: A4" } else { "Paper: US Letter" }, |ui| {
+                        for (v, l) in [(false, "US Letter (8.5 x 11 in)"), (true, "A4 (210 x 297 mm)")] {
+                            if ui.selectable_label(self.settings.paper_a4 == v, l).clicked() {
+                                self.settings.paper_a4 = v;
+                                PAPER_A4.store(v, Ordering::Relaxed);
+                                save_settings(&self.settings);
+                                ui.close_menu();
+                            }
+                        }
+                        ui.label(RichText::new("Also choose the same paper in the print window.").small().weak());
+                    });
                     ui.separator();
                     if ui.button("Report designer (make your own)...").clicked() {
                         self.x.designer_open = true;
@@ -305,6 +321,15 @@ impl eframe::App for App {
                             ui.close_menu();
                         }
                     });
+                    ui.menu_button("Lists", |ui| {
+                        for (i, (l, tip)) in lists::LISTS.iter().enumerate() {
+                            if ui.button(*l).on_hover_text(*tip).clicked() {
+                                let html = self.list_html(i);
+                                self.open_print(html);
+                                ui.close_menu();
+                            }
+                        }
+                    });
                     ui.separator();
                     let has = self.sel.is_some();
                     for (label, k) in [
@@ -313,6 +338,8 @@ impl eframe::App for App {
                         ("Descendant chart...", Action::PrintDescendants),
                         ("Birthdays and anniversaries...", Action::ReportBirthdays),
                         ("Family book...", Action::ReportBook),
+                        ("Ancestor book (with index)...", Action::ReportAncestorBook),
+                        ("Descendant book (with index)...", Action::ReportDescendantBook),
                         ("Source list (bibliography)...", Action::ReportSources),
                     ] {
                         if ui.add_enabled(has, egui::Button::new(label)).clicked() {
@@ -326,6 +353,33 @@ impl eframe::App for App {
                         self.src_open = true;
                         ui.close_menu();
                     }
+                    if ui.button("Date calculator...").on_hover_text("Age on a date, birth year from an age, days between dates, day of the week").clicked() {
+                        self.x.calc_open = true;
+                        ui.close_menu();
+                    }
+                    if ui.button("Soundex...").on_hover_text("The sound-alike code of a surname, and the surnames in this tree that share it").clicked() {
+                        self.x.soundex_open = true;
+                        if self.x.soundex_q.is_empty() {
+                            if let Some(p) = self.sel.and_then(|i| self.db.people.get(&i)) {
+                                self.x.soundex_q = p.surname.clone();
+                            }
+                        }
+                        ui.close_menu();
+                    }
+                    let who = self.sel.and_then(|i| self.db.people.get(&i)).cloned();
+                    ui.add_enabled_ui(who.is_some(), |ui| {
+                        ui.menu_button("Search websites for this person", |ui| {
+                            if let Some(p) = &who {
+                                ui.label(RichText::new(format!("{} — opens in your web browser", display_name(p))).small().weak());
+                                for (site, url) in tools::search_links(p) {
+                                    if ui.button(site).clicked() {
+                                        ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+                                        ui.close_menu();
+                                    }
+                                }
+                            }
+                        });
+                    });
                     ui.separator();
                     if ui.button("Home person...").on_hover_text("Choose who the Home button and Home key go back to").clicked() {
                         self.home_pick = Some(String::new());
@@ -876,6 +930,8 @@ impl eframe::App for App {
         self.import_merge_window(ctx);
         self.letters_window(ctx);
         self.groups_window(ctx, &mut act);
+        self.tools_windows(ctx);
+        self.notes_replace_window(ctx, &mut act);
         if let Some(id) = self.src_pick.take() {
             if self.db.sources.contains_key(&id) {
                 self.src_open = true;
@@ -1037,6 +1093,7 @@ impl eframe::App for App {
                                         });
                                         ui.end_row();
                                     });
+                                    templates::template_ui(ui, s, &mut self.x.tpl_which, &mut self.x.tpl_vals);
                                     ui.label("Description, or text of the whole source");
                                     ui.add(egui::TextEdit::multiline(&mut s.text).desired_rows(3).desired_width(f32::INFINITY));
                                     ui.label("Your notes on this source (how reliable it is, where you found it)");
@@ -2103,6 +2160,18 @@ impl eframe::App for App {
                 Action::ReportSources => {
                     let h = self.sources_html();
                     self.open_print(h);
+                }
+                Action::ReportAncestorBook => {
+                    if let Some(r) = self.sel {
+                        let h = self.ancestor_book_html(r);
+                        self.open_print(h);
+                    }
+                }
+                Action::ReportDescendantBook => {
+                    if let Some(r) = self.sel {
+                        let h = self.descendant_book_html(r);
+                        self.open_print(h);
+                    }
                 }
                 Action::ReportBook => {
                     if let Some(r) = self.sel {

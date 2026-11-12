@@ -235,10 +235,10 @@ pub(crate) fn cite_list(
                 }
             });
         });
-        let has_more = !c.data.is_empty() || !c.url.is_empty() || !c.accessed.is_empty() || !c.note.is_empty();
+        let has_more = !c.data.is_empty() || !c.url.is_empty() || !c.accessed.is_empty() || !c.note.is_empty() || !c.media.is_empty();
         ui.horizontal(|ui| {
             ui.add_space(20.0);
-            egui::CollapsingHeader::new(if has_more { "Transcription, web address, notes (filled in)" } else { "Transcription, web address, notes" })
+            egui::CollapsingHeader::new(if has_more { "Transcription, web address, notes, pictures (filled in)" } else { "Transcription, web address, notes, pictures" })
                 .id_salt((id_key, i, "more"))
                 .show(ui, |ui| {
                     ui.label("Text from the source (copy it exactly as written)");
@@ -260,6 +260,42 @@ pub(crate) fn cite_list(
                     });
                     ui.label("Your notes on this citation");
                     ui.add(egui::TextEdit::multiline(&mut c.note).desired_rows(2).desired_width(f32::INFINITY));
+                    ui.label("Pictures of the record (a census page, a certificate)");
+                    let mut drop_pic: Option<usize> = None;
+                    for (k, m) in c.media.iter().enumerate() {
+                        ui.horizontal(|ui| {
+                            let name = if m.name.is_empty() { m.file.clone() } else { m.name.clone() };
+                            if !m.file.is_empty() {
+                                if ui.link(&name).on_hover_text("Open").clicked() {
+                                    open_path(&mfile(&m.file));
+                                }
+                            } else if is_url(&m.path) {
+                                ui.hyperlink_to(&name, m.path.clone());
+                            } else {
+                                ui.label(format!("{} (file not found)", name));
+                            }
+                            if ui.small_button("Remove").on_hover_text("Takes the picture off this citation; the file stays in the media folder").clicked() {
+                                drop_pic = Some(k);
+                            }
+                        });
+                    }
+                    if let Some(k) = drop_pic {
+                        c.media.remove(k);
+                    }
+                    if ui.small_button("Add picture...").clicked() {
+                        if let Some(paths) = rfd::FileDialog::new()
+                            .set_title("Add a picture of the record")
+                            .add_filter("Pictures and PDFs", &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff", "pdf"])
+                            .pick_files()
+                        {
+                            for p in paths {
+                                let name = p.file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
+                                if let Some((file, shown)) = import_one(&p, &name) {
+                                    c.media.push(Media { file, name: shown, ..Default::default() });
+                                }
+                            }
+                        }
+                    }
                 });
         });
         ui.add_space(4.0);
@@ -336,12 +372,13 @@ pub(crate) fn page_with_css(title: &str, body: &str, landscape: bool, extra: &st
         .noprint{margin-bottom:10px;font-family:system-ui,sans-serif}\
         .noprint button{font-size:14px;padding:6px 14px}\
         @media print{.noprint{display:none}body{padding:0}svg{max-height:150mm}.foot{display:none}}\
-        @media print{body.port{width:7.25in}body.land{width:9.75in}}\
-        @media print and (orientation:portrait){body.land{width:7.25in}}\
+        @media print{body.port{width:7.25in}body.land{width:9.75in}body.port.a4{width:180mm}body.land.a4{width:265mm}}\
+        @media print and (orientation:portrait){body.land{width:7.25in}body.land.a4{width:180mm}}\
         .safari{display:none;background:#fff6d6;border:1px solid #e0c97a;padding:6px 10px;margin:8px 0;font-size:13px}";
+    let a4 = PAPER_A4.load(Ordering::Relaxed);
     let heading = if show_title { format!("<h1>{}</h1><hr class=\"rule\">", esc(title)) } else { String::new() };
     format!(
-        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>{t}</title><style>{css}{extra}@page{{size:letter {o};margin:12mm 12mm 14mm 12mm;@bottom-left{{content:'{t2}';font:9px Georgia,serif;color:#888}}@bottom-center{{content:'Prepared {d} with Gilded Roots';font:9px Georgia,serif;color:#888}}@bottom-right{{content:'Page ' counter(page) ' of ' counter(pages);font:9px Georgia,serif;color:#888}}}}</style></head><body class=\"{bc}\"><div class=\"noprint\"><button onclick=\"window.print()\">Print or save as PDF</button><div class=\"safari\" id=\"grSafari\">Printing from Safari? If the right side is cut off, lower <b>Scale</b> in the print window (try 85%){lt}. Chrome and Firefox fit the page by themselves.</div></div>{h}{body}<div class=\"foot\">Prepared {d} with Gilded Roots</div><script>{fit}window.onload=function(){{setTimeout(function(){{window.print()}},500)}}</script></body></html>",
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>{t}</title><style>{css}{extra}@page{{size:{paper} {o};margin:12mm 12mm 14mm 12mm;@bottom-left{{content:'{t2}';font:9px Georgia,serif;color:#888}}@bottom-center{{content:'Prepared {d} with Gilded Roots';font:9px Georgia,serif;color:#888}}@bottom-right{{content:'Page ' counter(page) ' of ' counter(pages);font:9px Georgia,serif;color:#888}}}}</style></head><body class=\"{bc}\"><div class=\"noprint\"><button onclick=\"window.print()\">Print or save as PDF</button><div class=\"safari\" id=\"grSafari\">Printing from Safari? If the right side is cut off, lower <b>Scale</b> in the print window (try 85%){lt}. Chrome and Firefox fit the page by themselves.</div></div>{h}{body}<div class=\"foot\">Prepared {d} with Gilded Roots</div><script>{fit}window.onload=function(){{setTimeout(function(){{window.print()}},500)}}</script></body></html>",
         t = esc(title),
         t2 = esc(title).replace('\'', "\\'"),
         css = css,
@@ -353,7 +390,8 @@ pub(crate) fn page_with_css(title: &str, body: &str, landscape: bool, extra: &st
         // Safari prints at 100% without shrinking to the paper; the page widths in @media print above
         // keep it on the paper, and Safari users get a tip in case their printer's margins are wider.
         fit = "if(/^((?!chrome|chromium|crios|fxios|edg|android).)*safari/i.test(navigator.userAgent)){var s=document.getElementById('grSafari');if(s)s.style.display='block';}",
-        bc = if landscape { "land" } else { "port" },
+        bc = format!("{}{}", if landscape { "land" } else { "port" }, if a4 { " a4" } else { "" }),
+        paper = if a4 { "A4" } else { "letter" },
         lt = if landscape { ", and choose Landscape" } else { "" },
         h = heading,
         body = body,
@@ -392,7 +430,7 @@ pub(crate)     fn print_db(&self) -> Db {
         if self.settings.hide_living {
             self.db.sanitized()
         } else {
-            self.db.clone()
+            notes::without_private_notes(self.db.clone())
         }
     }
 
