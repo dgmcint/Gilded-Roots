@@ -2,7 +2,7 @@
 
 Major work so far, in the order it was done.
 
-## Next version (not released yet)
+## 1.0.4 (12 November 2026)
 
 - **LDS ordinances panel** on the Individual page: baptism, confirmation, initiatory, endowment, sealing to
   each set of parents and to each spouse, with date, temple (chosen from a searchable list of temple codes,
