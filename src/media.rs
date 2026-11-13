@@ -75,7 +75,12 @@ pub(crate) fn remove_media_items(db: &mut Db, sel: &HashSet<(u32, usize)>) -> us
         idx.sort_unstable_by(|a, b| b.cmp(a));
         idx.dedup();
         for i in idx {
-            if i < p.media.len() {
+            if i == NOTE_ITEM {
+                if !p.notes.trim().is_empty() {
+                    p.notes.clear();
+                    n += 1;
+                }
+            } else if i < p.media.len() {
                 let m = p.media.remove(i);
                 if !m.file.is_empty() && p.portrait == m.file {
                     p.portrait.clear();
@@ -88,6 +93,9 @@ pub(crate) fn remove_media_items(db: &mut Db, sel: &HashSet<(u32, usize)>) -> us
     }
     n
 }
+
+/// The key used for a person's note in the Memories selection (in place of a media index).
+pub(crate) const NOTE_ITEM: usize = usize::MAX;
 
 /// Every media file the tree still uses (photos, documents, recordings and profile pictures).
 pub(crate) fn media_in_use(db: &Db) -> HashSet<String> {
@@ -255,7 +263,7 @@ pub(crate) fn try_device(dev: &cpal::Device, buf: &Arc<Mutex<Vec<i16>>>, peak: &
 }
 
 impl App {
-pub(crate)     fn attach_files(&mut self, id: u32) {
+    pub(crate) fn attach_files(&mut self, id: u32) {
         if let Some(paths) = rfd::FileDialog::new()
             .set_title("Add photos or documents")
             .add_filter("Photos, PDFs, documents and recordings", &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff", "pdf", "doc", "docx", "rtf", "txt", "odt", "htm", "html", "wav", "mp3", "m4a", "ogg", "flac", "aac", "mp4", "mov"])
@@ -277,7 +285,7 @@ pub(crate)     fn attach_files(&mut self, id: u32) {
         }
     }
 
-pub(crate)     fn ensure_previews(&mut self, id: u32) {
+    pub(crate) fn ensure_previews(&mut self, id: u32) {
         let todo: Vec<(usize, String)> = match self.db.people.get(&id) {
             Some(p) => p.media.iter().enumerate().filter(|(_, m)| is_image(&m.file) && m.thumb.is_empty()).map(|(i, m)| (i, m.file.clone())).collect(),
             None => return,
@@ -304,7 +312,7 @@ pub(crate)     fn ensure_previews(&mut self, id: u32) {
 
     /// Make previews for up to `max` photos (anywhere in the tree) that do not have one yet.
     /// Returns true if any were made (the screen should be drawn again).
-pub(crate)     fn missing_previews(&mut self, max: usize) -> bool {
+    pub(crate) fn missing_previews(&mut self, max: usize) -> bool {
         let todo: Vec<(u32, usize, String)> = self
             .db
             .people
@@ -332,7 +340,7 @@ pub(crate)     fn missing_previews(&mut self, max: usize) -> bool {
         true
     }
 
-pub(crate)     fn viewer(&mut self, ctx: &egui::Context) {
+    pub(crate) fn viewer(&mut self, ctx: &egui::Context) {
         let Some((pid, idx)) = self.viewing else { return };
         let valid = self.db.people.get(&pid).map(|p| idx < p.media.len()).unwrap_or(false);
         if !valid {
@@ -593,7 +601,7 @@ pub(crate)     fn viewer(&mut self, ctx: &egui::Context) {
         }
     }
 
-pub(crate)     fn start_recording(&mut self, person: u32) {
+    pub(crate) fn start_recording(&mut self, person: u32) {
         let host = cpal::default_host();
         let mut cands: Vec<cpal::Device> = Vec::new();
         if !self.settings.mic.is_empty() {
@@ -637,7 +645,7 @@ pub(crate)     fn start_recording(&mut self, person: u32) {
         );
     }
 
-pub(crate)     fn stop_recording(&mut self) {
+    pub(crate) fn stop_recording(&mut self) {
         let Some(r) = self.rec.take() else { return };
         let Recorder { _stream, buf, channels, rate, person, .. } = r;
         drop(_stream);
@@ -677,7 +685,7 @@ pub(crate)     fn stop_recording(&mut self) {
 impl App {
     /// Where a person's profile picture comes from: the picture's address and the part of it
     /// to show (the whole picture, or a tagged face).
-pub(crate)     fn portrait_src(&self, p: &Person) -> Option<(String, [f32; 4])> {
+    pub(crate) fn portrait_src(&self, p: &Person) -> Option<(String, [f32; 4])> {
         if let Some(fp) = &p.face_portrait {
             if let Some(m) = self.db.people.get(&fp.owner).and_then(|o| o.media.iter().find(|m| m.file == fp.file)) {
                 // a face is a small part of the picture, so use the larger preview
@@ -720,7 +728,7 @@ pub(crate)     fn portrait_src(&self, p: &Person) -> Option<(String, [f32; 4])> 
     }
 
     /// Photos in other people's albums where this person is tagged, shown cropped to their face.
-pub(crate)     fn tagged_strip(&mut self, ui: &mut egui::Ui, id: u32) {
+    pub(crate) fn tagged_strip(&mut self, ui: &mut egui::Ui, id: u32) {
         let tags = self.tagged_in(id);
         if tags.is_empty() {
             return;
@@ -749,7 +757,7 @@ pub(crate)     fn tagged_strip(&mut self, ui: &mut egui::Ui, id: u32) {
     }
 
     /// Photos in other people's albums where this person is tagged: (owner, index, face box).
-pub(crate)     fn tagged_in(&self, id: u32) -> Vec<(u32, usize, [f32; 4])> {
+    pub(crate) fn tagged_in(&self, id: u32) -> Vec<(u32, usize, [f32; 4])> {
         let mut v = Vec::new();
         for (oid, o) in &self.db.people {
             for (i, m) in o.media.iter().enumerate() {
@@ -767,18 +775,18 @@ pub(crate)     fn tagged_in(&self, id: u32) -> Vec<(u32, usize, [f32; 4])> {
 impl App {
     /// The Gallery: every photo, document, PDF, recording, story and note in the tree, with
     /// filters by kind and an Add menu.
-pub(crate)     fn gallery_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn gallery_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         self.media_hub(ui, act, true);
     }
 
-pub(crate)     fn memories_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn memories_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         if self.x.gal_kind == 1 {
             self.x.gal_kind = 0;
         }
         self.media_hub(ui, act, false);
     }
 
-pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, photos: bool) {
+    pub(crate) fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, photos: bool) {
         let sel_name = self.sel.map(|s| self.db.label(s)).unwrap_or_default();
         ui.horizontal_wrapped(|ui| {
             ui.heading(if photos { "Gallery" } else { "Memories" });
@@ -859,7 +867,7 @@ pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Actio
             if !photos && (want == 0 || want == 5) && !p.notes.trim().is_empty() && (!self.gal_only || self.sel == Some(*id)) {
                 let first: String = p.notes.trim().chars().take(140).collect();
                 if q.is_empty() || p.name.to_lowercase().contains(&q) || p.notes.to_lowercase().contains(&q) {
-                    items.push((*id, usize::MAX, 5, first, p.name.clone()));
+                    items.push((*id, NOTE_ITEM, 5, first, p.name.clone()));
                 }
             }
         }
@@ -877,7 +885,7 @@ pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Actio
         }
         if self.x.gal_pick {
             // only keep ticks for items still listed
-            let shown: HashSet<(u32, usize)> = items.iter().filter(|x| x.1 != usize::MAX).map(|x| (x.0, x.1)).collect();
+            let shown: HashSet<(u32, usize)> = items.iter().map(|x| (x.0, x.1)).collect();
             self.x.gal_sel.retain(|k| shown.contains(k));
             ui.horizontal(|ui| {
                 ui.label(RichText::new(format!("{} selected", self.x.gal_sel.len())).strong());
@@ -889,6 +897,7 @@ pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Actio
                 }
                 if ui.add_enabled(!self.x.gal_sel.is_empty(), egui::Button::new("Remove selected...")).clicked() {
                     self.x.gal_confirm = true;
+                    self.x.gal_freed = files_freed_by(&self.db, &self.x.gal_sel);
                 }
                 if ui.button("Done").clicked() {
                     self.x.gal_pick = false;
@@ -914,16 +923,37 @@ pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Actio
                             ui.set_width(cw);
                             ui.set_max_width(cw);
                             let size = vec2(cw, (cw * 0.76).round());
-                            if *i == usize::MAX {
+                            if *i == NOTE_ITEM {
                                 // a note: show its first lines on a card
                                 let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
                                 ui.painter().rect(rect, 6.0_f32, ui.visuals().faint_bg_color, ui.visuals().widgets.noninteractive.bg_stroke);
                                 let g = ui.painter().layout(title.clone(), FontId::proportional(12.0), ui.visuals().text_color(), rect.width() - 16.0);
                                 ui.painter().with_clip_rect(rect.shrink(6.0)).galley(rect.min + vec2(8.0, 8.0), g, ui.visuals().text_color());
-                                if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                                    *act = Some(Action::Open(*id));
+                                let key = (*id, NOTE_ITEM);
+                                if self.x.gal_sel.contains(&key) {
+                                    ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
                                 }
-                                ui.label(RichText::new("Note").small().weak());
+                                if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                                    if self.x.gal_pick {
+                                        if !self.x.gal_sel.remove(&key) {
+                                            self.x.gal_sel.insert(key);
+                                        }
+                                    } else {
+                                        *act = Some(Action::Open(*id));
+                                    }
+                                }
+                                if self.x.gal_pick {
+                                    let mut on = self.x.gal_sel.contains(&key);
+                                    if ui.checkbox(&mut on, RichText::new("Note").small()).changed() {
+                                        if on {
+                                            self.x.gal_sel.insert(key);
+                                        } else {
+                                            self.x.gal_sel.remove(&key);
+                                        }
+                                    }
+                                } else {
+                                    ui.label(RichText::new("Note").small().weak());
+                                }
                             } else {
                                 let m = &self.db.people[id].media[*i];
                                 if *kind == 1 && online_photo(m) {
@@ -1018,10 +1048,14 @@ pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Actio
             let n = self.x.gal_sel.len();
             let mut go = false;
             let mut cancel = false;
-            let freed = files_freed_by(&self.db, &self.x.gal_sel);
+            let freed = self.x.gal_freed.clone();
+            let notes = self.x.gal_sel.iter().filter(|k| k.1 == NOTE_ITEM).count();
             let del = &mut self.x.gal_del_files;
             egui::Window::new("Remove selected items").id(egui::Id::new("gal_remove")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
                 ui.label(format!("Remove {} item(s) from the people they belong to?", n));
+                if notes > 0 {
+                    ui.label(RichText::new(format!("{} of them are notes: the whole of each person's Notes box is cleared.", notes)).small());
+                }
                 if freed.is_empty() {
                     ui.label(RichText::new("Undo (Ctrl+Z) brings them back. Files that are still used by someone else stay where they are.").small().weak());
                 } else {
@@ -1100,7 +1134,7 @@ pub(crate)     fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Actio
 
     /// Write or read a story. Stories are kept as plain text files in the media folder, so they
     /// are backed up and exported like any other document.
-pub(crate)     fn story_window(&mut self, ctx: &egui::Context) {
+    pub(crate) fn story_window(&mut self, ctx: &egui::Context) {
         let Some(st) = self.x.story.as_mut() else { return };
         let mut open = true;
         let mut save = false;

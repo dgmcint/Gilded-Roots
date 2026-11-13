@@ -626,6 +626,19 @@ mod scale_tests {
     }
 
     #[test]
+    fn memories_can_remove_notes() {
+        let mut db = Db::default();
+        db.people.insert(1, Person { name: "Ann".into(), notes: "Born on the farm.".into(), media: vec![Media { file: "a.jpg".into(), ..Default::default() }], ..Default::default() });
+        db.people.insert(2, Person { name: "Bob".into(), notes: "Keep me.".into(), ..Default::default() });
+        let sel: HashSet<(u32, usize)> = [(1, crate::media::NOTE_ITEM)].into_iter().collect();
+        assert!(files_freed_by(&db, &sel).is_empty(), "a note frees no files");
+        assert_eq!(remove_media_items(&mut db, &sel), 1);
+        assert!(db.people[&1].notes.is_empty());
+        assert_eq!(db.people[&1].media.len(), 1, "the photo stays");
+        assert_eq!(db.people[&2].notes, "Keep me.");
+    }
+
+    #[test]
     #[ignore]
     fn snapshot_cost_like_users_tree() {
         let (mut db, _) = big_tree(4400);

@@ -171,6 +171,8 @@ pub(crate) struct Extra {
     pub(crate) gal_confirm: bool,
     /// The remove box: also move the files that nobody else uses out of the media folder
     pub(crate) gal_del_files: bool,
+    /// Files that removing the ticked items would leave unused (worked out once, when asked).
+    pub(crate) gal_freed: Vec<String>,
     /// Asking before removing every link to a photo stored on a website
     pub(crate) gal_online_confirm: bool,
     pub(crate) jump_open: bool,
@@ -427,7 +429,7 @@ pub(crate) struct App {
 }
 
 impl App {
-pub(crate)     fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let (mut db, load_notice) = load_from(&data_dir());
         fix_names(&mut db);
         // Older versions kept one home person for the whole program; move it into the tree it
@@ -480,7 +482,7 @@ pub(crate)     fn new() -> Self {
         app
     }
 
-pub(crate)     fn persist(&mut self) -> bool {
+    pub(crate) fn persist(&mut self) -> bool {
         // the sample family is for practice: it is never written over the real tree
         if self.x.practice.is_some() {
             return true;
@@ -501,19 +503,19 @@ pub(crate)     fn persist(&mut self) -> bool {
 }
 
 impl App {
-pub(crate)     fn started(mut self) -> Self {
+    pub(crate) fn started(mut self) -> Self {
         self.remember_state();
         self
     }
 
-pub(crate)     fn remember_state(&mut self) {
+    pub(crate) fn remember_state(&mut self) {
         self.x.prev_names = self.db.people.iter().map(|(k, p)| (*k, p.name.clone())).collect();
         self.x.prev_sel = self.sel.and_then(|s| self.db.people.get(&s).map(|p| (s, serde_json::to_string(p).unwrap_or_default())));
         self.x.prev_fams = self.db.fams.len();
         self.x.next_label = None;
     }
 
-pub(crate)     fn track(&mut self) {
+    pub(crate) fn track(&mut self) {
         let cur = serde_json::to_string(&self.db).unwrap_or_default();
         if cur != self.last_json {
             let label = self.change_label();
@@ -538,7 +540,7 @@ pub(crate)     fn track(&mut self) {
         }
     }
 
-pub(crate)     fn load_snapshot(&mut self, json: String) {
+    pub(crate) fn load_snapshot(&mut self, json: String) {
         if let Ok(mut db) = serde_json::from_str::<Db>(&json) {
             fix_names(&mut db);
             self.db = db;
@@ -554,7 +556,7 @@ pub(crate)     fn load_snapshot(&mut self, json: String) {
         }
     }
 
-pub(crate)     fn undo_action(&mut self) {
+    pub(crate) fn undo_action(&mut self) {
         self.track();
         if let Some(prev) = self.undo.pop() {
             self.redo.push(Snap { z: pack(&self.last_json), label: prev.label.clone(), at: prev.at });
@@ -563,7 +565,7 @@ pub(crate)     fn undo_action(&mut self) {
         }
     }
 
-pub(crate)     fn redo_action(&mut self) {
+    pub(crate) fn redo_action(&mut self) {
         if let Some(next) = self.redo.pop() {
             self.undo.push(Snap { z: pack(&self.last_json), label: next.label.clone(), at: next.at });
             self.load_snapshot(unpack(&next.z));

@@ -2,6 +2,12 @@
 
 Major work so far, in the order it was done.
 
+## Not yet released
+
+- **Notes can be removed from Memories:** in Select mode, notes can now be ticked (click the card or its box) and
+  removed along with photos and files; this clears that person's Notes box, and Undo (Ctrl+Z) brings it back.
+  Opening the "Remove selected" box is also quicker on a big tree.
+
 ## 1.0.4 (12 November 2026)
 
 - **LDS ordinances panel** on the Individual page: baptism, confirmation, initiatory, endowment, sealing to
