@@ -58,6 +58,18 @@ pub(crate) struct Settings {
     pub(crate) mem_kind: u8,
     #[serde(default)]
     pub(crate) mem_by_person: bool,
+    /// Toolbars: the main toolbar and the tab toolbars shown, words beside the pictures, large
+    /// buttons, and buttons hidden (by their names).
+    #[serde(default = "default_true")]
+    pub(crate) tb_main: bool,
+    #[serde(default = "default_true")]
+    pub(crate) tb_tab: bool,
+    #[serde(default = "default_true")]
+    pub(crate) tb_words: bool,
+    #[serde(default)]
+    pub(crate) tb_large: bool,
+    #[serde(default)]
+    pub(crate) tb_hidden: Vec<String>,
     /// The last choices in the Import options window.
     #[serde(default)]
     pub(crate) import: ImportChoices,
@@ -169,7 +181,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default() }
+        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new() }
     }
 }
 

@@ -9,6 +9,20 @@ Press **Ctrl+K** (Windows/Linux) or **Cmd+K** (Mac), or **F4**, from anywhere. T
 (`#123`) or what you want to do ("add spouse", "places", "export"). Use the arrow keys to choose and **Enter** to go;
 **Esc** closes it. With nothing typed it shows your bookmarked people and every command.
 
+## Toolbars
+The **main toolbar** under the menus is the same on every tab: Back, Forward, Home, Add person, Edit, Find, Quick
+jump, Undo, Redo, Print (prints what the tab shows) and Back up now. Under the tab names, each tab has its own
+**tab toolbar**:
+- **Family:** add father, mother, spouse, child or brother or sister; sort the children by birth; family group sheet.
+- **Pedigree** and **Descendants:** smaller, bigger, fit to the window, make the home person, print the chart.
+- **Individual:** Edit (or Done), add files, write a story, record a story, print a family book.
+- **Memories:** add files, write a story, record a story, select several items.
+- **Charts:** print. **People:** find, save as a spreadsheet. **Map:** fit to pins, world, this person's places.
+
+Hover over a button to see its name and shortcut. Right-click a toolbar to show or hide words beside the pictures,
+use large buttons, choose which buttons it shows, or hide it. **View** has **Show main toolbar** and **Show tab
+toolbars** (each on its own), and the same word and size choices. Your choices are remembered.
+
 ## Keyboard shortcuts
 - **F1** user guide · **F2** edit the selected person · **F3** find a person · **F4** quick jump
 - **F5** fit the chart to the window · **F6** next tab · **F7** data checker · **F8** research to-do list

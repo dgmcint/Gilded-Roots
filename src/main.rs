@@ -42,6 +42,7 @@ mod media;
 mod memories;
 mod mediafolders;
 mod importopts;
+mod toolbar;
 pub(crate) use importopts::*;
 pub(crate) use mediafolders::*;
 pub(crate) use memories::*;

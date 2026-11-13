@@ -144,6 +144,16 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
+                    let mut tb = false;
+                    tb |= ui.checkbox(&mut self.settings.tb_main, "Show main toolbar").changed();
+                    tb |= ui.checkbox(&mut self.settings.tb_tab, "Show tab toolbars").changed();
+                    tb |= ui.checkbox(&mut self.settings.tb_words, "Toolbar words beside the pictures").changed();
+                    tb |= ui.checkbox(&mut self.settings.tb_large, "Large toolbar buttons").changed();
+                    if tb {
+                        save_settings(&self.settings);
+                    }
+                    ui.label(RichText::new("Right-click a toolbar to choose its buttons.").small().weak());
+                    ui.separator();
                     for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
                         if ui.button(l).clicked() {
                             self.view = v;
@@ -554,6 +564,13 @@ impl App {
                 self.end_practice();
             }
         }
+        if self.settings.tb_main {
+            egui::TopBottomPanel::top("main_toolbar").show(ctx, |ui| {
+                ui.add_space(2.0);
+                self.main_toolbar(ui, &mut act);
+                ui.add_space(1.0);
+            });
+        }
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
@@ -567,6 +584,14 @@ impl App {
                 }
             });
         });
+
+        if self.settings.tb_tab {
+            egui::TopBottomPanel::top("tab_toolbar").show(ctx, |ui| {
+                ui.add_space(1.0);
+                self.tab_toolbar(ui, &mut act);
+                ui.add_space(1.0);
+            });
+        }
 
         if let Some(err) = self.save_error.clone() {
             egui::TopBottomPanel::top("save_err").show(ctx, |ui| {

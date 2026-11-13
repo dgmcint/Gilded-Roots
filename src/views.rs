@@ -102,9 +102,12 @@ impl App {
             zoom_controls(ui, z, act);
             ui.separator();
             hand_switch(ui, self.settings.hand, act);
-            ui.separator();
-            if ui.button("Print").clicked() {
-                *act = Some(Action::PrintDescendants);
+            // the tab toolbar has Print when it is shown
+            if !self.settings.tb_tab {
+                ui.separator();
+                if ui.button("Print").clicked() {
+                    *act = Some(Action::PrintDescendants);
+                }
             }
         });
         let mut nodes: Vec<(u32, usize, f32, Option<usize>)> = Vec::new();
@@ -482,22 +485,25 @@ impl App {
             }
         };
         ui.horizontal_wrapped(|ui| {
-            if ui.add_enabled(!self.back.is_empty(), egui::Button::new("< Back")).clicked() {
-                *act = Some(Action::Back);
-            }
-            if ui.add_enabled(!self.fwd.is_empty(), egui::Button::new("Forward >")).clicked() {
-                *act = Some(Action::Forward);
-            }
-            let hb = ui.button("Home").on_hover_text("Go to the home person. Right-click to make the current person the home person.");
-            if hb.clicked() {
-                *act = Some(Action::GoHome);
-            }
-            hb.context_menu(|ui| {
-                if ui.button("Make the current person the home person").clicked() {
-                    *act = Some(Action::SetHome(sel));
-                    ui.close_menu();
+            // Back, Forward and Home are on the main toolbar when it is shown
+            if !self.settings.tb_main {
+                if ui.add_enabled(!self.back.is_empty(), egui::Button::new("< Back")).clicked() {
+                    *act = Some(Action::Back);
                 }
-            });
+                if ui.add_enabled(!self.fwd.is_empty(), egui::Button::new("Forward >")).clicked() {
+                    *act = Some(Action::Forward);
+                }
+                let hb = ui.button("Home").on_hover_text("Go to the home person. Right-click to make the current person the home person.");
+                if hb.clicked() {
+                    *act = Some(Action::GoHome);
+                }
+                hb.context_menu(|ui| {
+                    if ui.button("Make the current person the home person").clicked() {
+                        *act = Some(Action::SetHome(sel));
+                        ui.close_menu();
+                    }
+                });
+            }
             let mut recent: Vec<u32> = Vec::new();
             for k in self.back.iter().rev() {
                 if *k != sel && self.db.people.contains_key(k) && !recent.contains(k) {
@@ -651,9 +657,12 @@ impl App {
             zoom_controls(ui, z, act);
             ui.separator();
             hand_switch(ui, self.settings.hand, act);
-            ui.separator();
-            if ui.button("Print").clicked() {
-                *act = Some(Action::PrintPedigree);
+            // the tab toolbar has Print when it is shown
+            if !self.settings.tb_tab {
+                ui.separator();
+                if ui.button("Print").clicked() {
+                    *act = Some(Action::PrintPedigree);
+                }
             }
         });
         egui::ScrollArea::both().show(ui, |ui| {

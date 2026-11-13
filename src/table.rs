@@ -158,7 +158,7 @@ impl App {
 
     pub(crate) fn table_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let rows = self.table_rows_kept();
-        let mut export = false;
+        let mut export = std::mem::take(&mut self.x.csv_req);
         ui.horizontal_wrapped(|ui| {
             ui.label(RichText::new(format!("{} of {} people", rows.len(), self.db.people.len())).strong());
             ui.add(egui::TextEdit::singleline(&mut self.x.table_find).hint_text("Filter: name, year, place or #ID").desired_width(240.0));

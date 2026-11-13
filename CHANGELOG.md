@@ -4,6 +4,12 @@ Major work so far, in the order it was done.
 
 ## Not yet released
 
+- **Toolbars:** a main toolbar under the menus (Back, Forward, Home, Add person, Edit, Find, Quick jump, Undo, Redo,
+  Print, Back up now) and a toolbar for each tab with its own buttons (Family: add father, mother, spouse, child,
+  sibling, sort children, family group sheet; Pedigree and Descendants: zoom, fit, make home person, print;
+  Individual: edit, add files, story, recording, family book; Memories; Charts; People; Map). Buttons have small
+  pictures of our own, with the name and shortcut on hover. Right-click a toolbar for words on or off, large buttons
+  and which buttons to show; View > Show main toolbar / Show tab toolbars turn each on or off.
 - **Import options:** choosing a file to import now reads it first and shows what is in it (people, families,
   sources, notes, events, photos and links, LDS ordinances, living people, research tasks, the program it came from),
   then lets you choose: add to your tree, replace it, or make **a new tree of its own**; everyone, or a person's
