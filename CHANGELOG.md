@@ -4,6 +4,18 @@ Major work so far, in the order it was done.
 
 ## Not yet released
 
+- **Memories, together:** the Gallery and Memories tabs are now one **Memories** tab, with filters for All, Photos,
+  Documents, Stories, Recordings and Notes (with counts), **Show by person** (grouped under each person's name), and
+  **Not linked to anyone** (files in the media folder nobody uses, to add to the selected person or move out). The
+  last filter is remembered. Ctrl/Cmd+5 opens Memories and Ctrl/Cmd+9 opens DNA.
+- **Memories on each person's page:** the Individual page's "Photos and recordings" section is now **Memories**,
+  with the same filters, photos as pictures and the rest as a list, and one **+ Add** for any kind of file, a written
+  story or a spoken story.
+- **Media folders sorted by person:** Tools > **Sort media into person folders...** puts each file in a folder named
+  after its person ("Harwood, Thomas James (9)"), with "Shared" for files on several people or a couple and
+  "Sources" for files only a source uses. It lists every move first, and keeps the folders sorted afterwards (new
+  files, renamed people, a file added to a second person). Files are only moved, never deleted; the backup copy is
+  sorted too; the tree file does not change, so Undo, backups, archives and older versions keep working.
 - **Notes can be removed from Memories:** in Select mode, notes can now be ticked (click the card or its box) and
   removed along with photos and files; this clears that person's Notes box, and Undo (Ctrl+Z) brings it back.
   Opening the "Remove selected" box is also quicker on a big tree.

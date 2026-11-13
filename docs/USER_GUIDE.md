@@ -13,7 +13,7 @@ Press **Ctrl+K** (Windows/Linux) or **Cmd+K** (Mac), or **F4**, from anywhere. T
 - **F1** user guide · **F2** edit the selected person · **F3** find a person · **F4** quick jump
 - **F5** fit the chart to the window · **F6** next tab · **F7** data checker · **F8** research to-do list
 - **F9** places · **F11** full screen · **F12** history of changes
-- **Ctrl/Cmd+1 to 7** Family, Pedigree, Descendants, Individual, Gallery, Charts, People
+- **Ctrl/Cmd+1 to 9** Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map, DNA
 - **Arrow keys** move around the chart · **Home** goes to the home person · **Ctrl/Cmd + / -** zoom
 - On a Mac the top-row keys control brightness and volume. Hold **fn** to use them as F keys, or use
   **Cmd+?** for help and **Ctrl+Cmd+F** for full screen.
@@ -120,8 +120,8 @@ on the chart** in the Relationships panel while editing.
 ## Importing from Ancestry
 Ancestry's GEDCOM files contain links to the photos on Ancestry's website, not the photos themselves. Gilded
 Roots keeps every link, writes it back when you export, and shows **Open online** next to it (photos appear in
-the Gallery as "Photo stored online"). To have the pictures on your computer, download them from Ancestry and add
-them with **Add photos or documents**. If you don't want the links, **Remove online links...** in the Gallery takes
+Memories as "Photo stored online"). To have the pictures on your computer, download them from Ancestry and add
+them with **Add photos or documents**. If you don't want the links, **Remove online links...** on the Memories tab takes
 them all off at once. Dates Ancestry writes in other styles (such as "FEB 8 1891" or
 "13 SEPTEMBER, 1713") are tidied into standard form.
 
@@ -216,7 +216,7 @@ All of them print on the paper chosen under Reports → Paper (US Letter or A4).
 in the print window; a page that is still too wide is shrunk to fit the paper.
 
 ## Charts and reports
-**View** switches between Family, Pedigree, Descendants, Individual, Gallery, Charts and People, and sets the number
+**View** switches between Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map and DNA, and sets the number
 of generations. **File** prints the pedigree chart and the family group sheet. **Reports** has ancestor, descendant,
 birthday and source reports, and:
 
@@ -361,20 +361,30 @@ or had other events (blue). It works without the internet: the world map and abo
 - Places are matched like "Town, County, State, Country"; "USA" can be left out. Fixing spellings in Tools > Places helps.
 
 ## Memories
-The **Memories** tab holds everything that is not a photo: **stories**, **recordings**, **documents and PDFs**, and
-**notes**, with a filter for each. **+ Add** (for the selected person) can add PDFs, documents or recordings, **write a
-story** (a title and as much text as you like, saved with the person's files), record a spoken story, or write a note.
-Click a story to read or edit it, a PDF to read it in the built-in viewer, a recording to play it, or a note to open
-the person's page.
+Memories are everything you keep about the family besides the facts: **photos**, **documents and PDFs**, **stories**,
+**recordings** and **notes**.
 
-## Gallery
-The **Gallery** tab (Ctrl/Cmd+5) shows every photo in the tree in one grid. **+ Add** adds photos for the selected person. Filter by name or caption, or tick
-**Only the selected person** (this includes photos they are tagged in). Click a photo to view it, or the name under it
-to open that person's page.
-- **Removing several at once:** click **Select...**, click the photos (or tick them), then **Remove selected...**. If
-  some of the files are not used by anyone else in the tree, you can also tick **Also take the files out of the media
-  folder**: they are moved to a **Removed files** folder in your Gilded Roots folder (not deleted), so you can put one
-  back or delete them yourself later. Undo (Ctrl/Cmd+Z) brings the items back.
+**On a person's page:** the **Memories** section (turn it on in the Panels row) shows that person's own memories,
+with a filter for **All, Photos, Documents, Stories** and **Recordings** (each with how many there are). Photos are
+shown as pictures and everything else as a list. **+ Add** takes any kind of file (photos, PDFs, letters,
+certificates, sound or video) and works out what it is, or lets you **write a story** or **record a spoken story**.
+Click a photo to view it, tag faces or choose the profile photo there. While editing, you can type captions and
+remove items.
+
+**The Memories tab** (Ctrl/Cmd+5) shows everything in the tree with the same filters plus **Notes**. It took over
+from the old Gallery tab: choose **Photos** for the photo grid. The filter you used last is remembered.
+- **+ Add** adds files, a story, a recording or a note for the selected person.
+- **Show by person** groups the memories under each person's name (click a name to open their page).
+- **Only the selected person** shows just their memories (and photos they are tagged in). Filter by name or caption.
+- Click a story to read or edit it, a PDF to read it in the built-in viewer, a recording to play it, a photo to view
+  it, a note to open the person's page, or the name under any item to open that person.
+- **Not linked to anyone** lists files in the media folder that nobody in the tree uses (copied in by hand, or left
+  behind when something was removed). Select a person and press **Add** to put a file on them, or **Move to Removed
+  files** to clear it out.
+- **Removing several at once:** click **Select...**, click the items (or tick them), then **Remove selected...**.
+  Notes can be removed this way too (it clears that person's Notes box). If some files are not used by anyone else in
+  the tree, you can also tick **Also take the files out of the media folder**: they are moved to a **Removed files**
+  folder in your Gilded Roots folder (not deleted). Undo (Ctrl/Cmd+Z) brings the items back.
 - **Remove online links:** a tree from Ancestry or MyHeritage brings links to photos on their websites rather than the
   pictures. **Remove online links...** takes them all off in one go. Nothing on your computer is deleted, and Undo
   brings them back.
@@ -382,8 +392,8 @@ to open that person's page.
 ## Tagging faces in photos
 Open a photo and press **Tag faces**. Drag a box around someone's face, then type their name (the photo owner's close
 family are suggested first) and click them. Each tag shows the person's name under the box. A tagged photo also
-appears on that person's page under **Tagged in other photos**, cropped to their face, and in the Gallery when they
-are selected. **Use as their profile picture** makes the face their portrait on charts and their page. **Remove tag**
+appears on that person's page under **Tagged in other photos**, cropped to their face, and on the Memories tab with
+**Only the selected person** ticked. **Use as their profile picture** makes the face their portrait on charts and their page. **Remove tag**
 takes a box away. Tags are kept in your tree file and backups (other programs do not read face tags from GEDCOM).
 
 ## Profile photo: crop and size
@@ -393,15 +403,23 @@ trimmed to fit each frame. **View → Profile photo size** makes the photo at th
 Normal, Large or Extra large.
 
 ## Reading PDFs
-Add PDF files (certificates, letters, census pages) with **Add photos or documents**. They are listed under
-**Documents and recordings** with a **Read** button that opens them in the built-in viewer: **< Previous / Next >**
+Add PDF files (certificates, letters, census pages) with **Add photos or documents**. They are listed in the
+person's **Memories** section under **Documents**, with a **Read** button that opens them in the built-in viewer: **< Previous / Next >**
 (or the arrow and Page Up/Down keys), a page number box, **Fit width**, **Actual size** and **+ / -** zoom. **Open in
 my PDF app** is there for printing, searching the text or filling in forms. Password-protected PDFs open in your PDF
 app instead.
 
 ## Photos: where they are kept
-Added photos are copied into the `media` folder in your data folder, with a number on the front of the file name.
-The Photos panel's **Open media folder** button opens it.
+Added photos, documents and recordings are copied into the `media` folder in your data folder, with a number on the
+front of the file name. The Memories section's **Open media folder** button (while editing) opens it.
+
+**Tools > Sort media into person folders...** puts each file in a folder named after the person it belongs to, such
+as "Harwood, Thomas James (9)" (the ID number keeps two people with the same name apart). A file on several people,
+or on a couple, goes in **Shared**, and a file only a source uses goes in **Sources**. The window lists every file
+that will move before anything happens. After that the folder stays sorted: new files go to their person's folder,
+a person's folder follows their name, and a file added to a second person moves to Shared. Files are only moved,
+never deleted, the backup copy of the media folder is sorted the same way, and your tree itself does not change, so
+Undo, backups and archives keep working. **Stop keeping them sorted** in the same window leaves files where they are.
 
 ## Getting around a large tree
 Gilded Roots is tested with trees of 100,000 people. Your tree is saved in the background a moment after each

@@ -720,12 +720,11 @@ pub(crate) fn split_off(db: &Db, g: &Group, tree: &str) -> Result<usize, String>
     let n = part.people.len();
     std::fs::create_dir_all(dir.join("media")).map_err(|e| format!("Could not make the new tree: {}", io_msg(&e)))?;
     // copy the media files the new tree uses
-    let json = serde_json::to_string(&part).unwrap_or_default();
-    if let Ok(rd) = std::fs::read_dir(media_dir()) {
-        for e in rd.flatten() {
-            let name = e.file_name().to_string_lossy().to_string();
-            if e.path().is_file() && json.contains(&format!("\"{}\"", name.replace('\\', "\\\\").replace('"', "\\\""))) {
-                let _ = std::fs::copy(e.path(), dir.join("media").join(&name));
+    // (wherever each is in the media folder, the new tree gets it at the top of its own)
+    for name in media_in_use(&part) {
+        if let Some(src) = safe_media_path(&name) {
+            if src.is_file() {
+                let _ = std::fs::copy(&src, dir.join("media").join(&name));
             }
         }
     }

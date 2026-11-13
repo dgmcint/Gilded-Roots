@@ -27,6 +27,57 @@ mod tests {
     }
 
 
+    /// Sorting the media folder into person folders: files move, are still found, follow a
+    /// renamed person, move to Shared when a second person gets them, and the tree is unchanged.
+    #[test]
+    fn media_folders_sort_and_follow_changes() {
+        let home = tdir("home-folders");
+        std::env::set_var("HOME", &home);
+        std::env::set_var("APPDATA", &home);
+        let dir = media_dir();
+        for f in ["1-ann.jpg", "2-letter.pdf", "3-both.jpg", "4-loose.jpg"] {
+            std::fs::write(dir.join(f), f.as_bytes()).unwrap();
+        }
+        // a backup copy of the media folder, which is sorted the same way
+        let bdir = data_dir().join("backups").join("media");
+        std::fs::create_dir_all(&bdir).unwrap();
+        std::fs::write(bdir.join("1-ann.jpg"), b"1-ann.jpg").unwrap();
+        let m = |f: &str| Media { file: f.into(), ..Default::default() };
+        let mut db = Db::default();
+        db.people.insert(1, Person { given: "Ann".into(), surname: "Lee".into(), media: vec![m("1-ann.jpg"), m("2-letter.pdf"), m("3-both.jpg")], ..Default::default() });
+        db.people.insert(2, Person { given: "Bob".into(), surname: "Lee".into(), ..Default::default() });
+        let before = serde_json::to_string(&db).unwrap();
+        forget_media_index();
+        let plan = media_plan(&db);
+        assert_eq!(plan.len(), 3, "{plan:?}");
+        let (moved, problems) = apply_media_plan(&plan);
+        assert_eq!((moved, problems.len()), (3, 0), "{problems:?}");
+        assert!(dir.join("Lee, Ann (1)").join("1-ann.jpg").is_file());
+        assert!(bdir.join("Lee, Ann (1)").join("1-ann.jpg").is_file() && !bdir.join("1-ann.jpg").exists(), "the backup copy follows");
+        assert!(dir.join("4-loose.jpg").is_file(), "files nobody uses stay put");
+        assert_eq!(std::fs::read(mfile("2-letter.pdf")).unwrap(), b"2-letter.pdf", "still found in its new folder");
+        assert_eq!(serde_json::to_string(&db).unwrap(), before, "the tree itself is not changed");
+        assert!(media_plan(&db).is_empty(), "nothing left to move");
+        // found again after the program starts afresh
+        forget_media_index();
+        assert!(mfile("1-ann.jpg").is_file());
+        // a renamed person's files follow; the old folder goes once empty
+        db.people.get_mut(&1).unwrap().surname = "Smith".into();
+        db.people.get_mut(&2).unwrap().media.push(m("3-both.jpg"));
+        let (moved, _) = apply_media_plan(&media_plan(&db));
+        assert_eq!(moved, 3);
+        assert!(dir.join("Smith, Ann (1)").join("1-ann.jpg").is_file());
+        assert!(dir.join("Shared").join("3-both.jpg").is_file());
+        assert!(!dir.join("Lee, Ann (1)").exists(), "the empty old folder is removed");
+        // files in person folders are listed as not linked once nobody uses them
+        db.people.get_mut(&1).unwrap().media.retain(|x| x.file != "1-ann.jpg");
+        let loose: Vec<String> = unlinked_files(&db).into_iter().map(|x| x.0).collect();
+        assert!(loose.contains(&"1-ann.jpg".to_string()) && loose.contains(&"4-loose.jpg".to_string()), "{loose:?}");
+        // and they can be moved out to Removed files from there
+        assert_eq!(move_to_removed(&["1-ann.jpg".to_string()]), 1);
+        assert!(data_dir().join("Removed files").join("1-ann.jpg").is_file());
+    }
+
     /// Whole path: a tree with photos is written as a GEDCOM file, then read back as if it came from another program.
     #[test]
     fn export_then_import_with_photos_end_to_end() {

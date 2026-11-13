@@ -698,6 +698,9 @@ pub(crate) struct Db {
     pub(crate) fams: Fams,
     #[serde(default)]
     pub(crate) next: u32,
+    /// The media folder is kept sorted into person folders (Tools > Sort media into person folders).
+    #[serde(default, skip_serializing_if = "crate::is_false")]
+    pub(crate) media_folders: bool,
     #[serde(default)]
     pub(crate) sample: bool,
     #[serde(default)]
@@ -751,7 +754,7 @@ pub(crate) struct Group {
 
 impl Default for Db {
     fn default() -> Self {
-        Db { people: BTreeMap::new(), fams: Fams::default(), next: 0, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new() }
+        Db { people: BTreeMap::new(), fams: Fams::default(), next: 0, media_folders: false, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new() }
     }
 }
 

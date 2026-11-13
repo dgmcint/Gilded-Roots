@@ -144,7 +144,7 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
-                    for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Gallery, "Gallery"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
+                    for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
                         if ui.button(l).clicked() {
                             self.view = v;
                             ui.close_menu();
@@ -365,6 +365,11 @@ impl App {
                         self.x.calc_open = true;
                         ui.close_menu();
                     }
+                    if ui.button("Sort media into person folders...").on_hover_text("Put each person's photos, documents and recordings in a folder named after them, inside the media folder").clicked() {
+                        self.x.folders_open = true;
+                        self.x.folders_plan = None;
+                        ui.close_menu();
+                    }
                     if ui.button("Soundex...").on_hover_text("The sound-alike code of a surname, and the surnames in this tree that share it").clicked() {
                         self.x.soundex_open = true;
                         if self.x.soundex_q.is_empty() {
@@ -516,7 +521,7 @@ impl App {
                             ("F12", "History of changes"),
                             ("Arrow keys", "Move around the chart"),
                             ("Home", "Go to the home person"),
-                            ("Ctrl/Cmd+1..9", "Family, Pedigree, Descendants, Individual, Gallery, Charts, People, Map, Memories"),
+                            ("Ctrl/Cmd+1..9", "Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map, DNA"),
                             ("Ctrl/Cmd + / -", "Zoom the chart"),
                             ("H", "Pedigree and descendants: switch between Select and the hand"),
                         ] {
@@ -551,7 +556,7 @@ impl App {
         }
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Gallery, "Gallery"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
+                for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
                     let mut t = RichText::new(l).size(16.0);
                     if self.view == v {
                         t = t.strong();
@@ -731,6 +736,10 @@ impl App {
         self.trees_window(ctx);
         self.designer_window(ctx);
         self.story_window(ctx);
+        self.media_folders_window(ctx);
+        if self.x.tidy_pending && self.media_job.is_none() {
+            self.tidy_media();
+        }
         self.versions_window(ctx);
         self.renumber_window(ctx);
         if self.home_pick.is_some() {
@@ -1983,7 +1992,7 @@ impl App {
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::Minus)) {
             act = Some(Action::SetZoom(self.settings.zoom - 0.1));
         }
-        for (k, v) in [(egui::Key::Num1, View::Family), (egui::Key::Num2, View::Pedigree), (egui::Key::Num3, View::Descendants), (egui::Key::Num4, View::Person), (egui::Key::Num5, View::Gallery), (egui::Key::Num6, View::Charts), (egui::Key::Num7, View::Table), (egui::Key::Num8, View::Map), (egui::Key::Num9, View::Memories)] {
+        for (k, v) in [(egui::Key::Num1, View::Family), (egui::Key::Num2, View::Pedigree), (egui::Key::Num3, View::Descendants), (egui::Key::Num4, View::Person), (egui::Key::Num5, View::Memories), (egui::Key::Num6, View::Charts), (egui::Key::Num7, View::Table), (egui::Key::Num8, View::Map), (egui::Key::Num9, View::Dna)] {
             if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, k)) {
                 self.view = v;
             }

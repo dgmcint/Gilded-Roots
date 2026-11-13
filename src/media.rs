@@ -165,6 +165,7 @@ pub(crate) fn move_to_removed(files: &[String]) -> usize {
         }
         if std::fs::rename(&src, &dst).is_ok() || (std::fs::copy(&src, &dst).is_ok() && std::fs::remove_file(&src).is_ok()) {
             n += 1;
+            forget_media_file(&media_dir(), f);
         }
     }
     n
@@ -781,26 +782,46 @@ impl App {
 impl App {
     /// The Gallery: every photo, document, PDF, recording, story and note in the tree, with
     /// filters by kind and an Add menu.
+    /// The old Gallery tab: now the Memories tab showing photos.
     pub(crate) fn gallery_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
-        self.media_hub(ui, act, true);
+        self.view = View::Memories;
+        self.settings.mem_kind = 1;
+        save_settings(&self.settings);
+        self.media_hub(ui, act);
     }
 
     pub(crate) fn memories_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
-        if self.x.gal_kind == 1 {
-            self.x.gal_kind = 0;
-        }
-        self.media_hub(ui, act, false);
+        self.media_hub(ui, act);
     }
 
-    pub(crate) fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, photos: bool) {
+    /// The Memories tab: everything kept in the tree (photos, documents, stories, recordings and
+    /// notes), with a filter, optionally grouped under each person, plus files in the media
+    /// folder that nobody uses yet.
+    pub(crate) fn media_hub(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let sel_name = self.sel.map(|s| self.db.label(s)).unwrap_or_default();
+        let kind = self.settings.mem_kind;
+        // how many of each kind, for the filter buttons (kept until the tree changes)
+        if self.x.mem_counts.0 != self.x.data_ver || self.x.mem_counts.0 == 0 {
+            let mut c = [0usize; 7];
+            for p in self.db.people.values() {
+                for m in &p.media {
+                    c[media_kind(m) as usize] += 1;
+                }
+                if !p.notes.trim().is_empty() {
+                    c[5] += 1;
+                }
+            }
+            c[0] = c[1] + c[2] + c[3] + c[4] + c[5];
+            self.x.mem_counts = (self.x.data_ver.max(1), c);
+        }
+        let counts = self.x.mem_counts.1;
         ui.horizontal_wrapped(|ui| {
-            ui.heading(if photos { "Gallery" } else { "Memories" });
+            ui.heading("Memories");
             ui.add_space(8.0);
             ui.add_enabled_ui(self.sel.is_some(), |ui| {
                 ui.menu_button(RichText::new("+ Add").strong(), |ui| {
                     ui.label(RichText::new(format!("For {}", sel_name)).small().weak());
-                    if ui.button(if photos { "Photos..." } else { "PDFs, documents or recordings..." }).clicked() {
+                    if ui.button("Photos, documents or recordings...").clicked() {
                         *act = Some(Action::AttachFiles);
                         ui.close_menu();
                     }
@@ -810,7 +831,8 @@ impl App {
                         }
                         ui.close_menu();
                     }
-                    if ui.button("Record a spoken story...").on_hover_text("Recording is done from the person's Photos and recordings panel").clicked() {
+                    if ui.button("Record a spoken story").clicked() {
+                        *act = Some(Action::StartRec);
                         self.view = View::Person;
                         if let Some(d) = self.settings.dock.iter_mut().find(|d| d.sec == "media") {
                             d.on = true;
@@ -826,18 +848,29 @@ impl App {
                         ui.close_menu();
                     }
                 });
-            });
+            })
+            .response
+            .on_disabled_hover_text("Select a person first");
             ui.separator();
-            if !photos {
-                for (k, l) in [(0u8, "All memories"), (4, "Stories"), (3, "Recordings"), (2, "Documents and PDFs"), (5, "Notes")] {
-                    if ui.selectable_label(self.x.gal_kind == k, l).clicked() {
-                        self.x.gal_kind = k;
-                    }
+            for (k, l) in TAB_KINDS {
+                let label = if k == 6 { l.to_string() } else { format!("{} ({})", l, counts[k as usize]) };
+                if ui.selectable_label(kind == k, label).clicked() {
+                    self.settings.mem_kind = k;
+                    self.x.gal_pick = false;
+                    self.x.gal_sel.clear();
+                    save_settings(&self.settings);
                 }
             }
         });
+        if kind == 6 {
+            self.unlinked_view(ui, act);
+            return;
+        }
         ui.horizontal(|ui| {
             ui.checkbox(&mut self.gal_only, "Only the selected person");
+            if ui.checkbox(&mut self.settings.mem_by_person, "Show by person").on_hover_text("Group the memories under each person's name").changed() {
+                save_settings(&self.settings);
+            }
             ui.add(egui::TextEdit::singleline(&mut self.gal_find).hint_text("Filter by name or caption").desired_width(220.0));
             ui.separator();
             if !self.x.gal_pick {
@@ -852,21 +885,92 @@ impl App {
             }
         });
         let q = self.gal_find.trim().to_lowercase();
-        let want = if photos { 1 } else { self.x.gal_kind };
-        let key: MemKey = (self.x.data_ver, photos, want, self.gal_only, self.sel, q.clone());
+        let key: MemKey = (self.x.data_ver, false, kind, self.gal_only, self.sel, q.clone());
         let items = match &self.x.mem_cache {
             Some((k, items)) if *k == key => items.clone(),
             _ => {
-                let items = std::sync::Arc::new(self.memory_items(photos, want, &q));
+                let items = std::sync::Arc::new(self.memory_items(kind, &q));
                 self.x.mem_cache = Some((key, items.clone()));
                 items
             }
         };
-        self.memory_cards(ui, act, photos, &items);
+        self.memory_cards(ui, act, &items);
+    }
+
+    /// Files in the media folder that are not on anyone yet, to add to the selected person.
+    fn unlinked_view(&mut self, ui: &mut egui::Ui, _act: &mut Option<Action>) {
+        // reading the folder takes a moment with thousands of files: done when the tree changes
+        // or Refresh is pressed
+        if self.x.unlinked.as_ref().map_or(true, |u| u.0 != self.x.data_ver) {
+            self.x.unlinked = Some((self.x.data_ver, std::sync::Arc::new(unlinked_files(&self.db))));
+        }
+        let files = self.x.unlinked.as_ref().map(|u| u.1.clone()).unwrap_or_default();
+        ui.horizontal(|ui| {
+            ui.label(RichText::new(format!("{} file(s) in the media folder that no one in the tree uses.", files.len())).weak());
+            if ui.button("Refresh").clicked() {
+                self.x.unlinked = None;
+                forget_media_index();
+            }
+            if ui.button("Open media folder").clicked() {
+                open_path(&media_dir());
+            }
+        });
+        let who = self.sel.filter(|s| self.db.people.contains_key(s));
+        ui.label(RichText::new(match who {
+            Some(s) => format!("Add a file to {} with its Add button, or select someone else first.", self.db.label(s)),
+            None => "Select a person (Search > Find, or another tab) to add these files to them.".to_string(),
+        }).small().weak());
+        ui.separator();
+        if files.is_empty() {
+            ui.label("Every file in the media folder is linked to someone.");
+            return;
+        }
+        let mut add: Option<String> = None;
+        let mut remove: Option<String> = None;
+        let h = ui.spacing().interact_size.y + ui.spacing().item_spacing.y;
+        egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(ui, h, files.len(), |ui, range| {
+            for (name, size) in &files[range] {
+                ui.horizontal(|ui| {
+                    let k = media_kind(&Media { file: name.clone(), ..Default::default() });
+                    let badge = match k {
+                        1 => "Photo",
+                        3 => "Recording",
+                        _ if is_pdf(name) => "PDF",
+                        _ => "Document",
+                    };
+                    fixed_label(ui, 70.0, RichText::new(badge).small().color(ui.visuals().selection.bg_fill));
+                    fixed_label(ui, 360.0, name.as_str());
+                    fixed_label(ui, 70.0, RichText::new(size_words(*size)).small().weak());
+                    if ui.small_button("Open").clicked() {
+                        open_media(name);
+                    }
+                    if ui.add_enabled(who.is_some(), egui::Button::new("Add").small()).on_hover_text("Put this file on the selected person").clicked() {
+                        add = Some(name.clone());
+                    }
+                    if ui.small_button("Move to Removed files").on_hover_text("Moved to the Removed files folder in your Gilded Roots folder, not deleted").clicked() {
+                        remove = Some(name.clone());
+                    }
+                });
+            }
+        });
+        if let (Some(f), Some(s)) = (add, who) {
+            if let Some(p) = self.db.people.get_mut(&s) {
+                let shown = f.split_once('-').filter(|(a, _)| a.chars().all(|c| c.is_ascii_digit())).map(|(_, b)| b.to_string()).unwrap_or_else(|| f.clone());
+                p.media.push(Media { file: f.clone(), name: shown, ..Default::default() });
+                self.dirty = true;
+                self.status = format!("Added {} to {}.", f, self.db.label(s));
+                self.x.unlinked = None;
+            }
+        }
+        if let Some(f) = remove {
+            let n = move_to_removed(&[f.clone()]);
+            self.status = if n == 1 { format!("Moved {} to the Removed files folder.", f) } else { format!("Could not move {}.", f) };
+            self.x.unlinked = None;
+        }
     }
 
     /// Every card to show, in order of the owner's name.
-    fn memory_items(&self, photos: bool, want: u8, q: &str) -> Vec<MemItem> {
+    fn memory_items(&self, want: u8, q: &str) -> Vec<MemItem> {
         let mut items: Vec<MemItem> = Vec::new();
         for (id, p) in &self.db.people {
             for (i, m) in p.media.iter().enumerate() {
@@ -874,7 +978,7 @@ impl App {
                     continue;
                 }
                 let kind = media_kind(m);
-                if (want != 0 && want != kind) || (!photos && kind == 1) {
+                if want != 0 && want != kind {
                     continue;
                 }
                 let title = if !m.caption.is_empty() { m.caption.clone() } else if !m.name.is_empty() { m.name.clone() } else { m.path.rsplit('/').next().unwrap_or("").to_string() };
@@ -883,24 +987,18 @@ impl App {
                 }
                 items.push((*id, i, kind, title, p.name.clone()));
             }
-            if !photos && (want == 0 || want == 5) && !p.notes.trim().is_empty() && (!self.gal_only || self.sel == Some(*id)) {
+            if (want == 0 || want == 5) && !p.notes.trim().is_empty() && (!self.gal_only || self.sel == Some(*id)) {
                 let first: String = p.notes.trim().chars().take(140).collect();
                 if q.is_empty() || p.name.to_lowercase().contains(q) || p.notes.to_lowercase().contains(q) {
                     items.push((*id, NOTE_ITEM, 5, first, p.name.clone()));
                 }
             }
         }
-        items.sort_by(|a, b| a.4.cmp(&b.4).then(a.2.cmp(&b.2)).then(a.1.cmp(&b.1)));
+        items.sort_by(|a, b| a.4.cmp(&b.4).then(a.0.cmp(&b.0)).then(a.2.cmp(&b.2)).then(a.1.cmp(&b.1)));
         items
     }
 
-    fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, photos: bool, items: &[MemItem]) {
-        let counts = |k: u8| items.iter().filter(|x| x.2 == k).count();
-        if photos {
-            ui.label(RichText::new(format!("{} photo(s)", counts(1))).weak());
-        } else {
-            ui.label(RichText::new(format!("{} stor(ies), {} recording(s), {} document(s), {} note(s)", counts(4), counts(3), counts(2), counts(5))).weak());
-        }
+    fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, items: &[MemItem]) {
         ui.separator();
         if items.is_empty() {
             ui.label("Nothing here yet. Select a person and use + Add.");
@@ -940,135 +1038,70 @@ impl App {
         // every row is the same height (room for a two-line name), so only the rows in view
         // need drawing, however many memories there are
         let row_h = (cw * 0.76).round() + 64.0;
-        let n_rows = items.len().div_ceil(cols);
-        egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(ui, row_h, n_rows, |ui, range| {
-            for row in items.chunks(cols).skip(range.start).take(range.len()) {
-                let top = ui.cursor().top();
-                ui.horizontal_top(|ui| {
-                    ui.spacing_mut().item_spacing.x = gap;
-                    for (id, i, kind, title, name) in row {
-                        ui.vertical(|ui| {
-                            ui.set_width(cw);
-                            ui.set_max_width(cw);
-                            let size = vec2(cw, (cw * 0.76).round());
-                            if *i == NOTE_ITEM {
-                                // a note: show its first lines on a card
-                                let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
-                                ui.painter().rect(rect, 6.0_f32, ui.visuals().faint_bg_color, ui.visuals().widgets.noninteractive.bg_stroke);
-                                let g = ui.painter().layout(title.clone(), FontId::proportional(12.0), ui.visuals().text_color(), rect.width() - 16.0);
-                                ui.painter().with_clip_rect(rect.shrink(6.0)).galley(rect.min + vec2(8.0, 8.0), g, ui.visuals().text_color());
-                                let key = (*id, NOTE_ITEM);
-                                if self.x.gal_sel.contains(&key) {
-                                    ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
-                                }
-                                if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                                    if self.x.gal_pick {
-                                        if !self.x.gal_sel.remove(&key) {
-                                            self.x.gal_sel.insert(key);
-                                        }
-                                    } else {
-                                        *act = Some(Action::Open(*id));
-                                    }
-                                }
-                                if self.x.gal_pick {
-                                    let mut on = self.x.gal_sel.contains(&key);
-                                    if ui.checkbox(&mut on, RichText::new("Note").small()).changed() {
-                                        if on {
-                                            self.x.gal_sel.insert(key);
-                                        } else {
-                                            self.x.gal_sel.remove(&key);
-                                        }
-                                    }
-                                } else {
-                                    ui.label(RichText::new("Note").small().weak());
-                                }
-                            } else {
-                                // gone since the list was made (just removed): skip until it is redone
-                                let Some(m) = self.db.people.get(id).and_then(|p| p.media.get(*i)) else { return };
-                                if *kind == 1 && online_photo(m) {
-                                    let picked = self.x.gal_sel.contains(&(*id, *i));
-                                    if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open in browser").selected(picked)).clicked() {
-                                        if self.x.gal_pick {
-                                            if !self.x.gal_sel.remove(&(*id, *i)) {
-                                                self.x.gal_sel.insert((*id, *i));
-                                            }
-                                        } else {
-                                            ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
-                                        }
-                                    }
-                                } else if *kind == 1 && !m.thumb.is_empty() && m.thumb != "-" {
-                                    let uri = img_uri(&mprev(&m.thumb));
-                                    let r = ui.add(egui::Image::new(uri).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
-                                    if self.x.gal_sel.contains(&(*id, *i)) {
-                                        ui.painter().rect_stroke(r.rect.expand(2.0), 5.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
-                                    }
-                                    if r.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                                        if self.x.gal_pick {
-                                            // choosing several: a click ticks or unticks the photo
-                                            if !self.x.gal_sel.remove(&(*id, *i)) {
-                                                self.x.gal_sel.insert((*id, *i));
-                                            }
-                                        } else {
-                                            self.viewing = Some((*id, *i));
-                                        }
-                                    }
-                                } else {
-                                    let (badge, hint) = match *kind {
-                                        1 => ("PHOTO", "Open"),
-                                        3 => ("\u{266A}", "Play"),
-                                        4 => ("STORY", "Read"),
-                                        _ if is_pdf(&m.file) => ("PDF", "Read"),
-                                        _ => ("DOC", "Open"),
-                                    };
-                                    let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
-                                    let hov = resp.hovered();
-                                    ui.painter().rect(rect, 6.0_f32, if hov { ui.visuals().widgets.hovered.bg_fill } else { ui.visuals().faint_bg_color }, ui.visuals().widgets.noninteractive.bg_stroke);
-                                    ui.painter().text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, badge, FontId::proportional(28.0), ui.visuals().selection.bg_fill);
-                                    let online = m.file.is_empty() && is_url(&m.path);
-                                    ui.painter().text(rect.center() + vec2(0.0, 26.0), Align2::CENTER_CENTER, if online { "Open online" } else { hint }, FontId::proportional(12.0), ui.visuals().weak_text_color());
-                                    if self.x.gal_sel.contains(&(*id, *i)) {
-                                        ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
-                                    }
-                                    if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                                        if self.x.gal_pick {
-                                            if !self.x.gal_sel.remove(&(*id, *i)) {
-                                                self.x.gal_sel.insert((*id, *i));
-                                            }
-                                        } else if online {
-                                            ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
-                                        } else if *kind == 4 && m.file.ends_with(".txt") {
-                                            story_open = Some((*id, *i));
-                                        } else if is_pdf(&m.file) {
-                                            pdf_req = Some((mfile(&m.file), title.clone()));
-                                        } else if *kind == 1 && m.thumb.is_empty() && !m.file.is_empty() {
-                                            self.viewing = Some((*id, *i));
-                                        } else if !m.file.is_empty() {
-                                            open_media(&m.file);
-                                        }
-                                    }
-                                }
-                                if self.x.gal_pick {
-                                    let key = (*id, *i);
-                                    let mut on = self.x.gal_sel.contains(&key);
-                                    if ui.checkbox(&mut on, RichText::new(title.as_str()).small()).changed() {
-                                        if on {
-                                            self.x.gal_sel.insert(key);
-                                        } else {
-                                            self.x.gal_sel.remove(&key);
-                                        }
-                                    }
-                                } else {
-                                    ui.add(egui::Label::new(RichText::new(title.as_str()).small()).truncate());
-                                }
-                            }
-                            if ui.link(RichText::new(name.as_str()).small()).clicked() {
+        // what to draw, line by line: a person's name (when grouped by person) or a row of cards
+        let head_h = 30.0;
+        let mut lines: Vec<(Option<(u32, String, usize)>, std::ops::Range<usize>)> = Vec::new();
+        if self.settings.mem_by_person {
+            let mut s = 0;
+            while s < items.len() {
+                let mut e = s;
+                while e < items.len() && items[e].0 == items[s].0 {
+                    e += 1;
+                }
+                lines.push((Some((items[s].0, items[s].4.clone(), e - s)), s..s));
+                let mut r = s;
+                while r < e {
+                    lines.push((None, r..(r + cols).min(e)));
+                    r += cols;
+                }
+                s = e;
+            }
+        } else {
+            let mut r = 0;
+            while r < items.len() {
+                lines.push((None, r..(r + cols).min(items.len())));
+                r += cols;
+            }
+        }
+        let mut tops: Vec<f32> = Vec::with_capacity(lines.len() + 1);
+        let mut y = 0.0;
+        for l in &lines {
+            tops.push(y);
+            y += if l.0.is_some() { head_h } else { row_h };
+        }
+        let total = y;
+        egui::ScrollArea::vertical().auto_shrink([false, false]).show_viewport(ui, |ui, vp| {
+            ui.set_height(total);
+            let origin = ui.min_rect().min;
+            let width = ui.available_width();
+            // only the lines in view are drawn, however many memories there are
+            let first = tops.partition_point(|t| *t <= vp.min.y).saturating_sub(1);
+            for li in first..lines.len() {
+                let top = tops[li];
+                if top > vp.max.y {
+                    break;
+                }
+                let h = if lines[li].0.is_some() { head_h } else { row_h };
+                let rect = Rect::from_min_size(origin + vec2(0.0, top), vec2(width, h));
+                let (head, range) = &lines[li];
+                ui.allocate_new_ui(egui::UiBuilder::new().max_rect(rect), |ui| {
+                    if let Some((id, name, n)) = head {
+                        ui.add_space(6.0);
+                        ui.horizontal(|ui| {
+                            if ui.link(RichText::new(name.as_str()).strong().size(15.0)).on_hover_text("Open their page").clicked() {
                                 *act = Some(Action::Open(*id));
+                            }
+                            ui.label(RichText::new(format!("{} item(s)", n)).small().weak());
+                        });
+                    } else {
+                        ui.horizontal_top(|ui| {
+                            ui.spacing_mut().item_spacing.x = gap;
+                            for it in &items[range.clone()] {
+                                ui.vertical(|ui| self.memory_card(ui, act, it, cw, &mut pdf_req, &mut story_open));
                             }
                         });
                     }
                 });
-                let used = ui.cursor().top() - top;
-                ui.add_space((row_h - used).max(0.0));
             }
         });
         if pdf_req.is_some() {
@@ -1160,6 +1193,127 @@ impl App {
                 self.x.story = Some(StoryEdit { who, idx: Some(i), title: m.caption.clone(), text });
             }
         }
+    }
+
+    /// One card on the Memories tab: a photo, or a badge for a document, story, recording or note.
+    fn memory_card(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, it: &MemItem, cw: f32, pdf_req: &mut Option<(PathBuf, String)>, story_open: &mut Option<(u32, usize)>) {
+        let (id, i, kind, title, name) = (&it.0, &it.1, &it.2, &it.3, &it.4);
+                ui.set_width(cw);
+                ui.set_max_width(cw);
+                let size = vec2(cw, (cw * 0.76).round());
+                if *i == NOTE_ITEM {
+                    // a note: show its first lines on a card
+                    let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
+                    ui.painter().rect(rect, 6.0_f32, ui.visuals().faint_bg_color, ui.visuals().widgets.noninteractive.bg_stroke);
+                    let g = ui.painter().layout(title.clone(), FontId::proportional(12.0), ui.visuals().text_color(), rect.width() - 16.0);
+                    ui.painter().with_clip_rect(rect.shrink(6.0)).galley(rect.min + vec2(8.0, 8.0), g, ui.visuals().text_color());
+                    let key = (*id, NOTE_ITEM);
+                    if self.x.gal_sel.contains(&key) {
+                        ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                    }
+                    if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                        if self.x.gal_pick {
+                            if !self.x.gal_sel.remove(&key) {
+                                self.x.gal_sel.insert(key);
+                            }
+                        } else {
+                            *act = Some(Action::Open(*id));
+                        }
+                    }
+                    if self.x.gal_pick {
+                        let mut on = self.x.gal_sel.contains(&key);
+                        if ui.checkbox(&mut on, RichText::new("Note").small()).changed() {
+                            if on {
+                                self.x.gal_sel.insert(key);
+                            } else {
+                                self.x.gal_sel.remove(&key);
+                            }
+                        }
+                    } else {
+                        ui.label(RichText::new("Note").small().weak());
+                    }
+                } else {
+                    // gone since the list was made (just removed): skip until it is redone
+                    let Some(m) = self.db.people.get(id).and_then(|p| p.media.get(*i)) else { return };
+                    if *kind == 1 && online_photo(m) {
+                        let picked = self.x.gal_sel.contains(&(*id, *i));
+                        if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open in browser").selected(picked)).clicked() {
+                            if self.x.gal_pick {
+                                if !self.x.gal_sel.remove(&(*id, *i)) {
+                                    self.x.gal_sel.insert((*id, *i));
+                                }
+                            } else {
+                                ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
+                            }
+                        }
+                    } else if *kind == 1 && !m.thumb.is_empty() && m.thumb != "-" {
+                        let uri = img_uri(&mprev(&m.thumb));
+                        let r = ui.add(egui::Image::new(uri).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
+                        if self.x.gal_sel.contains(&(*id, *i)) {
+                            ui.painter().rect_stroke(r.rect.expand(2.0), 5.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                        }
+                        if r.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                            if self.x.gal_pick {
+                                // choosing several: a click ticks or unticks the photo
+                                if !self.x.gal_sel.remove(&(*id, *i)) {
+                                    self.x.gal_sel.insert((*id, *i));
+                                }
+                            } else {
+                                self.viewing = Some((*id, *i));
+                            }
+                        }
+                    } else {
+                        let (badge, hint) = match *kind {
+                            1 => ("PHOTO", "Open"),
+                            3 => ("\u{266A}", "Play"),
+                            4 => ("STORY", "Read"),
+                            _ if is_pdf(&m.file) => ("PDF", "Read"),
+                            _ => ("DOC", "Open"),
+                        };
+                        let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
+                        let hov = resp.hovered();
+                        ui.painter().rect(rect, 6.0_f32, if hov { ui.visuals().widgets.hovered.bg_fill } else { ui.visuals().faint_bg_color }, ui.visuals().widgets.noninteractive.bg_stroke);
+                        ui.painter().text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, badge, FontId::proportional(28.0), ui.visuals().selection.bg_fill);
+                        let online = m.file.is_empty() && is_url(&m.path);
+                        ui.painter().text(rect.center() + vec2(0.0, 26.0), Align2::CENTER_CENTER, if online { "Open online" } else { hint }, FontId::proportional(12.0), ui.visuals().weak_text_color());
+                        if self.x.gal_sel.contains(&(*id, *i)) {
+                            ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                        }
+                        if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                            if self.x.gal_pick {
+                                if !self.x.gal_sel.remove(&(*id, *i)) {
+                                    self.x.gal_sel.insert((*id, *i));
+                                }
+                            } else if online {
+                                ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
+                            } else if *kind == 4 && m.file.ends_with(".txt") {
+                                *story_open = Some((*id, *i));
+                            } else if is_pdf(&m.file) {
+                                *pdf_req = Some((mfile(&m.file), title.clone()));
+                            } else if *kind == 1 && m.thumb.is_empty() && !m.file.is_empty() {
+                                self.viewing = Some((*id, *i));
+                            } else if !m.file.is_empty() {
+                                open_media(&m.file);
+                            }
+                        }
+                    }
+                    if self.x.gal_pick {
+                        let key = (*id, *i);
+                        let mut on = self.x.gal_sel.contains(&key);
+                        if ui.checkbox(&mut on, RichText::new(title.as_str()).small()).changed() {
+                            if on {
+                                self.x.gal_sel.insert(key);
+                            } else {
+                                self.x.gal_sel.remove(&key);
+                            }
+                        }
+                    } else {
+                        ui.add(egui::Label::new(RichText::new(title.as_str()).small()).truncate());
+                    }
+                }
+                if ui.link(RichText::new(name.as_str()).small()).clicked() {
+                    *act = Some(Action::Open(*id));
+                }
     }
 
     /// Write or read a story. Stories are kept as plain text files in the media folder, so they

@@ -106,6 +106,15 @@ pub(crate) struct QuickEdit {
 /// Screen state for the newer tools (kept together so App's long constructor stays readable).
 #[derive(Default)]
 pub(crate) struct Extra {
+    /// Tools > Sort media into person folders: the window, and the moves it will make.
+    pub(crate) folders_open: bool,
+    pub(crate) folders_plan: Option<Vec<MediaMove>>,
+    /// The media folder needs sorting once the backup copying it has finished.
+    pub(crate) tidy_pending: bool,
+    /// How many memories of each kind (for the Memories tab's filters), and for which tree version.
+    pub(crate) mem_counts: (u64, [usize; 7]),
+    /// Files in the media folder nobody uses, read for one tree version.
+    pub(crate) unlinked: Option<(u64, std::sync::Arc<Vec<(String, u64)>>)>,
     /// A fingerprint of the tree as last noted for Undo, so checking for a change after a click
     /// does not need a whole new copy of the tree in memory.
     pub(crate) last_hash: u64,
@@ -240,7 +249,6 @@ pub(crate) struct Extra {
     pub(crate) hist_new: (i32, i32, String),
     /// While exploring the sample family: the real tree and selection, put back afterwards.
     pub(crate) practice: Option<(Db, Option<u32>, View)>,
-    pub(crate) gal_kind: u8,
     pub(crate) map_who: u8,
     pub(crate) map_types: [bool; 5],
     pub(crate) map_year: i32,
@@ -550,6 +558,7 @@ impl App {
         }
         self.track();
         self.x.track_at = None;
+        self.tidy_media();
         let dir = data_dir();
         let json = self.last_json.clone().into_bytes();
         self.dirty = false;

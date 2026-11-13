@@ -235,12 +235,26 @@ pub(crate) fn is_media_name(f: &str) -> bool {
     )
 }
 
-/// A stored media file name that stays inside the media folder (no folders, no "..").
+/// A stored media file name that stays inside the media folder (no folders, no ".."). The
+/// file may be in a person folder inside the media folder; it is found wherever it is.
 pub(crate) fn safe_media_path(file: &str) -> Option<PathBuf> {
     if file.is_empty() || file.contains('/') || file.contains('\\') || file.contains("..") || file.contains(':') {
         return None;
     }
-    Some(media_dir().join(file))
+    let dir = media_dir();
+    Some(match media_folder_of(&dir, file) {
+        Some(folder) => {
+            let p = dir.join(folder).join(file);
+            // moved since (outside the program, or put back at the top): look there instead
+            if !p.exists() && dir.join(file).exists() {
+                forget_media_file(&dir, file);
+                dir.join(file)
+            } else {
+                p
+            }
+        }
+        None => dir.join(file),
+    })
 }
 
 /// The full path of a stored media file, kept inside the media folder whatever the stored name
