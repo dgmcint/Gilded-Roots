@@ -8,23 +8,34 @@ use super::*;
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Raw {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) at: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) text: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Media {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) file: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) name: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) caption: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) thumb: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) mid: String,
     /// The file reference as it appeared in a GEDCOM file (kept when the file itself was not found).
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) path: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) form: String,
     /// People tagged in this picture.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) faces: Vec<Face>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -42,6 +53,7 @@ pub(crate) struct Face {
 #[serde(default)]
 pub(crate) struct FacePortrait {
     pub(crate) owner: u32,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) file: String,
     pub(crate) r: [f32; 4],
 }
@@ -51,26 +63,42 @@ pub(crate) struct FacePortrait {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Event {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) kind: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) date: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) place: String,
     /// Free-text note.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) note: String,
     /// The value on the event line itself (an occupation, a religion, "Y"...).
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) val: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) typ: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) cause: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) age: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) agency: String,
     /// LDS temple code and ordinance status.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) temp: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) stat: String,
     /// The original GEDCOM tag, when it is not one this app knows by name.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) tag: String,
     /// How sure the researcher is of this fact: confirmed, supported, probable, uncertain, disputed.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) conf: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) cites: Vec<Source>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -220,18 +248,25 @@ pub(crate) fn conf_label(v: &str) -> Option<&'static str> {
 #[serde(default)]
 pub(crate) struct Journal {
     /// The day of the search, as typed.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) date: String,
     /// What was looked for.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) goal: String,
     /// Where: an archive, a website, a book, a person.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) place: String,
     /// The source searched, when it is one in the tree.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) sid: Option<u32>,
     /// "found", "nothing", "partial" or "" (not yet).
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) result: String,
     /// What was discovered (or not).
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) notes: String,
     /// People this search was about.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) people: Vec<u32>,
 }
 
@@ -270,24 +305,36 @@ pub(crate) const FAM_KINDS: &[&str] = &[
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Source {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) about: String,
     /// Shown text. For a citation of a source record this is that record's title.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) text: String,
     /// The source record cited, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) sid: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) page: String,
     /// Text copied from the source (a transcription), and its date.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) data: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) ddate: String,
     /// A web address for this particular record, and the day it was looked at.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) url: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) accessed: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) quality: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) note: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
     /// Pictures of the record itself (a census page, a certificate), kept with this citation.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) media: Vec<Media>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -295,21 +342,34 @@ pub(crate) struct Source {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct SourceRec {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) title: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) author: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) abbr: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) publ: String,
     /// What kind of source it is: Book, Census, Vital record, Church record, Website...
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) kind: String,
     /// Web address of the source as a whole.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) url: String,
     /// Where the source is kept, and its call number there.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) repo: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) call: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) medium: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) text: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) notes: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -317,13 +377,21 @@ pub(crate) struct SourceRec {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct RepoRec {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) name: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) addr: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) url: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) email: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) phone: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) notes: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -336,7 +404,9 @@ pub(crate) const SOURCE_KINDS: &[&str] = &[
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct NoteRec {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) text: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -344,15 +414,25 @@ pub(crate) struct NoteRec {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct AltName {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) kind: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) given: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) surname: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) prefix: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) suffix: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) nick: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) note: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) cites: Vec<Source>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -362,9 +442,13 @@ pub(crate) const FACTS: [&str; 6] = ["General", "Birth", "Christening", "Death",
 #[derive(Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub(crate) struct Contact {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) addr: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) phone: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) email: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) url: String,
 }
 
@@ -377,38 +461,66 @@ impl Contact {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Person {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) name: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) given: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) surname: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) maiden: String,
+    #[serde(skip_serializing_if = "crate::is_false")]
     pub(crate) living: bool,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) sex: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) bd: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) bp: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) chd: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) chp: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) dd: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) dp: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) bud: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) bup: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) notes: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) media: Vec<Media>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) sources: Vec<Source>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) events: Vec<Event>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) portrait: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) prefix: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) suffix: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) nick: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) alt_names: Vec<AltName>,
     /// Shared notes this person points to.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
     /// "BAPM" when the christening above was recorded as a baptism.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) chtag: String,
     /// Original values of single-line facts that carry one ("SEX" other than M/F, "BIRT" = "Y").
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) fvals: BTreeMap<String, String>,
     /// Extra details of NAME, BIRT, CHR, DEAT and BURI (notes, causes, ages...).
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) fx: BTreeMap<String, Event>,
     /// The family whose parents the chart shows, when the person belongs to more than one.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) pref_parents: Option<u32>,
     /// The order of this person's own families (spouses), when it has been chosen by hand or came
     /// from a file. Empty means by marriage date. Families not listed come after, by date.
@@ -418,13 +530,18 @@ pub(crate) struct Person {
     #[serde(skip_serializing_if = "Contact::is_empty")]
     pub(crate) contact: Contact,
     /// Ties to other people outside the family structure: guardian, godparent, witness...
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) assoc: Vec<Assoc>,
     /// Research tasks for this person.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) todos: Vec<Todo>,
     /// Profile picture cut from a face tag (takes the place of `portrait` when set).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) face_portrait: Option<FacePortrait>,
     /// The part of the profile photo to show (x, y, width, height as parts of the picture).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) portrait_crop: Option<[f32; 4]>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -432,10 +549,14 @@ pub(crate) struct Person {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Todo {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) text: String,
+    #[serde(skip_serializing_if = "crate::is_false")]
     pub(crate) done: bool,
     /// The day it was written down, as "2026-10-29".
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) added: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) note: String,
 }
 
@@ -444,7 +565,9 @@ pub(crate) struct Todo {
 #[serde(default)]
 pub(crate) struct Assoc {
     pub(crate) other: u32,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) role: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) note: String,
 }
 
@@ -483,6 +606,9 @@ pub(crate) fn rel_name(s: &str) -> String {
     }
 }
 
+/// Who belongs to which family, so finding someone's parents or partners does not mean
+/// reading every family in the tree. Partners are in no particular order here; `fams_of_ix`
+/// puts them in order.
 #[derive(Default)]
 pub(crate) struct Idx {
     pub(crate) child_of: HashMap<u32, Vec<u32>>,
@@ -492,29 +618,46 @@ pub(crate) struct Idx {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Family {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) h: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) w: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) md: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) mp: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) kids: Vec<u32>,
     /// More partners than the usual one husband and one wife, with their GEDCOM role.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) more: Vec<(String, u32)>,
     /// How each child is related to this family: "adopted", "foster", "sealing", "birth".
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) pedi: BTreeMap<u32, String>,
     /// What kind of partnership this is (Married, Unmarried, Civil Union...). Empty when not said.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) kind: String,
     /// How a child is related to the father / mother slot when that differs from `pedi`
     /// (a child born to the mother and adopted by her husband, for instance).
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) frel: BTreeMap<u32, String>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) mrel: BTreeMap<u32, String>,
     /// Details of the marriage other than its date and place.
     pub(crate) mx: Event,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) events: Vec<Event>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) cites: Vec<Source>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) notes: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) note_refs: Vec<u32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) media: Vec<Media>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) fvals: BTreeMap<String, String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) extra: Vec<Raw>,
 }
 
@@ -552,7 +695,7 @@ pub(crate) struct Db {
     #[serde(default)]
     pub(crate) people: BTreeMap<u32, Person>,
     #[serde(default)]
-    pub(crate) fams: BTreeMap<u32, Family>,
+    pub(crate) fams: Fams,
     #[serde(default)]
     pub(crate) next: u32,
     #[serde(default)]
@@ -598,14 +741,17 @@ pub(crate) struct Db {
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub(crate) struct Group {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) name: String,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
     pub(crate) ids: BTreeSet<u32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) how: Vec<String>,
 }
 
 impl Default for Db {
     fn default() -> Self {
-        Db { people: BTreeMap::new(), fams: BTreeMap::new(), next: 0, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new() }
+        Db { people: BTreeMap::new(), fams: Fams::default(), next: 0, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new() }
     }
 }
 
@@ -639,5 +785,113 @@ pub(crate) fn quality_label(q: &str) -> &'static str {
         "2" => "2 - secondary evidence",
         "3" => "3 - direct, primary evidence",
         _ => "not rated",
+    }
+}
+
+
+/// The tree's families. It reads and changes like the plain list of families it holds, and it
+/// remembers the family index (who is whose child and partner) until something changes a
+/// family: any change, through any route, throws the remembered index away.
+#[derive(Serialize, Deserialize)]
+#[serde(transparent)]
+pub(crate) struct Fams {
+    map: BTreeMap<u32, Family>,
+    #[serde(skip)]
+    ix: std::sync::Mutex<Option<std::sync::Arc<Idx>>>,
+}
+
+impl Default for Fams {
+    fn default() -> Self {
+        BTreeMap::new().into()
+    }
+}
+
+impl Clone for Fams {
+    fn clone(&self) -> Self {
+        let ix = self.ix.lock().map(|g| g.clone()).unwrap_or(None);
+        Fams { map: self.map.clone(), ix: std::sync::Mutex::new(ix) }
+    }
+}
+
+impl From<BTreeMap<u32, Family>> for Fams {
+    fn from(map: BTreeMap<u32, Family>) -> Self {
+        Fams { map, ix: Default::default() }
+    }
+}
+
+impl std::ops::Deref for Fams {
+    type Target = BTreeMap<u32, Family>;
+    fn deref(&self) -> &Self::Target {
+        &self.map
+    }
+}
+
+impl std::ops::DerefMut for Fams {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        if let Ok(g) = self.ix.get_mut() {
+            *g = None;
+        }
+        &mut self.map
+    }
+}
+
+impl<'a> IntoIterator for &'a Fams {
+    type Item = (&'a u32, &'a Family);
+    type IntoIter = std::collections::btree_map::Iter<'a, u32, Family>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.map.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Fams {
+    type Item = (&'a u32, &'a mut Family);
+    type IntoIter = std::collections::btree_map::IterMut<'a, u32, Family>;
+    fn into_iter(self) -> Self::IntoIter {
+        std::ops::DerefMut::deref_mut(self).iter_mut()
+    }
+}
+
+impl IntoIterator for Fams {
+    type Item = (u32, Family);
+    type IntoIter = std::collections::btree_map::IntoIter<u32, Family>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.map.into_iter()
+    }
+}
+
+impl FromIterator<(u32, Family)> for Fams {
+    fn from_iter<I: IntoIterator<Item = (u32, Family)>>(it: I) -> Self {
+        it.into_iter().collect::<BTreeMap<_, _>>().into()
+    }
+}
+
+impl Fams {
+    /// The family index, built the first time it is asked for after a change.
+    pub(crate) fn index(&self) -> std::sync::Arc<Idx> {
+        let mut g = match self.ix.lock() {
+            Ok(g) => g,
+            Err(e) => e.into_inner(),
+        };
+        if let Some(ix) = g.as_ref() {
+            return ix.clone();
+        }
+        let mut ix = Idx::default();
+        for (fid, f) in &self.map {
+            for k in &f.kids {
+                let e = ix.child_of.entry(*k).or_default();
+                if !e.contains(fid) {
+                    e.push(*fid);
+                }
+            }
+            for p in f.h.iter().chain(f.w.iter()).chain(f.more.iter().map(|(_, x)| x)) {
+                let e = ix.partner_in.entry(*p).or_default();
+                if !e.contains(fid) {
+                    e.push(*fid);
+                }
+            }
+        }
+        let ix = std::sync::Arc::new(ix);
+        *g = Some(ix.clone());
+        ix
     }
 }

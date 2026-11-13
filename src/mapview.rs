@@ -244,6 +244,18 @@ pub struct Pin {
     pub place: String,
 }
 
+/// The map's pins worked out for one choice of people, types and year, kept until any of
+/// those (or the tree) changes, so panning and zooming a big family stays smooth.
+pub struct MapShown {
+    key: (u64, u8, String, Option<u32>, [bool; 5], i32, bool),
+    pins: std::sync::Arc<Vec<Pin>>,
+    years: (i32, i32),
+    names: std::sync::Arc<Vec<String>>,
+    placed: Vec<(usize, [f32; 2], Prec)>,
+    missing: BTreeMap<String, usize>,
+    groups: BTreeMap<(i32, i32), (Vec<usize>, [f32; 2], Prec)>,
+}
+
 pub const WHAT: [(&str, [u8; 3]); 5] = [("Born", [70, 170, 90]), ("Married", [160, 100, 200]), ("Died", [200, 70, 70]), ("Buried", [120, 120, 130]), ("Lived / other", [60, 130, 210])];
 
 fn merc(lat: f32) -> f32 {
@@ -425,6 +437,55 @@ impl App {
         pins
     }
 
+    /// The pins for the map's current choices, worked out again only when something changes.
+    fn map_shown(&mut self) -> std::sync::Arc<MapShown> {
+        let key = (self.x.data_ver, self.x.map_who, self.x.map_surname.clone(), self.sel, self.x.map_types, self.x.map_year, self.x.map_undated);
+        if let Some(c) = &self.x.map_cache {
+            if c.key == key {
+                return c.clone();
+            }
+        }
+        // the pins themselves only depend on who is shown; reuse them when only the types or
+        // the year changed (the year moves on every step of Play)
+        let same_people = self.x.map_cache.as_ref().filter(|c| c.key.0 == key.0 && c.key.1 == key.1 && c.key.2 == key.2 && c.key.3 == key.3);
+        let (pins, years, names) = match same_people {
+            Some(c) => (c.pins.clone(), c.years, c.names.clone()),
+            None => {
+                let pins = self.map_pins();
+                let years: Vec<i32> = pins.iter().filter_map(|p| p.year).collect();
+                let lo = years.iter().min().copied().unwrap_or(1800);
+                let hi = years.iter().max().copied().unwrap_or(2000).max(lo + 1);
+                let mut names: Vec<String> = self.db.people.values().map(|p| p.surname.trim().to_string()).filter(|s| !s.is_empty()).collect::<HashSet<_>>().into_iter().collect();
+                names.sort();
+                (std::sync::Arc::new(pins), (lo, hi), std::sync::Arc::new(names))
+            }
+        };
+        let mut placed: Vec<(usize, [f32; 2], Prec)> = Vec::new();
+        let mut missing: BTreeMap<String, usize> = BTreeMap::new();
+        for (i, p) in pins.iter().enumerate() {
+            if !self.x.map_types[p.what as usize] {
+                continue;
+            }
+            match p.year {
+                Some(y) if y > self.x.map_year => continue,
+                None if !self.x.map_undated => continue,
+                _ => {}
+            }
+            match self.locate_place(&p.place) {
+                Some((ll, pr)) => placed.push((i, ll, pr)),
+                None => *missing.entry(p.place.clone()).or_default() += 1,
+            }
+        }
+        let mut groups: BTreeMap<(i32, i32), (Vec<usize>, [f32; 2], Prec)> = BTreeMap::new();
+        for (i, ll, pr) in &placed {
+            let e = groups.entry(key_of(*ll)).or_insert((Vec::new(), *ll, *pr));
+            e.0.push(*i);
+        }
+        let c = std::sync::Arc::new(MapShown { key, pins, years, names, placed, missing, groups });
+        self.x.map_cache = Some(c.clone());
+        c
+    }
+
     /// Where a place is, using the user's own setting first.
     pub(crate) fn locate_place(&mut self, place: &str) -> Option<([f32; 2], Prec)> {
         if let Some(p) = self.db.place_coords.get(place.trim()) {
@@ -450,12 +511,13 @@ impl App {
         // a fit asked for by a button below happens on the next frame, once the pins match the
         // new choice (these pins were worked out before the buttons were drawn)
         let fit_now = self.x.map_fit;
-        let pins = self.map_pins();
-        let years: Vec<i32> = pins.iter().filter_map(|p| p.year).collect();
-        let (y0, y1) = (years.iter().min().copied().unwrap_or(1800), years.iter().max().copied().unwrap_or(2000).max(years.iter().min().copied().unwrap_or(1800) + 1));
+        let shown = self.map_shown();
+        let (y0, y1) = shown.years;
         if self.x.map_year == 0 || self.x.map_year > y1 || self.x.map_year < y0 {
             self.x.map_year = y1;
         }
+        let shown = self.map_shown();
+        let pins = &shown.pins;
         // controls
         ui.horizontal_wrapped(|ui| {
             ui.label("Show");
@@ -468,8 +530,7 @@ impl App {
             }
             ui.separator();
             ui.label("Surname");
-            let mut names: Vec<String> = self.db.people.values().map(|p| p.surname.trim().to_string()).filter(|s| !s.is_empty()).collect::<HashSet<_>>().into_iter().collect();
-            names.sort();
+            let names: Vec<String> = shown.names.to_vec();
             egui::ComboBox::from_id_salt("map_sn").selected_text(if self.x.map_surname.is_empty() { "All".to_string() } else { self.x.map_surname.clone() }).width(130.0).show_ui(ui, |ui| {
                 if ui.selectable_label(self.x.map_surname.is_empty(), "All").clicked() {
                     self.x.map_surname.clear();
@@ -529,28 +590,13 @@ impl App {
             }
             ui.ctx().request_repaint();
         }
-        // place the pins
-        let mut placed: Vec<(usize, [f32; 2], Prec)> = Vec::new();
-        let mut missing: BTreeMap<String, usize> = BTreeMap::new();
-        for (i, p) in pins.iter().enumerate() {
-            if !self.x.map_types[p.what as usize] {
-                continue;
-            }
-            match p.year {
-                Some(y) if y > self.x.map_year => continue,
-                None if !self.x.map_undated => continue,
-                _ => {}
-            }
-            match self.locate_place(&p.place) {
-                Some((ll, pr)) => placed.push((i, ll, pr)),
-                None => *missing.entry(p.place.clone()).or_default() += 1,
-            }
-        }
+        let placed = &shown.placed;
+        let missing = &shown.missing;
         // side list: what is at the chosen pin, and places not found
         egui::SidePanel::right("map_side").resizable(true).default_width(300.0).show_inside(ui, |ui| {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 if let Some(key) = self.x.map_pick {
-                    let here: Vec<&(usize, [f32; 2], Prec)> = placed.iter().filter(|x| key_of(x.1) == key).collect();
+                    let here: Vec<(usize, [f32; 2], Prec)> = shown.groups.get(&key).map(|g| g.0.iter().map(|i| (*i, g.1, g.2)).collect()).unwrap_or_default();
                     if let Some(first) = here.first() {
                         ui.label(RichText::new(pins[first.0].place.as_str()).size(16.0).strong());
                         if first.2 == Prec::State || first.2 == Prec::Country {
@@ -581,7 +627,7 @@ impl App {
                     ui.add_space(6.0);
                     ui.label(RichText::new(format!("Not found ({})", missing.len())).strong());
                     ui.label(RichText::new("Pick one, then click where it is on the map.").small().weak());
-                    for (pl, n) in &missing {
+                    for (pl, n) in missing {
                         let on = self.x.map_setting.as_deref() == Some(pl.as_str());
                         if ui.selectable_label(on, format!("{} ({})", pl, n)).clicked() {
                             self.x.map_setting = if on { None } else { Some(pl.clone()) };
@@ -602,7 +648,7 @@ impl App {
             if fit_now && self.x.map_fit && !placed.is_empty() {
                 self.x.map_fit = false;
                 let (mut a, mut b) = ([f32::MAX, f32::MAX], [f32::MIN, f32::MIN]);
-                for (_, ll, _) in &placed {
+                for (_, ll, _) in placed {
                     a = [a[0].min(ll[0]), a[1].min(merc(ll[1]))];
                     b = [b[0].max(ll[0]), b[1].max(merc(ll[1]))];
                 }
@@ -672,15 +718,11 @@ impl App {
                 }
             }
             // pins, grouped by spot
-            let mut groups: BTreeMap<(i32, i32), (Vec<usize>, [f32; 2], Prec)> = BTreeMap::new();
-            for (i, ll, pr) in &placed {
-                let e = groups.entry(key_of(*ll)).or_insert((Vec::new(), *ll, *pr));
-                e.0.push(*i);
-            }
+            let groups = &shown.groups;
             let mut hover_txt: Option<String> = None;
             let mut clicked_group: Option<(i32, i32)> = None;
             let ptr = resp.hover_pos();
-            for (key, (idx, ll, pr)) in &groups {
+            for (key, (idx, ll, pr)) in groups {
                 let p = to_scr(near_lon(ll[0], cx), merc(ll[1]));
                 if !rect.contains(p) {
                     continue;

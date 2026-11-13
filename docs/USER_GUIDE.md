@@ -404,6 +404,8 @@ Added photos are copied into the `media` folder in your data folder, with a numb
 The Photos panel's **Open media folder** button opens it.
 
 ## Getting around a large tree
+Gilded Roots is tested with trees of 100,000 people. Your tree is saved in the background a moment after each
+change, so clicking and typing never wait for a save; the status bar shows when it was last saved.
 - **Fit** (next to the zoom buttons, or **View → Fit chart to window**) shows the whole chart in the window.
   Zoom goes down to 25%.
 - **Centre on a person:** right-click a box and choose **Centre chart on this person**, or use **Search → Find individual…**.

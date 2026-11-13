@@ -54,6 +54,8 @@ mod books;
 mod tools;
 mod notes;
 mod templates;
+#[cfg(test)]
+mod bigtree;
 pub(crate) use model::*;
 pub(crate) use genealogy::*;
 pub(crate) use settings::*;
@@ -103,3 +105,8 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(test)]
 mod tests;
+
+/// For leaving empty yes/no fields out of the saved tree.
+pub(crate) fn is_false(b: &bool) -> bool {
+    !*b
+}

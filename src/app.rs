@@ -106,6 +106,21 @@ pub(crate) struct QuickEdit {
 /// Screen state for the newer tools (kept together so App's long constructor stays readable).
 #[derive(Default)]
 pub(crate) struct Extra {
+    /// A fingerprint of the tree as last noted for Undo, so checking for a change after a click
+    /// does not need a whole new copy of the tree in memory.
+    pub(crate) last_hash: u64,
+    pub(crate) map_cache: Option<std::sync::Arc<mapview::MapShown>>,
+    pub(crate) mem_cache: Option<(media::MemKey, std::sync::Arc<Vec<media::MemItem>>)>,
+    /// Goes up whenever the tree is noted as changed, so long lists worked out from it (the
+    /// People table, the map's pins, Memories) are kept until then instead of rebuilt each frame.
+    pub(crate) data_ver: u64,
+    pub(crate) table_cache: Option<(table::TableKey, std::sync::Arc<Vec<table::Row>>)>,
+    pub(crate) sorted_cache: HashMap<String, (u64, std::sync::Arc<Vec<u32>>)>,
+    /// When to check whether the last clicks or typing changed the tree (for Undo and saving).
+    /// Checking waits until the typing pauses, so a big tree does not slow every keystroke.
+    pub(crate) track_at: Option<std::time::Instant>,
+    /// A save running in the background, so the window does not freeze while a big tree is written.
+    pub(crate) save_job: Option<std::thread::JoinHandle<Result<usize, String>>>,
     /// Tools > Renumber people: open, the order chosen (0 family, 1 present, 2 alphabetical),
     /// and the preview for that order (first few people: old number, new number, name)
     pub(crate) renum_open: bool,
@@ -487,7 +502,10 @@ impl App {
         if self.x.practice.is_some() {
             return true;
         }
-        match save_db_to(&data_dir(), &self.db) {
+        self.wait_for_save();
+        self.track();
+        self.x.track_at = None;
+        match save_json_to(&data_dir(), self.last_json.as_bytes()) {
             Ok(_) => {
                 self.last_saved = Some(std::time::Instant::now());
                 self.save_error = None;
@@ -508,6 +526,12 @@ impl App {
         self
     }
 
+    /// After the tree changed or was swapped for another: lists worked out from it are redone.
+    pub(crate) fn tree_replaced(&mut self) {
+        self.x.data_ver += 1;
+        self.x.last_hash = 0;
+    }
+
     pub(crate) fn remember_state(&mut self) {
         self.x.prev_names = self.db.people.iter().map(|(k, p)| (*k, p.name.clone())).collect();
         self.x.prev_sel = self.sel.and_then(|s| self.db.people.get(&s).map(|p| (s, serde_json::to_string(p).unwrap_or_default())));
@@ -515,7 +539,65 @@ impl App {
         self.x.next_label = None;
     }
 
-    pub(crate) fn track(&mut self) {
+    /// Starts saving in the background (the copy of the tree saved is the one Undo last noted).
+    pub(crate) fn autosave(&mut self) {
+        if self.x.practice.is_some() {
+            self.dirty = false;
+            return;
+        }
+        if self.x.save_job.is_some() {
+            return;
+        }
+        self.track();
+        self.x.track_at = None;
+        let dir = data_dir();
+        let json = self.last_json.clone().into_bytes();
+        self.dirty = false;
+        self.next_save = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        self.x.save_job = Some(std::thread::spawn(move || save_json_to(&dir, &json)));
+    }
+
+    /// Picks up the result of a background save once it has finished.
+    pub(crate) fn poll_save(&mut self) {
+        if self.x.save_job.as_ref().map_or(false, |j| j.is_finished()) {
+            self.finish_save();
+        }
+    }
+
+    /// Waits for a background save to finish (before closing, or saving again straight away).
+    pub(crate) fn wait_for_save(&mut self) {
+        if self.x.save_job.is_some() {
+            self.finish_save();
+        }
+    }
+
+    fn finish_save(&mut self) {
+        let Some(job) = self.x.save_job.take() else { return };
+        match job.join().unwrap_or_else(|_| Err("the save stopped unexpectedly".to_string())) {
+            Ok(_) => {
+                self.last_saved = Some(std::time::Instant::now());
+                self.save_error = None;
+            }
+            Err(e) => {
+                self.save_error = Some(e);
+                self.dirty = true;
+                self.next_save = std::time::Instant::now() + std::time::Duration::from_secs(3);
+            }
+        }
+    }
+
+    /// Notes a change for Undo. Returns whether anything in the tree changed.
+    pub(crate) fn track(&mut self) -> bool {
+        let mut h = Fingerprint::default();
+        if self.x.last_hash == 0 {
+            self.x.last_hash = fingerprint(self.last_json.as_bytes());
+        }
+        if serde_json::to_writer(&mut h, &self.db).is_ok() && h.0 == self.x.last_hash {
+            if self.x.prev_sel.as_ref().map(|x| x.0) != self.sel {
+                self.remember_state();
+            }
+            return false;
+        }
         let cur = serde_json::to_string(&self.db).unwrap_or_default();
         if cur != self.last_json {
             let label = self.change_label();
@@ -533,10 +615,15 @@ impl App {
             }
             self.redo.clear();
             self.last_json = cur;
+            self.tree_replaced();
             self.last_snap = std::time::Instant::now();
             self.remember_state();
-        } else if self.x.prev_sel.as_ref().map(|x| x.0) != self.sel {
-            self.remember_state();
+            true
+        } else {
+            if self.x.prev_sel.as_ref().map(|x| x.0) != self.sel {
+                self.remember_state();
+            }
+            false
         }
     }
 
@@ -545,6 +632,7 @@ impl App {
             fix_names(&mut db);
             self.db = db;
             self.last_json = serde_json::to_string(&self.db).unwrap_or(json);
+            self.tree_replaced();
             self.last_snap = std::time::Instant::now().checked_sub(std::time::Duration::from_secs(5)).unwrap_or_else(std::time::Instant::now);
             if !self.sel.map(|s| self.db.people.contains_key(&s)).unwrap_or(false) {
                 self.sel = self.db.home.or_else(|| self.db.people.keys().next().copied());
@@ -583,6 +671,37 @@ impl App {
         let recovered = false;
         let notice: Option<String> = None;
         let last_json = serde_json::to_string(&db).unwrap_or_default();
-        App { db, sel, view: View::Pedigree, search: String::new(), fx: 0, dlg: None, confirm: false, status, dirty: recovered, find_open: false, settings: Settings::default(), show_look: false, show_loc: false, review: None, imerge: None, src_open: false, src_sel: None, src_tab: 0, src_filter: String::new(), repo_sel: None, src_pick: None, src_merge: None, src_confirm: false, hl: None, back: Vec::new(), fwd: Vec::new(), wipe: None, show_about: false, help_open: false, help_find: String::new(), move_data: false, imp_open: false, imp_src: 0, imp_replace: false, rec: None, rel_open: false, rel_a: None, rel_b: None, viewing: None, undo: Vec::new(), redo: Vec::new(), last_json, last_snap: std::time::Instant::now(), last_backup_day: today(), check_open: false, dup_open: false, merge_open: false, merge_id: String::new(), merge_other: None, dups: Vec::new(), dup_ignore: HashSet::new(), save_error: None, last_saved: None, next_save: std::time::Instant::now(), notice, media_job: None, startup_done: false, verify_open: false, verify_results: Vec::new(), media_gap: String::new(), close_warned: false, report: None, report_open: false, link: None, fit_req: false, editing: None, quick: None, gal_only: false, home_pick: None, gal_find: String::new(), assoc_q: String::new(), assoc_role: "Guardian".to_string(), x: Extra::default() }.started()
+        App { db, sel, view: View::Pedigree, search: String::new(), fx: 0, dlg: None, confirm: false, status, dirty: recovered, find_open: false, settings: Settings::default(), show_look: false, show_loc: false, review: None, imerge: None, src_open: false, src_sel: None, src_tab: 0, src_filter: String::new(), repo_sel: None, src_pick: None, src_merge: None, src_confirm: false, hl: None, back: Vec::new(), fwd: Vec::new(), wipe: None, show_about: false, help_open: false, help_find: String::new(), move_data: false, imp_open: false, imp_src: 0, imp_replace: false, rec: None, rel_open: false, rel_a: None, rel_b: None, viewing: None, undo: Vec::new(), redo: Vec::new(), last_json, last_snap: std::time::Instant::now(), last_backup_day: today(), check_open: false, dup_open: false, merge_open: false, merge_id: String::new(), merge_other: None, dups: Vec::new(), dup_ignore: HashSet::new(), save_error: None, last_saved: None, next_save: std::time::Instant::now(), notice, media_job: None, startup_done: true, verify_open: false, verify_results: Vec::new(), media_gap: String::new(), close_warned: false, report: None, report_open: false, link: None, fit_req: false, editing: None, quick: None, gal_only: false, home_pick: None, gal_find: String::new(), assoc_q: String::new(), assoc_role: "Guardian".to_string(), x: Extra::default() }.started()
     }
+}
+
+/// A quick fingerprint of some bytes (FNV-1a). The same bytes, however they are split up when
+/// written, always give the same fingerprint.
+pub(crate) struct Fingerprint(pub(crate) u64);
+
+impl Default for Fingerprint {
+    fn default() -> Self {
+        Fingerprint(0xcbf2_9ce4_8422_2325)
+    }
+}
+
+impl std::io::Write for Fingerprint {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let mut h = self.0;
+        for b in buf {
+            h ^= *b as u64;
+            h = h.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        self.0 = h;
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+pub(crate) fn fingerprint(b: &[u8]) -> u64 {
+    let mut h = Fingerprint::default();
+    let _ = std::io::Write::write(&mut h, b);
+    h.0
 }

@@ -94,6 +94,12 @@ pub(crate) fn remove_media_items(db: &mut Db, sel: &HashSet<(u32, usize)>) -> us
     n
 }
 
+/// One card in Memories or the Gallery: (owner, media index or NOTE_ITEM, kind, title, owner name).
+pub(crate) type MemItem = (u32, usize, u8, String, String);
+/// What the list of cards depends on, besides the tree: (tree version, photos, kind, only the
+/// selected person, selected person, filter).
+pub(crate) type MemKey = (u64, bool, u8, bool, Option<u32>, String);
+
 /// The key used for a person's note in the Memories selection (in place of a media index).
 pub(crate) const NOTE_ITEM: usize = usize::MAX;
 
@@ -847,8 +853,21 @@ impl App {
         });
         let q = self.gal_find.trim().to_lowercase();
         let want = if photos { 1 } else { self.x.gal_kind };
-        // (owner, media index or usize::MAX for a note, kind, title, owner name)
-        let mut items: Vec<(u32, usize, u8, String, String)> = Vec::new();
+        let key: MemKey = (self.x.data_ver, photos, want, self.gal_only, self.sel, q.clone());
+        let items = match &self.x.mem_cache {
+            Some((k, items)) if *k == key => items.clone(),
+            _ => {
+                let items = std::sync::Arc::new(self.memory_items(photos, want, &q));
+                self.x.mem_cache = Some((key, items.clone()));
+                items
+            }
+        };
+        self.memory_cards(ui, act, photos, &items);
+    }
+
+    /// Every card to show, in order of the owner's name.
+    fn memory_items(&self, photos: bool, want: u8, q: &str) -> Vec<MemItem> {
+        let mut items: Vec<MemItem> = Vec::new();
         for (id, p) in &self.db.people {
             for (i, m) in p.media.iter().enumerate() {
                 if self.gal_only && self.sel != Some(*id) && !m.faces.iter().any(|f| Some(f.who) == self.sel) {
@@ -859,19 +878,23 @@ impl App {
                     continue;
                 }
                 let title = if !m.caption.is_empty() { m.caption.clone() } else if !m.name.is_empty() { m.name.clone() } else { m.path.rsplit('/').next().unwrap_or("").to_string() };
-                if !q.is_empty() && !p.name.to_lowercase().contains(&q) && !title.to_lowercase().contains(&q) {
+                if !q.is_empty() && !p.name.to_lowercase().contains(q) && !title.to_lowercase().contains(q) {
                     continue;
                 }
                 items.push((*id, i, kind, title, p.name.clone()));
             }
             if !photos && (want == 0 || want == 5) && !p.notes.trim().is_empty() && (!self.gal_only || self.sel == Some(*id)) {
                 let first: String = p.notes.trim().chars().take(140).collect();
-                if q.is_empty() || p.name.to_lowercase().contains(&q) || p.notes.to_lowercase().contains(&q) {
+                if q.is_empty() || p.name.to_lowercase().contains(q) || p.notes.to_lowercase().contains(q) {
                     items.push((*id, NOTE_ITEM, 5, first, p.name.clone()));
                 }
             }
         }
         items.sort_by(|a, b| a.4.cmp(&b.4).then(a.2.cmp(&b.2)).then(a.1.cmp(&b.1)));
+        items
+    }
+
+    fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, photos: bool, items: &[MemItem]) {
         let counts = |k: u8| items.iter().filter(|x| x.2 == k).count();
         if photos {
             ui.label(RichText::new(format!("{} photo(s)", counts(1))).weak());
@@ -908,14 +931,19 @@ impl App {
         }
         let mut pdf_req: Option<(PathBuf, String)> = None;
         let mut story_open: Option<(u32, usize)> = None;
-        egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-            // A grid that fits the window: as many columns as fit, with the cards stretched to
-            // fill each row, so nothing runs off the right edge.
-            let gap = 12.0;
-            let avail = (ui.available_width() - 4.0).max(130.0);
-            let cols = (((avail + gap) / (170.0 + gap)).floor() as usize).max(1);
-            let cw = ((avail - gap * (cols as f32 - 1.0)) / cols as f32).clamp(120.0, 260.0);
-            for row in items.chunks(cols) {
+        // A grid that fits the window: as many columns as fit, with the cards stretched to
+        // fill each row, so nothing runs off the right edge.
+        let gap = 12.0;
+        let avail = (ui.available_width() - 4.0 - ui.spacing().scroll.bar_width).max(130.0);
+        let cols = (((avail + gap) / (170.0 + gap)).floor() as usize).max(1);
+        let cw = ((avail - gap * (cols as f32 - 1.0)) / cols as f32).clamp(120.0, 260.0);
+        // every row is the same height (room for a two-line name), so only the rows in view
+        // need drawing, however many memories there are
+        let row_h = (cw * 0.76).round() + 64.0;
+        let n_rows = items.len().div_ceil(cols);
+        egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(ui, row_h, n_rows, |ui, range| {
+            for row in items.chunks(cols).skip(range.start).take(range.len()) {
+                let top = ui.cursor().top();
                 ui.horizontal_top(|ui| {
                     ui.spacing_mut().item_spacing.x = gap;
                     for (id, i, kind, title, name) in row {
@@ -955,7 +983,8 @@ impl App {
                                     ui.label(RichText::new("Note").small().weak());
                                 }
                             } else {
-                                let m = &self.db.people[id].media[*i];
+                                // gone since the list was made (just removed): skip until it is redone
+                                let Some(m) = self.db.people.get(id).and_then(|p| p.media.get(*i)) else { return };
                                 if *kind == 1 && online_photo(m) {
                                     let picked = self.x.gal_sel.contains(&(*id, *i));
                                     if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open in browser").selected(picked)).clicked() {
@@ -1038,7 +1067,8 @@ impl App {
                         });
                     }
                 });
-                ui.add_space(10.0);
+                let used = ui.cursor().top() - top;
+                ui.add_space((row_h - used).max(0.0));
             }
         });
         if pdf_req.is_some() {

@@ -616,7 +616,13 @@ pub(crate) fn read_db(path: &Path) -> Result<Db, String> {
 /// Saves the tree. Keeps the previous good version as tree.json.prev.
 pub(crate) fn save_db_to(dir: &Path, db: &Db) -> Result<usize, String> {
     let json = serde_json::to_vec(db).map_err(|e| e.to_string())?;
-    serde_json::from_slice::<Db>(&json).map_err(|e| format!("internal check failed: {}", e))?;
+    save_json_to(dir, &json)
+}
+
+/// Saves a tree already turned into JSON: checks it reads back, keeps the last good copy as
+/// tree.json.prev, then replaces tree.json in one step.
+pub(crate) fn save_json_to(dir: &Path, json: &[u8]) -> Result<usize, String> {
+    serde_json::from_slice::<Db>(json).map_err(|e| format!("internal check failed: {}", e))?;
     let _ = std::fs::create_dir_all(dir);
     let path = dir.join("tree.json");
     if let Ok(old) = std::fs::read(&path) {
@@ -624,7 +630,7 @@ pub(crate) fn save_db_to(dir: &Path, db: &Db) -> Result<usize, String> {
             let _ = atomic_write(&dir.join("tree.json.prev"), &old);
         }
     }
-    atomic_write(&path, &json).map_err(|e| io_msg(&e))?;
+    atomic_write(&path, json).map_err(|e| io_msg(&e))?;
     Ok(json.len())
 }
 

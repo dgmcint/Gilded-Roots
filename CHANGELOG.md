@@ -7,6 +7,15 @@ Major work so far, in the order it was done.
 - **Notes can be removed from Memories:** in Select mode, notes can now be ticked (click the card or its box) and
   removed along with photos and files; this clears that person's Notes box, and Undo (Ctrl+Z) brings it back.
   Opening the "Remove selected" box is also quicker on a big tree.
+- **Big trees are fast.** Tested with a made-up tree of 100,000 people:
+  - Clicking and typing no longer pause while the tree is saved: saving now happens in the background, at most
+    every couple of seconds, and only when something actually changed (before, every click saved the whole tree).
+  - The People, Map and Memories tabs and the Find list redraw in a few hundredths of a second instead of up to a
+    second: their lists are worked out once and kept until the tree changes, and only the rows in view are drawn.
+  - Finding parents, partners and children no longer reads every family in the tree each time.
+  - Find duplicates is about 15 times quicker (same results).
+  - The saved tree file is about a third of the size (empty fields are left out), so opening and saving are quicker.
+    Older files open as before.
 
 ## 1.0.4 (12 November 2026)
 

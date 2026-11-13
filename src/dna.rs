@@ -11,12 +11,19 @@ use super::*;
 #[serde(default)]
 pub struct DnaTest {
     /// The person in the tree who took the test.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub person: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub company: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub kit: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub date: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub notes: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub regions: Vec<Region>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub matches: Vec<DnaMatch>,
     /// 0 autosomal, 1 Y-DNA (father's line), 2 mtDNA (mother's line). Older trees have only 0.
     pub kind: u8,
@@ -31,13 +38,18 @@ pub const KINDS: &[&str] = &["Autosomal", "Y-DNA", "mtDNA"];
 #[serde(default)]
 pub struct LineTest {
     /// "R-M269", "R-FGC11134", "H1a1"...
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub haplogroup: String,
     /// "Y-37", "Big Y-700", "HVR1", "Full sequence"...
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub level: String,
     /// Y-STR markers and their values, in the company's order ("DYS393", "13").
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub markers: Vec<(String, String)>,
     /// mtDNA differences from the reference sequence, as the company lists them.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub mutations: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub matches: Vec<LineMatch>,
 }
 
@@ -45,15 +57,22 @@ pub struct LineTest {
 #[derive(Clone, Default, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(default)]
 pub struct LineMatch {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub name: String,
     /// Genetic distance: how many steps the two results differ by.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub distance: Option<u32>,
     /// Markers or region compared ("37", "111", "HVR1", "Full sequence").
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub compared: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub haplogroup: String,
     /// The match's earliest known ancestor on this line.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub ancestor: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub link: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub notes: String,
 }
 
@@ -61,6 +80,7 @@ pub struct LineMatch {
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct Region {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub name: String,
     pub pct: f32,
 }
@@ -69,20 +89,29 @@ pub struct Region {
 #[derive(Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct DnaMatch {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub name: String,
     /// Shared centimorgans.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cm: Option<f32>,
     /// Percent of DNA shared, when the company gives that instead of (or as well as) cM.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pct: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub segments: Option<u32>,
     /// Longest shared segment, cM.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub longest: Option<f32>,
     /// The company's own prediction ("1st-2nd cousin").
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub predicted: String,
     /// Maternal, paternal, both or blank.
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub side: String,
     /// The matching person in the tree, once worked out.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub link: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub notes: String,
 }
 

@@ -45,7 +45,11 @@ pub struct Row {
     pub tasks: usize,
     sort_born: i32,
     sort_died: i32,
+    sort_name: (String, String),
 }
+
+/// What the People table's rows depend on, besides the tree itself.
+pub(crate) type TableKey = (u64, String, Only, usize, Col, bool);
 
 fn date_key(s: &str) -> i32 {
     let (y, m, d) = parse_date(s);
@@ -102,13 +106,13 @@ impl App {
                 tasks: open_tasks,
                 sort_born: date_key(&p.bd),
                 sort_died: date_key(&p.dd),
+                sort_name: (p.surname.to_lowercase(), p.name.to_lowercase()),
             });
         }
         let empty_last = |a: &str, b: &str| (a.is_empty(), a.to_lowercase()).cmp(&(b.is_empty(), b.to_lowercase()));
-        let surname_of = |id: u32| self.db.people[&id].surname.to_lowercase();
         rows.sort_by(|a, b| {
             let o = match self.x.table_col {
-                Col::Name => surname_of(a.id).cmp(&surname_of(b.id)).then(a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+                Col::Name => a.sort_name.cmp(&b.sort_name),
                 Col::Id => a.id.cmp(&b.id),
                 Col::Sex => a.sex.cmp(b.sex),
                 Col::Born => a.sort_born.cmp(&b.sort_born),
@@ -124,8 +128,36 @@ impl App {
         rows
     }
 
+    /// Everyone matching `filter`, in name order, kept until the tree changes.
+    pub(crate) fn sorted_kept(&mut self, filter: &str) -> std::sync::Arc<Vec<u32>> {
+        if let Some((v, ids)) = self.x.sorted_cache.get(filter) {
+            if *v == self.x.data_ver {
+                return ids.clone();
+            }
+        }
+        if self.x.sorted_cache.len() > 8 {
+            self.x.sorted_cache.clear();
+        }
+        let ids = std::sync::Arc::new(self.db.sorted(filter));
+        self.x.sorted_cache.insert(filter.to_string(), (self.x.data_ver, ids.clone()));
+        ids
+    }
+
+    /// The table's rows, kept until the tree or the filter changes.
+    pub(crate) fn table_rows_kept(&mut self) -> std::sync::Arc<Vec<Row>> {
+        let key: TableKey = (self.x.data_ver, self.x.table_find.clone(), self.x.table_only, self.x.table_group, self.x.table_col, self.x.table_desc);
+        if let Some((k, rows)) = &self.x.table_cache {
+            if *k == key {
+                return rows.clone();
+            }
+        }
+        let rows = std::sync::Arc::new(self.table_rows());
+        self.x.table_cache = Some((key, rows.clone()));
+        rows
+    }
+
     pub(crate) fn table_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
-        let rows = self.table_rows();
+        let rows = self.table_rows_kept();
         let mut export = false;
         ui.horizontal_wrapped(|ui| {
             ui.label(RichText::new(format!("{} of {} people", rows.len(), self.db.people.len())).strong());
@@ -241,7 +273,7 @@ impl App {
                 let s = if s.starts_with(['=', '+', '-', '@', '\t', '\r']) { format!("'{}", s) } else { s.to_string() };
                 format!("\"{}\"", s.replace('"', "\"\""))
             };
-            for r in &rows {
+            for r in rows.iter() {
                 csv.push_str(&format!("{},{},{},{},{},{},{},{},{},{}\n", r.id, q(&r.name), r.sex, q(&r.born), q(&r.born_in), q(&r.died), q(&r.died_in), r.sources, r.photos, r.tasks));
             }
             if let Some(p) = rfd::FileDialog::new().set_file_name("people.csv").add_filter("Spreadsheet (CSV)", &["csv"]).save_file() {

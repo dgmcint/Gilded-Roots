@@ -7,7 +7,7 @@ impl App {
     /// held, so help and full screen also have the usual Mac shortcuts.
     ///   F1 help   F2 edit person   F3 find   F4 quick jump   F5 fit chart   F6 next tab
     ///   F7 data checker   F8 research to-do   F9 places   F11 full screen   F12 history
-pub(crate)     fn global_keys(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
+    pub(crate) fn global_keys(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
         use egui::{Key, Modifiers as M};
         let typing = ctx.wants_keyboard_input();
         let pressed = ctx.input_mut(|i| {
@@ -64,7 +64,7 @@ pub(crate)     fn global_keys(&mut self, ctx: &egui::Context, act: &mut Option<A
     }
 
     /// Everything quick jump can offer for the text typed so far: people first, then commands.
-pub(crate)     fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
+    pub(crate) fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
         let q = q.trim().to_lowercase();
         let words: Vec<&str> = q.split_whitespace().collect();
         let mut out: Vec<(String, String, Jump)> = Vec::new();
@@ -174,7 +174,7 @@ pub(crate)     fn jump_results(&self, q: &str) -> Vec<(String, String, Jump)> {
         out
     }
 
-pub(crate)     fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
+    pub(crate) fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
         match j {
             Jump::Act(a) => *act = Some(a),
             Jump::View(v) => self.view = v,
@@ -245,7 +245,7 @@ pub(crate)     fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
     }
 
     /// Ctrl/Cmd+K: type a name or a command, arrows to choose, Enter to go.
-pub(crate)     fn jump_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
+    pub(crate) fn jump_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::K)) {
             self.x.jump_open = !self.x.jump_open;
             self.x.jump_q.clear();

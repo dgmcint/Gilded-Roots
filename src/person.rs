@@ -5,7 +5,7 @@ use super::*;
 impl App {
     /// One block of the Individual page. The big blocks live in the dock on the right.
     /// The Individual page while it is locked: plain, readable text instead of greyed-out boxes.
-pub(crate)     fn person_read(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str) {
+    pub(crate) fn person_read(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str) {
         let Some(p) = self.db.people.get(&id).cloned() else { return };
         let mut pdf_req: Option<(PathBuf, String)> = None;
         // A value laid out at a set width (wrapping only text longer than that), so inside a grid
@@ -417,7 +417,7 @@ pub(crate)     fn person_read(&mut self, ui: &mut egui::Ui, act: &mut Option<Act
         }
     }
 
-pub(crate)     fn person_section(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str) {
+    pub(crate) fn person_section(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str) {
         let mut pdf_req: Option<(PathBuf, String)> = None;
         self.person_section_inner(ui, act, id, sec, &mut pdf_req);
         if pdf_req.is_some() {
@@ -425,7 +425,7 @@ pub(crate)     fn person_section(&mut self, ui: &mut egui::Ui, act: &mut Option<
         }
     }
 
-pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str, pdf_req: &mut Option<(PathBuf, String)>) {
+    pub(crate) fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str, pdf_req: &mut Option<(PathBuf, String)>) {
         match sec {
             "facts" => {
                 let home = self.db.home;
@@ -1180,7 +1180,7 @@ pub(crate)     fn person_section_inner(&mut self, ui: &mut egui::Ui, act: &mut O
     }
 
     /// The panels that are shown and docked, one after another, each with its own title bar.
-pub(crate)     fn dock_panels(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, editing: bool) {
+    pub(crate) fn dock_panels(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, editing: bool) {
         let items = self.settings.dock.clone();
         let mut cmd: Option<(usize, u8)> = None; // 0 up, 1 down, 2 pop out, 3 hide
         for (i, it) in items.iter().enumerate() {
@@ -1224,7 +1224,7 @@ pub(crate)     fn dock_panels(&mut self, ui: &mut egui::Ui, act: &mut Option<Act
         }
     }
 
-pub(crate)     fn person_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn person_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let id = self.sel.unwrap();
         let editing = matches!(&self.editing, Some(e) if e.id == id);
         self.nav_bar(ui, act);
@@ -1306,7 +1306,7 @@ pub(crate)     fn person_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Act
     }
 
     /// Row of buttons that show or hide each panel.
-pub(crate)     fn dock_bar(&mut self, ui: &mut egui::Ui) {
+    pub(crate) fn dock_bar(&mut self, ui: &mut egui::Ui) {
         let mut changed = false;
         let mut reset = false;
         ui.horizontal_wrapped(|ui| {

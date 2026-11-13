@@ -60,7 +60,7 @@ pub(crate) fn desc_layout(db: &Db, ix: &Idx, id: u32, depth: usize, max: usize, 
     let mut kids: Vec<u32> = Vec::new();
     if depth + 1 < max {
         for f in db.fams_of_ix(ix, id) {
-            for k in &db.fams[f].kids {
+            for k in &db.fams[&f].kids {
                 if db.people.contains_key(k) && !seen.contains(k) && !kids.contains(k) {
                     kids.push(*k);
                 }
@@ -412,7 +412,7 @@ pub(crate) fn print_date(s: &str) -> String {
 }
 
 impl App {
-pub(crate)     fn open_print(&mut self, html: String) {
+    pub(crate) fn open_print(&mut self, html: String) {
         // kept in the program's own folder: a shared temporary folder could be tampered with
         let dir = data_dir().join("print");
         let _ = std::fs::create_dir_all(&dir);
@@ -426,7 +426,7 @@ pub(crate)     fn open_print(&mut self, html: String) {
         }
     }
 
-pub(crate)     fn print_db(&self) -> Db {
+    pub(crate) fn print_db(&self) -> Db {
         if self.settings.hide_living {
             self.db.sanitized()
         } else {
@@ -436,7 +436,7 @@ pub(crate)     fn print_db(&self) -> Db {
 
     /// One spouse's block on a family group sheet: name, the four life events with date and
     /// place in their own columns, and their parents.
-pub(crate)     fn person_rows(db: &Db, role: &str, id: Option<u32>) -> String {
+    pub(crate) fn person_rows(db: &Db, role: &str, id: Option<u32>) -> String {
         let cell = |s: &str| if s.trim().is_empty() { "<td class=\"empty\"></td>".to_string() } else { format!("<td>{}</td>", esc(s.trim())) };
         match id {
             Some(i) => {
@@ -455,13 +455,13 @@ pub(crate)     fn person_rows(db: &Db, role: &str, id: Option<u32>) -> String {
         }
     }
 
-pub(crate)     fn family_html(&self, id: u32) -> String {
+    pub(crate) fn family_html(&self, id: u32) -> String {
         let db = self.print_db();
         let name = db.people[&id].name.clone();
         page_with_css(&format!("Family Group Sheet: {}", name), &Self::family_body(&db, id), false, "", false)
     }
 
-pub(crate)     fn family_body(db: &Db, id: u32) -> String {
+    pub(crate) fn family_body(db: &Db, id: u32) -> String {
         let mut ids = db.fams_of(id);
         if ids.is_empty() {
             if let Some(f) = db.famc(id) {
@@ -556,13 +556,13 @@ pub(crate)     fn family_body(db: &Db, id: u32) -> String {
         body
     }
 
-pub(crate)     fn pedigree_html(&self, root: u32) -> String {
+    pub(crate) fn pedigree_html(&self, root: u32) -> String {
         let db = self.print_db();
         let svg = self.pedigree_svg(&db, root);
         page(&format!("Pedigree chart of {}", db.people[&root].name), &svg, true)
     }
 
-pub(crate)     fn pedigree_svg(&self, db: &Db, root: u32) -> String {
+    pub(crate) fn pedigree_svg(&self, db: &Db, root: u32) -> String {
         let gens = self.settings.gens.clamp(3, 8);
         let rows = 1usize << (gens - 1);
         // more detail when there is room: name, born and died lines for up to 5 generations
@@ -643,7 +643,7 @@ pub(crate)     fn pedigree_svg(&self, db: &Db, root: u32) -> String {
     }
 
     /// Describe what just changed, for the History list.
-pub(crate)     fn change_label(&self) -> String {
+    pub(crate) fn change_label(&self) -> String {
         if let Some(l) = &self.x.next_label {
             return l.clone();
         }
@@ -676,7 +676,7 @@ pub(crate)     fn change_label(&self) -> String {
 }
 
 impl App {
-pub(crate)     fn ancestors_html(&self, root: u32) -> String {
+    pub(crate) fn ancestors_html(&self, root: u32) -> String {
         let db = self.print_db();
         let slots = ancestor_slots(&db, root, 12);
         let mut body = String::new();
@@ -701,7 +701,7 @@ pub(crate)     fn ancestors_html(&self, root: u32) -> String {
         page(&format!("Ancestors of {}", db.people[&root].name), &body, false)
     }
 
-pub(crate)     fn descendants_list_html(&self, root: u32) -> String {
+    pub(crate) fn descendants_list_html(&self, root: u32) -> String {
         let db = self.print_db();
         let mut out = String::from("<ul>");
         let mut seen = vec![root];
@@ -710,7 +710,7 @@ pub(crate)     fn descendants_list_html(&self, root: u32) -> String {
         page(&format!("Descendants of {}", db.people[&root].name), &out, false)
     }
 
-pub(crate)     fn sources_html(&self) -> String {
+    pub(crate) fn sources_html(&self) -> String {
         let db = self.print_db();
         let mut ids: Vec<u32> = db.sources.keys().copied().collect();
         ids.sort_by_key(|i| source_title(&db.sources[i]).to_lowercase());
@@ -756,7 +756,7 @@ pub(crate)     fn sources_html(&self) -> String {
         page("Sources", &b, false)
     }
 
-pub(crate)     fn birthdays_html(&self) -> String {
+    pub(crate) fn birthdays_html(&self) -> String {
         let db = self.print_db();
         let mut items: Vec<(u32, u32, String)> = Vec::new();
         for p in db.people.values() {
@@ -800,7 +800,7 @@ pub(crate)     fn birthdays_html(&self) -> String {
         page("Birthdays and anniversaries", &body, false)
     }
 
-pub(crate)     fn descendant_svg(&self, db: &Db, root: u32) -> String {
+    pub(crate) fn descendant_svg(&self, db: &Db, root: u32) -> String {
         let maxd = self.settings.gens.clamp(3, 8);
         let mut nodes: Vec<(u32, usize, f32, Option<usize>)> = Vec::new();
         let mut leaf = 0.0f32;
@@ -848,13 +848,13 @@ pub(crate)     fn descendant_svg(&self, db: &Db, root: u32) -> String {
         svg
     }
 
-pub(crate)     fn descendant_html(&self, root: u32) -> String {
+    pub(crate) fn descendant_html(&self, root: u32) -> String {
         let db = self.print_db();
         let svg = self.descendant_svg(&db, root);
         page(&format!("Descendant chart of {}", db.people[&root].name), &svg, true)
     }
 
-pub(crate)     fn book_html(&self, root: u32) -> String {
+    pub(crate) fn book_html(&self, root: u32) -> String {
         let db = self.print_db();
         let p = &db.people[&root];
         let mut b = String::new();

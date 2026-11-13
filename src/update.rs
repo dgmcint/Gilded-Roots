@@ -5,6 +5,14 @@ use super::*;
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.frame(ctx);
+    }
+}
+
+impl App {
+    /// Draws the whole program once. This is the body of the frame loop; tests call it
+    /// without a window to time how long each screen takes to draw.
+    pub(crate) fn frame(&mut self, ctx: &egui::Context) {
         let mut act: Option<Action> = None;
         self.type_pending_letter(ctx);
         NAME_STYLE.store(self.settings.name_style, Ordering::Relaxed);
@@ -857,6 +865,7 @@ impl eframe::App for App {
         if self.find_open {
             let mut open = true;
             let mut couple: Option<(u32, u32)> = None;
+            let found = if self.x.find_mode == 0 { self.sorted_kept(&self.search.clone()) } else { Default::default() };
             egui::Window::new("Find Individual").open(&mut open).default_width(320.0).show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.selectable_value(&mut self.x.find_mode, 0, "Name or place");
@@ -907,8 +916,13 @@ impl eframe::App for App {
                     _ => {
                         ui.add(egui::TextEdit::singleline(&mut self.search).hint_text("Name or place").desired_width(f32::INFINITY));
                         ui.label(format!("{} people", self.db.people.len()));
-                        egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-                            for id in self.db.sorted(&self.search) {
+                        // only the rows in view are drawn, so a tree of any size scrolls smoothly
+                        let h = ui.text_style_height(&egui::TextStyle::Button) + ui.spacing().item_spacing.y;
+                        egui::ScrollArea::vertical().max_height(300.0).auto_shrink([false, true]).show_rows(ui, h, found.len(), |ui, range| {
+                            for id in found[range].iter().copied() {
+                                if !self.db.people.contains_key(&id) {
+                                    continue;
+                                }
                                 let txt = self.db.label(id);
                                 if ui.selectable_label(self.sel == Some(id), txt).clicked() {
                                     act = Some(Action::Select(id));
@@ -1531,10 +1545,11 @@ impl eframe::App for App {
 
         if self.rel_open {
             let mut open = true;
+            let everyone = self.sorted_kept("");
             egui::Window::new("Relationship finder").open(&mut open).resizable(false).show(ctx, |ui| {
                 ui.set_min_width(380.0);
                 ui.label("Choose two people to see how they are related.");
-                let ids = self.db.sorted("");
+                let ids: Vec<u32> = everyone.iter().copied().filter(|i| self.db.people.contains_key(i)).collect();
                 for (title, which) in [("Person A", 0), ("Person B", 1)] {
                     ui.label(title);
                     let cur = if which == 0 { &mut self.rel_a } else { &mut self.rel_b };
@@ -2268,10 +2283,21 @@ impl eframe::App for App {
             i.pointer.any_released()
                 || i.events.iter().any(|e| matches!(e, egui::Event::Text(_) | egui::Event::Key { pressed: true, .. }))
         });
+        // Whether the clicks or typing changed anything is checked once they pause: on a big
+        // tree that check takes a moment, too long to repeat on every keystroke.
+        let now = std::time::Instant::now();
         if changed {
-            self.dirty = true;
-            self.track();
+            self.x.track_at = Some(now + std::time::Duration::from_millis(250));
+            ctx.request_repaint_after(std::time::Duration::from_millis(300));
+        }
+        if self.x.track_at.map_or(false, |t| now >= t) {
+            self.x.track_at = None;
+            if self.track() {
+                self.dirty = true;
+            }
             self.backup_if_due(ctx.input(|i| i.time));
+        } else if self.x.track_at.is_some() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(300));
         }
         if !self.x.sized {
             self.x.sized = true;
@@ -2296,7 +2322,8 @@ impl eframe::App for App {
                 save_settings(&self.settings);
             }
         }
-        if ctx.input(|i| i.viewport().close_requested()) && self.dirty {
+        self.poll_save();
+        if ctx.input(|i| i.viewport().close_requested()) && (self.dirty || self.x.track_at.is_some() || self.x.save_job.is_some()) {
             if self.persist() {
                 self.dirty = false;
             } else if !self.close_warned {
@@ -2305,10 +2332,11 @@ impl eframe::App for App {
                 self.status = "Your latest changes could not be saved, so the app was not closed. Fix the problem shown in red, or export a GEDCOM copy first. Close again to quit anyway.".to_string();
             }
         }
-        if self.dirty && std::time::Instant::now() >= self.next_save {
-            if self.persist() {
-                self.dirty = false;
-            }
+        if self.dirty && self.x.track_at.is_none() && std::time::Instant::now() >= self.next_save {
+            self.autosave();
+        }
+        if self.x.save_job.is_some() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(200));
         }
         if !self.startup_done {
             self.startup_done = true;

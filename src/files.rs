@@ -3,7 +3,7 @@
 use super::*;
 
 impl App {
-pub(crate)     fn spawn_media_job(&mut self, restore: bool) {
+    pub(crate) fn spawn_media_job(&mut self, restore: bool) {
         if self.media_job.is_some() {
             return;
         }
@@ -17,7 +17,7 @@ pub(crate)     fn spawn_media_job(&mut self, restore: bool) {
         self.media_job = Some(rx);
     }
 
-pub(crate)     fn poll_media_job(&mut self) {
+    pub(crate) fn poll_media_job(&mut self) {
         let mut fin: Option<Option<(bool, usize, usize, Option<String>)>> = None;
         if let Some(rx) = &self.media_job {
             match rx.try_recv() {
@@ -42,7 +42,7 @@ pub(crate)     fn poll_media_job(&mut self) {
         }
     }
 
-pub(crate)     fn run_verify(&mut self) {
+    pub(crate) fn run_verify(&mut self) {
         self.verify_results = verify_all_backups();
         let gap = mirror_dir(&media_dir(), &data_dir().join("backups").join("media"), false, true).0;
         self.media_gap = if gap == 0 {
@@ -53,7 +53,7 @@ pub(crate)     fn run_verify(&mut self) {
         self.verify_open = true;
     }
 
-pub(crate)     fn read_ged(&mut self) -> Option<Db> {
+    pub(crate) fn read_ged(&mut self) -> Option<Db> {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
         let path = rfd::FileDialog::new().set_title("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)").set_directory(start_dir()).pick_file()?;
         remember_dir(&path);
@@ -70,7 +70,7 @@ pub(crate)     fn read_ged(&mut self) -> Option<Db> {
         }
     }
 
-pub(crate)     fn import(&mut self) {
+    pub(crate) fn import(&mut self) {
         if let Some(db) = self.read_ged() {
             let n = db.people.len();
             self.sel = db.home.or_else(|| db.people.keys().next().copied());
@@ -80,7 +80,7 @@ pub(crate)     fn import(&mut self) {
         }
     }
 
-pub(crate)     fn import_merge(&mut self) {
+    pub(crate) fn import_merge(&mut self) {
         if let Some(inc) = self.read_ged() {
             let file = self.report.as_ref().map(|r| r.file.clone()).unwrap_or_else(|| "the file".to_string());
             let im = ImportMerge::new(&self.db, inc, file);
@@ -104,7 +104,7 @@ pub(crate)     fn import_merge(&mut self) {
         }
     }
 
-pub(crate)     fn export(&mut self, private: bool) {
+    pub(crate) fn export(&mut self, private: bool) {
         if let Some(path) = rfd::FileDialog::new().set_title("Save GEDCOM file").set_directory(start_dir()).set_file_name("gilded-roots.ged").save_file() {
             remember_dir(&path);
             self.status = match write_gedcom(&self.db, &path, private) {
@@ -113,7 +113,7 @@ pub(crate)     fn export(&mut self, private: bool) {
         }
     }
 
-pub(crate)     fn create(&mut self, d: Dlg) {
+    pub(crate) fn create(&mut self, d: Dlg) {
         let nid = self.db.alloc();
         let full = d.name.trim().to_string();
         let (gn, sn) = split_name(&full);
@@ -183,7 +183,7 @@ pub(crate)     fn create(&mut self, d: Dlg) {
         }
     }
 
-pub(crate)     fn is_pristine_sample(&self) -> bool {
+    pub(crate) fn is_pristine_sample(&self) -> bool {
         if !self.db.sample {
             return false;
         }
@@ -195,7 +195,7 @@ pub(crate)     fn is_pristine_sample(&self) -> bool {
             })
     }
 
-pub(crate)     fn backup(&mut self) -> bool {
+    pub(crate) fn backup(&mut self) -> bool {
         if self.db.people.is_empty() || self.x.practice.is_some() {
             return true;
         }
@@ -217,7 +217,7 @@ pub(crate)     fn backup(&mut self) -> bool {
         }
     }
 
-pub(crate)     fn restore(&mut self) {
+    pub(crate) fn restore(&mut self) {
         match read_db(&backup_path()) {
             Ok(mut old) => {
                 fix_names(&mut old);
@@ -235,7 +235,7 @@ pub(crate)     fn restore(&mut self) {
         }
     }
 
-pub(crate)     fn request_wipe(&mut self, w: Wipe) {
+    pub(crate) fn request_wipe(&mut self, w: Wipe) {
         if w == Wipe::Restore || self.db.people.is_empty() || self.is_pristine_sample() {
             self.run_wipe(w);
         } else {
@@ -243,7 +243,7 @@ pub(crate)     fn request_wipe(&mut self, w: Wipe) {
         }
     }
 
-pub(crate)     fn run_wipe(&mut self, w: Wipe) {
+    pub(crate) fn run_wipe(&mut self, w: Wipe) {
         if w == Wipe::Restore {
             self.restore();
             return;
@@ -270,7 +270,7 @@ pub(crate)     fn run_wipe(&mut self, w: Wipe) {
 }
 
 impl App {
-pub(crate)     fn change_data_folder(&mut self) {
+    pub(crate) fn change_data_folder(&mut self) {
         let Some(parent) = rfd::FileDialog::new().set_title("Choose where to keep your tree (a folder named Gilded Roots is made inside it)").set_directory(std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).unwrap_or_else(start_dir)).pick_folder() else {
             return;
         };
@@ -298,7 +298,7 @@ pub(crate)     fn change_data_folder(&mut self) {
         }
     }
 
-pub(crate)     fn make_portable(&mut self) {
+    pub(crate) fn make_portable(&mut self) {
         let Some(target) = portable_dir() else {
             self.status = "Could not find where the app is stored.".to_string();
             return;
@@ -326,13 +326,13 @@ pub(crate)     fn make_portable(&mut self) {
 }
 
 impl App {
-pub(crate)     fn restore_from_file(&mut self) {
+    pub(crate) fn restore_from_file(&mut self) {
         let dir = data_dir().join("backups");
         let Some(path) = rfd::FileDialog::new().set_directory(dir).add_filter("Backup", &["json"]).pick_file() else { return };
         self.restore_path(&path);
     }
 
-pub(crate)     fn restore_path(&mut self, path: &Path) {
+    pub(crate) fn restore_path(&mut self, path: &Path) {
         let path = path.to_path_buf();
         if let Err(e) = verify_backup(&path) {
             self.status = format!("That backup is damaged and was not used: {}", e);
@@ -357,7 +357,7 @@ pub(crate)     fn restore_path(&mut self, path: &Path) {
 }
 
 impl App {
-pub(crate)     fn save_archive_pick(&mut self) {
+    pub(crate) fn save_archive_pick(&mut self) {
         if self.x.practice.is_some() {
             self.status = "This is the sample family; go back to your tree to archive it.".into();
             return;
@@ -376,7 +376,7 @@ pub(crate)     fn save_archive_pick(&mut self) {
         }
     }
 
-pub(crate)     fn open_archive_pick(&mut self) {
+    pub(crate) fn open_archive_pick(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_title("Open Family Tree Archive").set_directory(start_dir()).add_filter("Family Tree Archive", &["zip"]).pick_file() {
             remember_dir(&path);
             match archive::read_info(&path) {
@@ -393,7 +393,7 @@ pub(crate)     fn open_archive_pick(&mut self) {
 impl App {
     /// Make a backup now: the checked copy in the backups folder, the photos mirror, and (when a
     /// second folder is chosen) a Family Tree Archive there.
-pub(crate)     fn backup_now(&mut self, force: bool) {
+    pub(crate) fn backup_now(&mut self, force: bool) {
         if self.x.practice.is_some() || self.db.people.is_empty() {
             return;
         }
@@ -441,7 +441,7 @@ pub(crate)     fn backup_now(&mut self, force: bool) {
     }
 
     /// Called after changes: makes a backup when one is due by the chosen frequency.
-pub(crate)     fn backup_if_due(&mut self, now: f64) {
+    pub(crate) fn backup_if_due(&mut self, now: f64) {
         if now - self.x.backup_check < 60.0 {
             return;
         }
@@ -461,7 +461,7 @@ pub(crate)     fn backup_if_due(&mut self, now: f64) {
     }
 
     /// Switch to another tree ("" = the main tree). The open one is saved first.
-pub(crate)     fn switch_tree(&mut self, name: &str) {
+    pub(crate) fn switch_tree(&mut self, name: &str) {
         if self.x.practice.is_some() {
             self.end_practice();
         }
@@ -489,6 +489,7 @@ pub(crate)     fn switch_tree(&mut self, name: &str) {
         self.hl = None;
         self.dirty = false;
         self.last_json = serde_json::to_string(&self.db).unwrap_or_default();
+        self.tree_replaced();
         self.remember_state();
         self.x.geo_cache.clear();
         self.x.stats = None;

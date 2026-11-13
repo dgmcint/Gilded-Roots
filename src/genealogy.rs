@@ -401,30 +401,17 @@ impl Db {
     /// families where both parents are biological, then the rest.
     /// Lookup tables so big trees do not rescan every family for every question.
     /// Build once for a whole chart, report or check; rebuild after the data changes.
-    pub(crate) fn index(&self) -> Idx {
-        let mut ix = Idx::default();
-        for (fid, f) in &self.fams {
-            for k in &f.kids {
-                ix.child_of.entry(*k).or_default().push(*fid);
-            }
-            for p in f.h.iter().chain(f.w.iter()).chain(f.more.iter().map(|(_, x)| x)) {
-                let e = ix.partner_in.entry(*p).or_default();
-                if !e.contains(fid) {
-                    e.push(*fid);
-                }
-            }
-        }
-        for (p, v) in ix.partner_in.iter_mut() {
-            v.sort_by_key(|f| self.fam_rank(*p, *f));
-        }
-        ix
+    pub(crate) fn index(&self) -> std::sync::Arc<Idx> {
+        self.fams.index()
     }
     pub(crate) fn parent_families_ix(&self, ix: &Idx, id: u32) -> Vec<u32> {
         let cands: &[u32] = ix.child_of.get(&id).map(|v| v.as_slice()).unwrap_or(&[]);
         self.rank_parent_fams(id, cands.iter().copied())
     }
-    pub(crate) fn fams_of_ix<'a>(&self, ix: &'a Idx, id: u32) -> &'a [u32] {
-        ix.partner_in.get(&id).map(|v| v.as_slice()).unwrap_or(&[])
+    pub(crate) fn fams_of_ix(&self, ix: &Idx, id: u32) -> Vec<u32> {
+        let mut v: Vec<((usize, i32, u32), u32)> = ix.partner_in.get(&id).into_iter().flatten().map(|k| (self.fam_rank(id, *k), *k)).collect();
+        v.sort();
+        v.into_iter().map(|(_, k)| k).collect()
     }
     pub(crate) fn parents_ix(&self, ix: &Idx, id: u32) -> (Option<u32>, Option<u32>) {
         match self.parent_families_ix(ix, id).first() {
@@ -433,7 +420,7 @@ impl Db {
         }
     }
     pub(crate) fn parent_families(&self, id: u32) -> Vec<u32> {
-        self.rank_parent_fams(id, self.fams.iter().filter(|(_, f)| f.kids.contains(&id)).map(|(k, _)| *k))
+        self.parent_families_ix(&self.index(), id)
     }
     pub(crate) fn rank_parent_fams(&self, id: u32, cands: impl Iterator<Item = u32>) -> Vec<u32> {
         let pref = self.people.get(&id).and_then(|p| p.pref_parents);
@@ -454,14 +441,7 @@ impl Db {
     /// Families the person is a partner in, in the order of the partnerships (by marriage year,
     /// those without a date last).
     pub(crate) fn fams_of(&self, id: u32) -> Vec<u32> {
-        let mut v: Vec<((usize, i32, u32), u32)> = self
-            .fams
-            .iter()
-            .filter(|(_, f)| f.h == Some(id) || f.w == Some(id) || f.more.iter().any(|(_, x)| *x == id))
-            .map(|(k, _)| (self.fam_rank(id, *k), *k))
-            .collect();
-        v.sort();
-        v.into_iter().map(|(_, k)| k).collect()
+        self.fams_of_ix(&self.index(), id)
     }
     /// Where a family comes in a person's list of spouses: the order chosen by hand (or from the
     /// file) first, then by marriage date, then by number.
@@ -941,40 +921,100 @@ impl Db {
                 buckets.entry(k).or_default().push(*id);
             }
         }
+        // Work out each person's comparable details once, not once per pair: a big tree has
+        // surname groups of thousands, so the pairs run into the millions.
+        struct Info { given: String, first: String, canon: String, born: Option<i32>, died: Option<i32>, bp: String, has_bp: bool, groups: usize }
+        let mut info: HashMap<u32, Info> = HashMap::new();
+        for ids in buckets.values() {
+            for id in ids {
+                if let Some(i) = info.get_mut(id) {
+                    i.groups += 1;
+                    continue;
+                }
+                let p = &self.people[id];
+                let first = first_given(&p.given);
+                info.insert(*id, Info {
+                    given: norm(&p.given),
+                    canon: canon_given(&first).to_string(),
+                    first,
+                    born: parse_date(&p.bd).0,
+                    died: parse_date(&p.dd).0,
+                    bp: norm(&p.bp),
+                    has_bp: !p.bp.is_empty(),
+                    groups: 1,
+                });
+            }
+        }
         let mut seen_pairs: HashSet<(u32, u32)> = HashSet::new();
         let mut out: Vec<(i32, u32, u32, String)> = Vec::new();
+        // Within a surname group, only people whose first names could match are compared: the
+        // same first name, a nickname of it, one starting the other, or one letter different.
+        // (Every pair the checks below accept is among these.) A big tree has thousands of
+        // people per common surname, so comparing everyone with everyone takes far too long.
+        let may_match = |a: &str, b: &str| {
+            a.is_empty()
+                || b.is_empty()
+                || a.starts_with(b)
+                || b.starts_with(a)
+                || canon_given(a) == canon_given(b)
+                || (a.len() >= 4 && b.len() >= 4 && a.len().abs_diff(b.len()) <= 1 && edit_distance(a, b) <= 1)
+        };
         for ids in buckets.values() {
-            for i in 0..ids.len() {
-                for j in (i + 1)..ids.len() {
-                    let pair = (ids[i].min(ids[j]), ids[i].max(ids[j]));
-                    if !seen_pairs.insert(pair) {
-                        continue;
+            let mut by_first: BTreeMap<&str, Vec<u32>> = BTreeMap::new();
+            for id in ids {
+                by_first.entry(info[id].first.as_str()).or_default().push(*id);
+            }
+            let names: Vec<&str> = by_first.keys().copied().collect();
+            for (gi, na) in names.iter().enumerate() {
+                let ga_ids = &by_first[na];
+                let mut pairs: Vec<(u32, u32)> = Vec::new();
+                for x in 0..ga_ids.len() {
+                    for y in (x + 1)..ga_ids.len() {
+                        pairs.push((ga_ids[x], ga_ids[y]));
                     }
-                    let (a, b) = (&self.people[&ids[i]], &self.people[&ids[j]]);
-                    let (ga, gb) = (norm(&a.given), norm(&b.given));
+                }
+                for nb in &names[gi + 1..] {
+                    if may_match(na, nb) {
+                        for x in ga_ids {
+                            for y in &by_first[nb] {
+                                pairs.push((*x, *y));
+                            }
+                        }
+                    }
+                }
+                for (x, y) in pairs {
+                    let a = &info[&x];
+                    let b = &info[&y];
+                    let (ga, gb) = (&a.given, &b.given);
                     let mut score: i32 = 0;
                     let mut why: Vec<&str> = Vec::new();
-                    let (fa, fb) = (first_given(&a.given), first_given(&b.given));
+                    let (fa, fb) = (&a.first, &b.first);
                     if !ga.is_empty() && ga == gb {
                         score += 2;
                         why.push("same name");
-                    } else if !fa.is_empty() && canon_given(&fa) == canon_given(&fb) {
+                    } else if !fa.is_empty() && a.canon == b.canon {
                         score += 2;
                         why.push(if fa == fb { "same first name" } else { "nickname of the same name" });
-                    } else if !ga.is_empty() && !gb.is_empty() && (ga.starts_with(&gb) || gb.starts_with(&ga)) {
+                    } else if !ga.is_empty() && !gb.is_empty() && (ga.starts_with(gb.as_str()) || gb.starts_with(ga.as_str())) {
                         score += 1;
                         why.push("similar name");
-                    } else if fa.len() >= 4 && fb.len() >= 4 && edit_distance(&fa, &fb) <= 1 {
+                    } else if fa.len() >= 4 && fb.len() >= 4 && fa.len().abs_diff(fb.len()) <= 1 && edit_distance(fa, fb) <= 1 {
                         score += 1;
                         why.push("names differ by one letter");
                     } else {
                         continue;
                     }
-                    let (sa, sb) = (norm(&a.surname), norm(&b.surname));
+                    // Only someone filed under two surnames (a maiden name) can meet the same
+                    // person twice, so only those pairs need remembering.
+                    if a.groups > 1 && b.groups > 1 && !seen_pairs.insert((x.min(y), x.max(y))) {
+                        continue;
+                    }
+                    let (pa, pb) = (&self.people[&x], &self.people[&y]);
+                    let (sa, sb) = (norm(&pa.surname), norm(&pb.surname));
                     if !sa.is_empty() && !sb.is_empty() && sa != sb {
                         why.push("surnames sound alike");
                     }
-                    if let (Some(x), Some(y)) = (parse_date(&a.bd).0, parse_date(&b.bd).0) {
+                    if let (Some(x), Some(y)) = (a.born, b.born) {
                         let d = (x - y).abs();
                         if d == 0 {
                             score += 2;
@@ -986,26 +1026,26 @@ impl Db {
                             continue;
                         }
                     }
-                    if !a.bp.is_empty() && norm(&a.bp) == norm(&b.bp) {
+                    if a.has_bp && a.bp == b.bp {
                         score += 1;
                         why.push("same birthplace");
                     }
-                    if let (Some(x), Some(y)) = (parse_date(&a.dd).0, parse_date(&b.dd).0) {
+                    if let (Some(x), Some(y)) = (a.died, b.died) {
                         if x == y {
                             score += 1;
                             why.push("same death year");
                         }
                     }
                     let exact = !ga.is_empty() && ga == gb;
-                    if exact && !a.bp.is_empty() != !b.bp.is_empty() {
+                    if exact && a.has_bp != b.has_bp {
                         why.push("one copy has less detail");
                     }
-                    for k in [ids[i], ids[j]] {
+                    for k in [x, y] {
                         if !cache.contains_key(&k) {
                             cache.insert(k, self.rel_names_ix(&ix, k));
                         }
                     }
-                    let (ra, rb) = (&cache[&ids[i]], &cache[&ids[j]]);
+                    let (ra, rb) = (&cache[&x], &cache[&y]);
                     if !ra.is_disjoint(rb) {
                         score += 2;
                         why.push("same relatives");
@@ -1013,13 +1053,13 @@ impl Db {
                     // Same full name and nothing contradicts it (checked above): worth a look even when
                     // one copy has little else recorded.
                     if score >= 3 || exact {
-                        let (lo, hi) = if ids[i] < ids[j] { (ids[i], ids[j]) } else { (ids[j], ids[i]) };
+                        let (lo, hi) = if x < y { (x, y) } else { (y, x) };
                         out.push((score, lo, hi, why.join(", ")));
                     }
                 }
             }
         }
-        out.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
+        out.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
         out.into_iter().map(|(_, a, b, w)| (a, b, w)).collect()
     }
 

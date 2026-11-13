@@ -6,7 +6,7 @@ impl App {
     /// Tools > Saved versions: the daily copies of the tree, what is different in each, and
     /// putting back one person or the whole tree.
     /// Tools > Renumber people: new ID numbers 1, 2, 3... for everyone (and their families).
-pub(crate)     fn renumber_window(&mut self, ctx: &egui::Context) {
+    pub(crate) fn renumber_window(&mut self, ctx: &egui::Context) {
         if !self.x.renum_open {
             return;
         }
@@ -91,7 +91,7 @@ pub(crate)     fn renumber_window(&mut self, ctx: &egui::Context) {
         }
     }
 
-pub(crate)     fn versions_window(&mut self, ctx: &egui::Context) {
+    pub(crate) fn versions_window(&mut self, ctx: &egui::Context) {
         if !self.x.ver_open {
             return;
         }
@@ -209,7 +209,7 @@ pub(crate)     fn versions_window(&mut self, ctx: &egui::Context) {
 
     /// Tools > History of changes (F12): every recent change, newest first. Clicking one puts the
     /// tree back to just before it; the steps after it stay available to redo.
-pub(crate)     fn history_window(&mut self, ctx: &egui::Context) {
+    pub(crate) fn history_window(&mut self, ctx: &egui::Context) {
         if !self.x.history_open {
             return;
         }
@@ -261,7 +261,7 @@ pub(crate)     fn history_window(&mut self, ctx: &egui::Context) {
 
 impl App {
     /// Things worth checking about this person (from the data checker), shown on their page.
-pub(crate)     fn problem_flags(&mut self, ui: &mut egui::Ui, id: u32) {
+    pub(crate) fn problem_flags(&mut self, ui: &mut egui::Ui, id: u32) {
         let key = (id, self.last_json.len(), self.undo.len());
         if self.x.flags_key != key {
             let mut f: Vec<String> = self.db.check().into_iter().filter(|(who, _)| *who == id).map(|(_, t)| t).collect();
@@ -290,7 +290,7 @@ pub(crate)     fn problem_flags(&mut self, ui: &mut egui::Ui, id: u32) {
 
     /// One person's research tasks. Works whether or not the page is locked: ticking off a
     /// task does not change any facts about the person.
-pub(crate)     fn todo_panel(&mut self, ui: &mut egui::Ui, id: u32) {
+    pub(crate) fn todo_panel(&mut self, ui: &mut egui::Ui, id: u32) {
         let mut remove: Option<usize> = None;
         let mut changed = false;
         if let Some(p) = self.db.people.get_mut(&id) {
@@ -346,7 +346,7 @@ pub(crate)     fn todo_panel(&mut self, ui: &mut egui::Ui, id: u32) {
 
     /// The first screen when the tree is empty: import (from PAF or anything else), start new,
     /// open an archive, or explore the sample family without touching anything.
-pub(crate)     fn welcome(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn welcome(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
             ui.vertical_centered(|ui| {
                 ui.add_space(24.0);
@@ -416,7 +416,7 @@ pub(crate)     fn welcome(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>
     }
 
     /// Open the sample family in practice mode. The real tree waits untouched.
-pub(crate)     fn start_practice(&mut self) {
+    pub(crate) fn start_practice(&mut self) {
         if self.x.practice.is_some() {
             return;
         }
@@ -432,12 +432,13 @@ pub(crate)     fn start_practice(&mut self) {
         self.undo.clear();
         self.redo.clear();
         self.last_json = serde_json::to_string(&self.db).unwrap_or_default();
+        self.tree_replaced();
         self.remember_state();
         self.x.geo_cache.clear();
         self.status = "You are exploring the sample family. Nothing here is saved. Use 'Back to my tree' at the top when you are done.".into();
     }
 
-pub(crate)     fn end_practice(&mut self) {
+    pub(crate) fn end_practice(&mut self) {
         if let Some((real, sel, view)) = self.x.practice.take() {
             self.db = real;
             self.sel = sel;
@@ -449,6 +450,7 @@ pub(crate)     fn end_practice(&mut self) {
             self.redo.clear();
             self.viewing = None;
             self.last_json = serde_json::to_string(&self.db).unwrap_or_default();
+            self.tree_replaced();
             self.remember_state();
             self.x.geo_cache.clear();
             self.status = "Back to your own tree.".into();
@@ -458,7 +460,7 @@ pub(crate)     fn end_practice(&mut self) {
 
 impl App {
     /// Windows for the archive (confirm restore, progress) and backup settings.
-pub(crate)     fn archive_windows(&mut self, ctx: &egui::Context) {
+    pub(crate) fn archive_windows(&mut self, ctx: &egui::Context) {
         if let Some(rx) = &self.x.arch_job {
             if let Ok(r) = rx.try_recv() {
                 match r {
@@ -594,7 +596,7 @@ pub(crate)     fn archive_windows(&mut self, ctx: &egui::Context) {
 
 impl App {
     /// File > Family trees: keep unrelated research in separate trees.
-pub(crate)     fn trees_window(&mut self, ctx: &egui::Context) {
+    pub(crate) fn trees_window(&mut self, ctx: &egui::Context) {
         if !self.x.trees_open {
             return;
         }
@@ -675,7 +677,7 @@ pub(crate)     fn trees_window(&mut self, ctx: &egui::Context) {
     }
 
     /// Every research task in the tree in one list.
-pub(crate)     fn todo_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
+    pub(crate) fn todo_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
         if !self.x.todo_open {
             return;
         }
@@ -747,7 +749,7 @@ pub(crate)     fn todo_window(&mut self, ctx: &egui::Context, act: &mut Option<A
     }
 
     /// Tools > Places: every place in the tree, who was there, and fixing spellings.
-pub(crate)     fn places_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
+    pub(crate) fn places_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
         if !self.x.places_open {
             return;
         }

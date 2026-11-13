@@ -71,7 +71,7 @@ pub(crate) fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>)
 }
 
 impl App {
-pub(crate)     fn chart_colors(&self, ui: &egui::Ui) -> (Stroke, Stroke, Color32, Color32, Color32, Color32, Color32) {
+    pub(crate) fn chart_colors(&self, ui: &egui::Ui) -> (Stroke, Stroke, Color32, Color32, Color32, Color32, Color32) {
         let dark = ui.visuals().dark_mode;
         let bg = self.settings.bg;
         let rgb = |r: u8, g: u8, b: u8| Color32::from_rgb(r, g, b);
@@ -84,7 +84,7 @@ pub(crate)     fn chart_colors(&self, ui: &egui::Ui) -> (Stroke, Stroke, Color32
         (Stroke::new(1.0_f32, line_c), Stroke::new(1.0_f32, edge_c), box_c, hover_c, ink_c, head_c, accent)
     }
 
-pub(crate)     fn descendants(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn descendants(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let sel = self.sel.unwrap();
         let z = self.settings.zoom;
         let maxd = self.settings.gens.clamp(3, 8);
@@ -215,7 +215,7 @@ pub(crate)     fn descendants(&self, ui: &mut egui::Ui, act: &mut Option<Action>
 
 impl App {
     /// The actions for one person in a chart: open, view tree, quick edit, add a relative.
-pub(crate)     fn person_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
+    pub(crate) fn person_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
         if ui.button("Open individual page").clicked() {
             *act = Some(Action::Open(id));
             ui.close_menu();
@@ -310,7 +310,7 @@ pub(crate)     fn person_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Optio
     }
 
     /// Spouse(s) and children of one person, as a drop-down list.
-pub(crate)     fn spouse_children_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
+    pub(crate) fn spouse_children_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
         let fams = self.db.fams_of(id);
         for fid in &fams {
             let fm = &self.db.fams[fid];
@@ -348,7 +348,7 @@ pub(crate)     fn spouse_children_menu(&self, ui: &mut egui::Ui, id: u32, act: &
         }
     }
 
-pub(crate)     fn siblings_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
+    pub(crate) fn siblings_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
         let sibs = self.db.siblings(id);
         for k in &sibs {
             if ui.button(self.db.label(*k)).clicked() {
@@ -367,7 +367,7 @@ pub(crate)     fn siblings_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Opt
     }
 
     /// Apply the Quick edit window to the tree.
-pub(crate)     fn apply_quick(&mut self, q: &QuickEdit) {
+    pub(crate) fn apply_quick(&mut self, q: &QuickEdit) {
         if let Some(p) = self.db.people.get_mut(&q.id) {
             p.given = q.given.trim().to_string();
             p.surname = q.surname.trim().to_string();
@@ -383,7 +383,7 @@ pub(crate)     fn apply_quick(&mut self, q: &QuickEdit) {
 
     /// Where an arrow key goes from the selected person: right = father (Shift: mother),
     /// left = a child (the one you just came from, if any), up/down = previous/next sibling.
-pub(crate)     fn nav_target(&self, key: egui::Key, shift: bool) -> Option<u32> {
+    pub(crate) fn nav_target(&self, key: egui::Key, shift: bool) -> Option<u32> {
         let sel = self.sel?;
         match key {
             egui::Key::ArrowRight => {
@@ -425,7 +425,7 @@ pub(crate)     fn nav_target(&self, key: egui::Key, shift: bool) -> Option<u32> 
     }
 
     /// The people you have been looking at, oldest first, ending with the current one.
-pub(crate)     fn trail(&self) -> Vec<u32> {
+    pub(crate) fn trail(&self) -> Vec<u32> {
         let mut seen: Vec<u32> = Vec::new();
         let cur = self.sel;
         for p in self.back.iter().rev() {
@@ -443,7 +443,7 @@ pub(crate)     fn trail(&self) -> Vec<u32> {
         seen
     }
 
-pub(crate)     fn trail_bar(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn trail_bar(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let t = self.trail();
         if t.len() < 2 {
             return;
@@ -471,7 +471,7 @@ pub(crate)     fn trail_bar(&self, ui: &mut egui::Ui, act: &mut Option<Action>) 
     }
 
     /// Back, forward, home, and one-click moves to parents, siblings, partners and children.
-pub(crate)     fn nav_bar(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn nav_bar(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let Some(sel) = self.sel else { return };
         let pick = |ui: &mut egui::Ui, act: &mut Option<Action>, ids: &[u32]| {
             for k in ids {
@@ -566,7 +566,7 @@ pub(crate)     fn nav_bar(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         });
     }
 
-pub(crate)     fn goto(&mut self, i: u32) {
+    pub(crate) fn goto(&mut self, i: u32) {
         if self.sel != Some(i) {
             if let Some(c) = self.sel {
                 self.back.push(c);
@@ -576,7 +576,7 @@ pub(crate)     fn goto(&mut self, i: u32) {
         self.sel = Some(i);
     }
 
-pub(crate)     fn delete(&mut self) {
+    pub(crate) fn delete(&mut self) {
         let Some(id) = self.sel else { return };
         self.db.people.remove(&id);
         if self.db.home == Some(id) {
@@ -597,7 +597,7 @@ pub(crate)     fn delete(&mut self) {
         self.confirm = false;
     }
 
-pub(crate)     fn pedigree(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn pedigree(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let sel = self.sel.unwrap();
         let gens = self.settings.gens.clamp(3, 8);
         let rows = 1usize << (gens - 1);
@@ -853,7 +853,7 @@ pub(crate)     fn pedigree(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
     }
 
     /// A compact, clickable person card: portrait (or initial), name, years and birthplace.
-pub(crate)     fn mini_card(&self, ui: &mut egui::Ui, id: u32, tag: &str, current: bool, act: &mut Option<Action>) {
+    pub(crate) fn mini_card(&self, ui: &mut egui::Ui, id: u32, tag: &str, current: bool, act: &mut Option<Action>) {
         let Some(p) = self.db.people.get(&id) else { return };
         let (_, edge, box_c, hover_c, ink_c, head_c, accent) = self.chart_colors(ui);
         let w = ui.available_width();
@@ -899,7 +899,7 @@ pub(crate)     fn mini_card(&self, ui: &mut egui::Ui, id: u32, tag: &str, curren
     }
 
     /// The couple, the marriage and the children of one family: the left side of the Family tab.
-pub(crate)     fn family_main(&self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, ids: &[u32], fx: usize) {
+    pub(crate) fn family_main(&self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, ids: &[u32], fx: usize) {
         let fid = ids[fx];
         let f = &self.db.fams[&fid];
         if ids.len() > 1 {
@@ -1016,7 +1016,7 @@ pub(crate)     fn family_main(&self, ui: &mut egui::Ui, act: &mut Option<Action>
     }
 
     /// Parents, siblings, partners and other relationships of the selected person: the right side.
-pub(crate)     fn family_side(&self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, fx: usize) {
+    pub(crate) fn family_side(&self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, fx: usize) {
         ui.label(RichText::new("Relationships").strong().size(16.0));
         ui.add_space(4.0);
         let sets = self.db.parent_families(id);
@@ -1138,7 +1138,7 @@ pub(crate)     fn family_side(&self, ui: &mut egui::Ui, act: &mut Option<Action>
         }
     }
 
-pub(crate)     fn family_view(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn family_view(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let id = self.sel.unwrap();
         self.nav_bar(ui, act);
         let mut ids = self.db.fams_of(id);
@@ -1182,7 +1182,7 @@ pub(crate)     fn family_view(&self, ui: &mut egui::Ui, act: &mut Option<Action>
         });
     }
 
-pub(crate)     fn family_empty(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn family_empty(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         ui.label("No family group yet.");
         ui.horizontal(|ui| {
             if ui.button("Add spouse").clicked() {
