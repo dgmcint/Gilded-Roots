@@ -29,6 +29,22 @@ When there is no tree yet, the welcome screen offers four choices:
 - **Create a new family tree** and add yourself first.
 - **Open a Family Tree Archive** made on this or another computer.
 - **Explore the sample family first** (also in the Help menu): see below.
+**Import options.** After you choose a file (File → Import tree...), Gilded Roots reads it and shows what is in it
+(people, families, sources, citations, notes, events, photos and documents, links to photos on websites, LDS
+ordinances, living people, research tasks and the program it came from) before anything comes in. Then choose:
+- **Where:** add it to your tree (you check every possible match), replace your tree with it (a backup is made
+  first), or put it in **a new tree of its own** (kept under File → Family trees; your open tree is saved and left
+  as it is).
+- **People:** everyone, or the ancestors, descendants, or ancestors and descendants of one person (type a name to
+  choose them), and whether to **leave out living people** (people marked living, or with no death or burial and
+  born in the last 110 years).
+- **What to include:** notes; sources and citations; photos and documents found with the file; links to photos on
+  websites (Ancestry, MyHeritage); LDS ordinances; addresses and contact details; research tasks; and other details
+  only the program that made the file understands.
+- **Places:** tick the box to open the Places window afterwards and tidy place names.
+A sentence under the choices says what will happen ("3 people will go in a new tree called..."). Your choices are
+remembered for next time, and the file itself is never changed.
+
 After an import, read the **Import report**: it counts the people, families, sources, citations, notes and photos that
 came across and lists anything that could not be carried over.
 
@@ -161,7 +177,7 @@ untick any note to leave it alone, then press **Replace**. Undo puts everything 
 - **Tools → Find duplicates** lists possible matches with reasons. Open one to see the review screen.
 - Or use **Merge with another person…** on a person's page (people also have ID numbers, shown as `#123`).
 - Differing facts are marked; click the one to keep. Tick the confirmation box(es) to merge. **Edit → Undo** reverses it.
-- When importing a second file, choose **Add to my tree** and confirm each suspected match as the same or different.
+- When importing a second file, choose **Add to my tree** in the Import options and confirm each suspected match as the same or different.
 
 ## Search and relationships
 **Search → Find individual…** and **Search → Relationship finder…**. The Find window has three ways to search:

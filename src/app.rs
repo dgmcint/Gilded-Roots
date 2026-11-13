@@ -106,6 +106,9 @@ pub(crate) struct QuickEdit {
 /// Screen state for the newer tools (kept together so App's long constructor stays readable).
 #[derive(Default)]
 pub(crate) struct Extra {
+    /// A file read for importing, waiting in the Import options window, and the choices there.
+    pub(crate) import: Option<ImportPending>,
+    pub(crate) import_choices: ImportChoices,
     /// Tools > Sort media into person folders: the window, and the moves it will make.
     pub(crate) folders_open: bool,
     pub(crate) folders_plan: Option<Vec<MediaMove>>,
@@ -409,7 +412,6 @@ pub(crate) struct App {
     pub(crate) move_data: bool,
     pub(crate) imp_open: bool,
     pub(crate) imp_src: usize,
-    pub(crate) imp_replace: bool,
     pub(crate) rec: Option<Recorder>,
     pub(crate) rel_open: bool,
     pub(crate) rel_a: Option<u32>,
@@ -495,7 +497,7 @@ impl App {
         if mac_translocated() {
             status = "macOS is running this copy from a hidden temporary folder, so a FamilyTreeData folder beside it (portable mode) cannot be used. See Help > About for the one-time fix.".to_string();
         }
-        let mut app = App { db, sel, view: View::Pedigree, search: String::new(), fx: 0, dlg: None, confirm: false, status, dirty: recovered, find_open: false, settings: load_settings(), show_look: false, show_loc: false, review: None, imerge: None, src_open: false, src_sel: None, src_tab: 0, src_filter: String::new(), repo_sel: None, src_pick: None, src_merge: None, src_confirm: false, hl: None, back: Vec::new(), fwd: Vec::new(), wipe: None, show_about: false, help_open: false, help_find: String::new(), move_data: false, imp_open: false, imp_src: 0, imp_replace: false, rec: None, rel_open: false, rel_a: None, rel_b: None, viewing: None, undo: Vec::new(), redo: Vec::new(), last_json, last_snap: std::time::Instant::now(), last_backup_day: today(), check_open: false, dup_open: false, merge_open: false, merge_id: String::new(), merge_other: None, dups: Vec::new(), dup_ignore: HashSet::new(), save_error: None, last_saved: None, next_save: std::time::Instant::now(), notice, media_job: None, startup_done: false, verify_open: false, verify_results: Vec::new(), media_gap: String::new(), close_warned: false, report: None, report_open: false, link: None, fit_req: false, editing: None, quick: None, gal_only: false, home_pick: None, gal_find: String::new(), assoc_q: String::new(), assoc_role: "Guardian".to_string(), x: Extra::default() }.started();
+        let mut app = App { db, sel, view: View::Pedigree, search: String::new(), fx: 0, dlg: None, confirm: false, status, dirty: recovered, find_open: false, settings: load_settings(), show_look: false, show_loc: false, review: None, imerge: None, src_open: false, src_sel: None, src_tab: 0, src_filter: String::new(), repo_sel: None, src_pick: None, src_merge: None, src_confirm: false, hl: None, back: Vec::new(), fwd: Vec::new(), wipe: None, show_about: false, help_open: false, help_find: String::new(), move_data: false, imp_open: false, imp_src: 0, rec: None, rel_open: false, rel_a: None, rel_b: None, viewing: None, undo: Vec::new(), redo: Vec::new(), last_json, last_snap: std::time::Instant::now(), last_backup_day: today(), check_open: false, dup_open: false, merge_open: false, merge_id: String::new(), merge_other: None, dups: Vec::new(), dup_ignore: HashSet::new(), save_error: None, last_saved: None, next_save: std::time::Instant::now(), notice, media_job: None, startup_done: false, verify_open: false, verify_results: Vec::new(), media_gap: String::new(), close_warned: false, report: None, report_open: false, link: None, fit_req: false, editing: None, quick: None, gal_only: false, home_pick: None, gal_find: String::new(), assoc_q: String::new(), assoc_role: "Guardian".to_string(), x: Extra::default() }.started();
         if settings_home_moved {
             // the home person now lives in the tree; the old program-wide setting is cleared
             app.settings.home = None;
@@ -680,7 +682,7 @@ impl App {
         let recovered = false;
         let notice: Option<String> = None;
         let last_json = serde_json::to_string(&db).unwrap_or_default();
-        App { db, sel, view: View::Pedigree, search: String::new(), fx: 0, dlg: None, confirm: false, status, dirty: recovered, find_open: false, settings: Settings::default(), show_look: false, show_loc: false, review: None, imerge: None, src_open: false, src_sel: None, src_tab: 0, src_filter: String::new(), repo_sel: None, src_pick: None, src_merge: None, src_confirm: false, hl: None, back: Vec::new(), fwd: Vec::new(), wipe: None, show_about: false, help_open: false, help_find: String::new(), move_data: false, imp_open: false, imp_src: 0, imp_replace: false, rec: None, rel_open: false, rel_a: None, rel_b: None, viewing: None, undo: Vec::new(), redo: Vec::new(), last_json, last_snap: std::time::Instant::now(), last_backup_day: today(), check_open: false, dup_open: false, merge_open: false, merge_id: String::new(), merge_other: None, dups: Vec::new(), dup_ignore: HashSet::new(), save_error: None, last_saved: None, next_save: std::time::Instant::now(), notice, media_job: None, startup_done: true, verify_open: false, verify_results: Vec::new(), media_gap: String::new(), close_warned: false, report: None, report_open: false, link: None, fit_req: false, editing: None, quick: None, gal_only: false, home_pick: None, gal_find: String::new(), assoc_q: String::new(), assoc_role: "Guardian".to_string(), x: Extra::default() }.started()
+        App { db, sel, view: View::Pedigree, search: String::new(), fx: 0, dlg: None, confirm: false, status, dirty: recovered, find_open: false, settings: Settings::default(), show_look: false, show_loc: false, review: None, imerge: None, src_open: false, src_sel: None, src_tab: 0, src_filter: String::new(), repo_sel: None, src_pick: None, src_merge: None, src_confirm: false, hl: None, back: Vec::new(), fwd: Vec::new(), wipe: None, show_about: false, help_open: false, help_find: String::new(), move_data: false, imp_open: false, imp_src: 0, rec: None, rel_open: false, rel_a: None, rel_b: None, viewing: None, undo: Vec::new(), redo: Vec::new(), last_json, last_snap: std::time::Instant::now(), last_backup_day: today(), check_open: false, dup_open: false, merge_open: false, merge_id: String::new(), merge_other: None, dups: Vec::new(), dup_ignore: HashSet::new(), save_error: None, last_saved: None, next_save: std::time::Instant::now(), notice, media_job: None, startup_done: true, verify_open: false, verify_results: Vec::new(), media_gap: String::new(), close_warned: false, report: None, report_open: false, link: None, fit_req: false, editing: None, quick: None, gal_only: false, home_pick: None, gal_find: String::new(), assoc_q: String::new(), assoc_role: "Guardian".to_string(), x: Extra::default() }.started()
     }
 }
 

@@ -737,6 +737,7 @@ impl App {
         self.designer_window(ctx);
         self.story_window(ctx);
         self.media_folders_window(ctx);
+        self.import_window(ctx);
         if self.x.tidy_pending && self.media_job.is_none() {
             self.tidy_media();
         }
@@ -1534,20 +1535,15 @@ impl App {
                     }
                 }
                 ui.separator();
-                ui.radio_value(&mut self.imp_replace, false, "Add to my tree (you check and confirm every possible match)");
-                ui.radio_value(&mut self.imp_replace, true, "Replace my tree with this file");
+                ui.label(RichText::new("Next you see what is in the file and choose where it goes and what to bring in.").small().weak());
                 ui.add_space(6.0);
-                if ui.button("Choose GEDCOM file...").clicked() {
+                if ui.button("Choose the file...").clicked() {
                     pick = true;
                 }
             });
             if pick {
                 open = false;
-                if self.imp_replace || self.is_pristine_sample() || self.db.people.is_empty() {
-                    self.request_wipe(Wipe::Import);
-                } else {
-                    self.import_merge();
-                }
+                self.start_import();
             }
             self.imp_open = open;
         }
@@ -2350,6 +2346,10 @@ impl App {
         if !self.startup_done {
             self.startup_done = true;
             self.spawn_media_job(false);
+            // for testing the Import options window without a file picker
+            if let Some(p) = std::env::var_os("GILDED_ROOTS_TEST_IMPORT") {
+                self.open_import(Path::new(&p));
+            }
         }
         self.poll_media_job();
         if self.media_job.is_some() {

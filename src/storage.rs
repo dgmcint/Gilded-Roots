@@ -337,29 +337,41 @@ pub(crate) fn remember_dir(file: &Path) {
     }
 }
 
+/// A file chosen for importing, read but not yet brought in: GEDCOM text (a .paf file is
+/// turned into GEDCOM text too), or one of this program's own saved trees.
+pub(crate) struct ImportSource {
+    pub(crate) path: PathBuf,
+    pub(crate) text: Option<String>,
+    pub(crate) json: Option<Db>,
+    pub(crate) charset: String,
+    /// What the file is, when it is not plain GEDCOM (".paf" or a saved tree).
+    pub(crate) program: String,
+    pub(crate) warnings: Vec<String>,
+}
+
 /// Read a GEDCOM file: decode it, parse it, copy in the photos it refers to, and check what an export would lose.
 pub(crate) fn read_ged_file(path: &Path) -> Result<(Db, ImportReport), String> {
+    let src = load_import(path)?;
+    Ok(parse_import(&src, &ImportChoices::default(), true))
+}
+
+/// Read a file to import and check it is a family tree, without bringing anything in yet.
+pub(crate) fn load_import(path: &Path) -> Result<ImportSource, String> {
     let b = std::fs::read(path).map_err(|e| format!("Could not read file: {}", e))?;
     if b.is_empty() {
         return Err("That file is empty.".to_string());
     }
+    let mut src = ImportSource { path: path.to_path_buf(), text: None, json: None, charset: String::new(), program: String::new(), warnings: Vec::new() };
     // One of this app's own tree files (tree.json or a backup)?
     let trimmed = b.iter().skip_while(|c| c.is_ascii_whitespace() || **c == 0xEF || **c == 0xBB || **c == 0xBF).next();
     if trimmed == Some(&b'{') {
         return match serde_json::from_slice::<Db>(&b) {
             Ok(mut db) if !db.people.is_empty() => {
                 migrate(&mut db);
-                let rep = ImportReport {
-                    file: path.file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default(),
-                    program: "a saved tree file (JSON)".to_string(),
-                    charset: "UTF-8".to_string(),
-                    people: db.people.len(),
-                    families: db.fams.len(),
-                    sources: db.sources.len(),
-                    notes: db.notes.len(),
-                    ..Default::default()
-                };
-                Ok((db, rep))
+                src.json = Some(db);
+                src.program = "a saved tree file (JSON)".to_string();
+                src.charset = "UTF-8".to_string();
+                Ok(src)
             }
             Ok(_) => Err("That JSON file has no people in it.".to_string()),
             Err(_) => Err("That is a JSON file, but not a family tree saved by this app, so it can't be read. If it came from another program, export a GEDCOM (.ged) file from that program instead.".to_string()),
@@ -368,24 +380,22 @@ pub(crate) fn read_ged_file(path: &Path) -> Result<(Db, ImportReport), String> {
     // A PAF 5 database: read it directly.
     if paf::is_paf(&b) {
         let (text, notes) = paf::to_gedcom(&b)?;
-        let (db, mut rep) = parse_ged_report(&text);
-        if db.people.is_empty() {
-            return Err("This PAF file has no people in it.".to_string());
-        }
-        rep.file = path.file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
-        rep.program = "PAF 5 database (.paf), read directly".to_string();
-        rep.charset = "ANSI".to_string();
+        src.program = "PAF 5 database (.paf), read directly".to_string();
+        src.charset = "ANSI".to_string();
         if notes.odd_dates > 0 {
-            rep.warnings.push(format!("{} dates were stored in a way this reader doesn't fully understand yet. They came in as full dates; please check them against PAF.", notes.odd_dates));
+            src.warnings.push(format!("{} dates were stored in a way this reader doesn't fully understand yet. They came in as full dates; please check them against PAF.", notes.odd_dates));
         }
         if notes.unread > 0 {
-            rep.warnings.push(format!("{} people or families have extra details (such as christenings, burials, LDS ordinances, notes or sources) this reader can't read from a .paf file yet. To bring those in, export a GEDCOM from PAF and import that instead.", notes.unread));
+            src.warnings.push(format!("{} people or families have extra details (such as christenings, burials, LDS ordinances, notes or sources) this reader can't read from a .paf file yet. To bring those in, export a GEDCOM from PAF and import that instead.", notes.unread));
         }
         if notes.odd_links > 0 {
-            rep.warnings.push(format!("{} children are linked to parents as something other than a birth child (adopted, sealed, guardian and so on). They came in as ordinary children; please check those links.", notes.odd_links));
+            src.warnings.push(format!("{} children are linked to parents as something other than a birth child (adopted, sealed, guardian and so on). They came in as ordinary children; please check those links.", notes.odd_links));
         }
-        rep.lost = loss_check(&text, &to_ged(&db));
-        return Ok((db, rep));
+        if parse_ged_report(&text).0.people.is_empty() {
+            return Err("This PAF file has no people in it.".to_string());
+        }
+        src.text = Some(text);
+        return Ok(src);
     }
     // A program's own data file (PAF's .paf, for example) rather than a GEDCOM export?
     let nuls = b.iter().take(4096).filter(|c| **c == 0).count();
@@ -396,15 +406,46 @@ pub(crate) fn read_ged_file(path: &Path) -> Result<(Db, ImportReport), String> {
         return Err("This is a program's own data file, not a GEDCOM file, so it can't be read directly. Open it in the program that made it (for PAF: File > Export, choose GEDCOM), save the .ged file, then import that here.".to_string());
     }
     let (text, charset) = decode_ged(&b);
-    let (mut db, mut rep) = parse_ged_report(&text);
-    if db.people.is_empty() {
-        return Err("This file is text, but it has no people in a GEDCOM layout. Make sure it is the GEDCOM (.ged) file the other program exported, not a report or a different kind of export.".to_string());
+    src.charset = charset;
+    src.text = Some(text);
+    Ok(src)
+}
+
+/// Bring in a file that was read with `load_import`, keeping only what the choices ask for.
+/// Photos and documents found next to the file are copied into the media folder when
+/// `copy_media` is set (and the choices include them).
+pub(crate) fn parse_import(src: &ImportSource, c: &ImportChoices, copy_media: bool) -> (Db, ImportReport) {
+    let file = src.path.file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
+    if let Some(db) = &src.json {
+        let db = db.clone();
+        let rep = ImportReport {
+            file,
+            program: src.program.clone(),
+            charset: src.charset.clone(),
+            people: db.people.len(),
+            families: db.fams.len(),
+            sources: db.sources.len(),
+            notes: db.notes.len(),
+            ..Default::default()
+        };
+        return (db, rep);
     }
-    rep.file = path.file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
-    rep.charset = charset;
-    resolve_media(&mut db, path.parent().unwrap_or(Path::new(".")), &mut rep);
+    let full = src.text.clone().unwrap_or_default();
+    let text = filter_ged(&full, c);
+    let (mut db, mut rep) = parse_ged_report(&text);
+    rep.file = file;
+    rep.charset = src.charset.clone();
+    if !src.program.is_empty() {
+        rep.program = src.program.clone();
+    }
+    rep.warnings.extend(src.warnings.iter().cloned());
+    // what reading the file could not keep (what was left out on purpose does not count)
     rep.lost = loss_check(&text, &to_ged(&db));
-    Ok((db, rep))
+    after_import_choices(&mut db, c);
+    if copy_media && c.files {
+        resolve_media(&mut db, src.path.parent().unwrap_or(Path::new(".")), &mut rep);
+    }
+    (db, rep)
 }
 
 /// Write the tree as a GEDCOM file. Photos and documents are copied into a folder next to it and the file
@@ -465,6 +506,21 @@ pub(crate) fn write_gedcom(db: &Db, path: &Path, private: bool) -> Result<String
     if problem { Err(s) } else { Ok(s) }
 }
 
+/// Where a photo or document a GEDCOM file names can be found: at the path it gives, or next
+/// to the file. Only photos, documents and recordings count, so a shared file cannot pull in
+/// other private files. Returns the file and its plain name.
+pub(crate) fn find_media_source(path: &str, base: &Path) -> Option<(PathBuf, String)> {
+    if path.is_empty() || is_url(path) {
+        return None;
+    }
+    let norm = path.replace('\\', "/");
+    let base_name = norm.rsplit('/').next().unwrap_or("").to_string();
+    if !is_media_name(&base_name) {
+        return None;
+    }
+    [PathBuf::from(path), base.join(&norm), base.join(&base_name)].into_iter().find(|c| c.is_file()).map(|c| (c, base_name))
+}
+
 /// Photos and documents that a GEDCOM file refers to: copy in the ones that can be found
 /// (next to the file, or at the path it gives) and keep the reference for the rest.
 pub(crate) fn resolve_media(db: &mut Db, base: &Path, rep: &mut ImportReport) {
@@ -476,27 +532,19 @@ pub(crate) fn resolve_media(db: &mut Db, base: &Path, rep: &mut ImportReport) {
             rep.media_missing += 1;
             return;
         }
-        let norm = m.path.replace('\\', "/");
-        let base_name = norm.rsplit('/').next().unwrap_or("").to_string();
-        // A GEDCOM file can name any file on the computer. Only photos, documents and
-        // recordings are copied in, so a shared file cannot pull in other private files.
-        if !is_media_name(&base_name) {
+        let Some((c, base_name)) = find_media_source(&m.path, base) else {
             rep.media_missing += 1;
             return;
-        }
-        let candidates = [PathBuf::from(&m.path), base.join(&norm), base.join(&base_name)];
-        for c in candidates.iter() {
-            if c.is_file() {
-                if let Some((file, shown)) = import_one(c, &base_name) {
-                    m.file = file;
-                    m.name = shown;
-                    m.path.clear();
-                    rep.media_found += 1;
-                    return;
-                }
+        };
+        match import_one(&c, &base_name) {
+            Some((file, shown)) => {
+                m.file = file;
+                m.name = shown;
+                m.path.clear();
+                rep.media_found += 1;
             }
+            None => rep.media_missing += 1,
         }
-        rep.media_missing += 1;
     };
     for p in db.people.values_mut() {
         for m in p.media.iter_mut() {

@@ -4,6 +4,12 @@ Major work so far, in the order it was done.
 
 ## Not yet released
 
+- **Import options:** choosing a file to import now reads it first and shows what is in it (people, families,
+  sources, notes, events, photos and links, LDS ordinances, living people, research tasks, the program it came from),
+  then lets you choose: add to your tree, replace it, or make **a new tree of its own**; everyone, or a person's
+  ancestors and/or descendants, with or without living people; and what to include (notes, sources, photo files,
+  photo links, LDS ordinances, contact details, research tasks, other programs' details), plus opening the Places
+  window afterwards. Choices are remembered; the file is never changed; the import report follows.
 - **Memories, together:** the Gallery and Memories tabs are now one **Memories** tab, with filters for All, Photos,
   Documents, Stories, Recordings and Notes (with counts), **Show by person** (grouped under each person's name), and
   **Not linked to anyone** (files in the media folder nobody uses, to add to the selected person or move out). The

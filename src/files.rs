@@ -80,9 +80,10 @@ impl App {
         }
     }
 
-    pub(crate) fn import_merge(&mut self) {
-        if let Some(inc) = self.read_ged() {
-            let file = self.report.as_ref().map(|r| r.file.clone()).unwrap_or_else(|| "the file".to_string());
+    /// Add people from a file to the open tree: straight in when nobody looks like anyone
+    /// already there, otherwise through the review of possible matches.
+    pub(crate) fn merge_incoming(&mut self, inc: Db, file: String) {
+        {
             let im = ImportMerge::new(&self.db, inc, file);
             if im.order.is_empty() {
                 // Nobody in the file looks like anyone in the tree, so there is nothing to decide.
