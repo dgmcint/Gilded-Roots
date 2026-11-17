@@ -71,6 +71,11 @@ and photos came across, and anything that could not be carried over. Your origin
 - Automatic updates: when a new version is released, ask whether to update, then download it, verify it and restart
 - Open Ancestral Quest databases (.aq, including the newer AQ 16 format) directly, alongside GEDCOM import from Ancestral Quest
 - Optional online features, such as working with FamilySearch, that stay off until you turn them on yourself
+- A home for your research files: archived emails (.eml, .mbox, Outlook .msg), audio, PDFs, documents, scans and
+  web pages, kept together in a **Research** tab with search and tags. Each item can be linked to the people,
+  families and events it is about, attached to a source as its evidence (with a citation and transcription), and
+  shown in that person's Individual page. Emails keep their sender, date and attachments, and can be read inside
+  the program
 
 ## Install
 

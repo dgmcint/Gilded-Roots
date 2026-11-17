@@ -2,7 +2,7 @@
 
 Major work so far, in the order it was done.
 
-## Not yet released
+## 1.0.5 (13 November 2026)
 
 - **Toolbars:** a main toolbar under the menus (Back, Forward, Home, Add person, Edit, Find, Quick jump, Undo, Redo,
   Print, Back up now) and a toolbar for each tab with its own buttons (Family: add father, mother, spouse, child,
