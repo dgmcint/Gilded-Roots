@@ -34,9 +34,9 @@ impl App {
                     self.status = msg.clone();
                     self.notice = Some(msg);
                 } else if restore {
-                    self.status = format!("Restored {} missing photo or recording file(s) from the backup.", copied);
+                    self.status = crate::i18n::trf("Restored {} missing photo or recording file(s) from the backup.", &["Restored ", " missing photo or recording file(s) from the backup."], &[(copied).to_string()]);
                 } else if copied > 0 {
-                    self.status = format!("Backed up {} new photo or recording file(s).", copied);
+                    self.status = crate::i18n::trf("Backed up {} new photo or recording file(s).", &["Backed up ", " new photo or recording file(s)."], &[(copied).to_string()]);
                 }
             }
         }
@@ -55,7 +55,7 @@ impl App {
 
     pub(crate) fn read_ged(&mut self) -> Option<Db> {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
-        let path = rfd::FileDialog::new().set_title("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)").set_directory(start_dir()).pick_file()?;
+        let path = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)")).set_directory(start_dir()).pick_file()?;
         remember_dir(&path);
         match read_ged_file(&path) {
             Ok((db, rep)) => {
@@ -75,7 +75,7 @@ impl App {
             let n = db.people.len();
             self.sel = db.home.or_else(|| db.people.keys().next().copied());
             self.db = db;
-            self.status = format!("Imported {} people.", n);
+            self.status = crate::i18n::trf("Imported {} people.", &["Imported ", " people."], &[(n).to_string()]);
             self.dirty = true;
         }
     }
@@ -96,7 +96,7 @@ impl App {
                 if self.sel.is_none() {
                     self.sel = self.db.people.keys().next().copied();
                 }
-                self.status = format!("Added {} people. None of them looked like anyone already in your tree.", added);
+                self.status = crate::i18n::trf("Added {} people. None of them looked like anyone already in your tree.", &["Added ", " people. None of them looked like anyone already in your tree."], &[(added).to_string()]);
                 self.dirty = true;
             } else {
                 self.imerge = Some(im);
@@ -106,7 +106,7 @@ impl App {
     }
 
     pub(crate) fn export(&mut self, private: bool) {
-        if let Some(path) = rfd::FileDialog::new().set_title("Save GEDCOM file").set_directory(start_dir()).set_file_name("gilded-roots.ged").save_file() {
+        if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Save GEDCOM file")).set_directory(start_dir()).set_file_name("gilded-roots.ged").save_file() {
             remember_dir(&path);
             self.status = match write_gedcom(&self.db, &path, private) {
                 Ok(s) | Err(s) => s,
@@ -203,7 +203,7 @@ impl App {
         let json = match serde_json::to_vec(&self.db) {
             Ok(j) => j,
             Err(e) => {
-                self.status = format!("Could not make a safety backup, so nothing was changed: {}", e);
+                self.status = crate::i18n::trf("Could not make a safety backup, so nothing was changed: {}", &["Could not make a safety backup, so nothing was changed: ", ""], &[(e).to_string()]);
                 return false;
             }
         };
@@ -230,9 +230,9 @@ impl App {
                 self.back.clear();
                 self.fwd.clear();
                 self.dirty = true;
-                self.status = "Restored your previous tree. Your last tree was saved as the new backup.".to_string();
+                self.status = crate::i18n::tr("Restored your previous tree. Your last tree was saved as the new backup.").to_string();
             }
-            Err(_) => self.status = "No usable backup found yet.".to_string(),
+            Err(_) => self.status = crate::i18n::tr("No usable backup found yet.").to_string(),
         }
     }
 
@@ -272,7 +272,7 @@ impl App {
 
 impl App {
     pub(crate) fn change_data_folder(&mut self) {
-        let Some(parent) = rfd::FileDialog::new().set_title("Choose where to keep your tree (a folder named Gilded Roots is made inside it)").set_directory(std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).unwrap_or_else(start_dir)).pick_folder() else {
+        let Some(parent) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose where to keep your tree (a folder named Gilded Roots is made inside it)")).set_directory(std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).unwrap_or_else(start_dir)).pick_folder() else {
             return;
         };
         let target = parent.join("Gilded Roots");
@@ -281,31 +281,31 @@ impl App {
             return;
         }
         if target.join("tree.json").exists() {
-            self.status = "That folder already holds a tree. Choose a different place.".to_string();
+            self.status = crate::i18n::tr("That folder already holds a tree. Choose a different place.").to_string();
             return;
         }
         self.persist();
         match copy_dir(&src, &target) {
             Ok(_) if std::fs::read(src.join("tree.json")).ok() == std::fs::read(target.join("tree.json")).ok() => {
                 if std::fs::write(config_dir().join("location.txt"), target.to_string_lossy().as_bytes()).is_ok() {
-                    self.status = format!("Your tree is now kept in {}. The old folder was left untouched.", target.display());
+                    self.status = crate::i18n::trf("Your tree is now kept in {}. The old folder was left untouched.", &["Your tree is now kept in ", ". The old folder was left untouched."], &[(target.display()).to_string()]);
                 } else {
-                    self.status = "Copied, but could not save the new location, so the old folder is still in use.".to_string();
+                    self.status = crate::i18n::tr("Copied, but could not save the new location, so the old folder is still in use.").to_string();
                 }
             }
             _ => {
-                self.status = "Could not copy your data to that folder, so nothing was changed.".to_string();
+                self.status = crate::i18n::tr("Could not copy your data to that folder, so nothing was changed.").to_string();
             }
         }
     }
 
     pub(crate) fn make_portable(&mut self) {
         let Some(target) = portable_dir() else {
-            self.status = "Could not find where the app is stored.".to_string();
+            self.status = crate::i18n::tr("Could not find where the app is stored.").to_string();
             return;
         };
         if target.is_dir() {
-            self.status = "This copy is already portable.".to_string();
+            self.status = crate::i18n::tr("This copy is already portable.").to_string();
             return;
         }
         self.persist();
@@ -313,14 +313,11 @@ impl App {
         let src = base_dir();
         match copy_dir(&src, &target) {
             Ok(_) => {
-                self.status = "Portable mode is on. Your data is now kept in the FamilyTreeData folder next to the app.".to_string();
+                self.status = crate::i18n::tr("Portable mode is on. Your data is now kept in the FamilyTreeData folder next to the app.").to_string();
             }
             Err(e) => {
                 let _ = std::fs::remove_dir_all(&target);
-                self.status = format!(
-                    "Could not create a folder next to the app ({}). Try moving the app to a folder you can write to, such as your Desktop or a USB stick.",
-                    e
-                );
+                self.status = crate::i18n::trf("Could not create a folder next to the app ({}). Try moving the app to a folder you can write to, such as your Desktop or a USB stick.", &["Could not create a folder next to the app (", "). Try moving the app to a folder you can write to, such as your Desktop or a USB stick."], &[(e).to_string()]);
             }
         }
     }
@@ -329,14 +326,14 @@ impl App {
 impl App {
     pub(crate) fn restore_from_file(&mut self) {
         let dir = data_dir().join("backups");
-        let Some(path) = rfd::FileDialog::new().set_directory(dir).add_filter("Backup", &["json"]).pick_file() else { return };
+        let Some(path) = rfd::FileDialog::new().set_directory(dir).add_filter(crate::i18n::tr("Backup"), &["json"]).pick_file() else { return };
         self.restore_path(&path);
     }
 
     pub(crate) fn restore_path(&mut self, path: &Path) {
         let path = path.to_path_buf();
         if let Err(e) = verify_backup(&path) {
-            self.status = format!("That backup is damaged and was not used: {}", e);
+            self.status = crate::i18n::trf("That backup is damaged and was not used: {}", &["That backup is damaged and was not used: ", ""], &[(e).to_string()]);
             self.notice = Some(self.status.clone());
             return;
         }
@@ -349,10 +346,10 @@ impl App {
                 self.sel = old.people.keys().next().copied();
                 self.db = old;
                 self.dirty = true;
-                self.status = "Restored from that backup. Your previous tree was saved as the last backup.".to_string();
+                self.status = crate::i18n::tr("Restored from that backup. Your previous tree was saved as the last backup.").to_string();
                 self.spawn_media_job(true);
             }
-            Err(e) => self.status = format!("That file could not be read as a backup: {}", e),
+            Err(e) => self.status = crate::i18n::trf("That file could not be read as a backup: {}", &["That file could not be read as a backup: ", ""], &[(e).to_string()]),
         }
     }
 }
@@ -360,11 +357,11 @@ impl App {
 impl App {
     pub(crate) fn save_archive_pick(&mut self) {
         if self.x.practice.is_some() {
-            self.status = "This is the sample family; go back to your tree to archive it.".into();
+            self.status = crate::i18n::tr("This is the sample family; go back to your tree to archive it.").into();
             return;
         }
         let name = format!("Gilded Roots archive {}.zip", today());
-        if let Some(path) = rfd::FileDialog::new().set_title("Save Family Tree Archive").set_directory(start_dir()).set_file_name(&name).add_filter("Family Tree Archive", &["zip"]).save_file() {
+        if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Save Family Tree Archive")).set_directory(start_dir()).set_file_name(&name).add_filter(crate::i18n::tr("Family Tree Archive"), &["zip"]).save_file() {
             remember_dir(&path);
             let db = self.db.clone();
             let (tx, rx) = std::sync::mpsc::channel();
@@ -373,12 +370,12 @@ impl App {
                 let _ = tx.send(r);
             });
             self.x.arch_job = Some(rx);
-            self.status = "Making the Family Tree Archive...".into();
+            self.status = crate::i18n::tr("Making the Family Tree Archive...").into();
         }
     }
 
     pub(crate) fn open_archive_pick(&mut self) {
-        if let Some(path) = rfd::FileDialog::new().set_title("Open Family Tree Archive").set_directory(start_dir()).add_filter("Family Tree Archive", &["zip"]).pick_file() {
+        if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Open Family Tree Archive")).set_directory(start_dir()).add_filter(crate::i18n::tr("Family Tree Archive"), &["zip"]).pick_file() {
             remember_dir(&path);
             match archive::read_info(&path) {
                 Ok(info) => self.x.arch_confirm = Some((path, info)),
@@ -403,7 +400,7 @@ impl App {
         match dated_backup_in(&data_dir().join("backups"), &self.db, force) {
             Ok(made) => {
                 if force {
-                    self.status = "Backup saved and checked.".to_string();
+                    self.status = crate::i18n::tr("Backup saved and checked.").to_string();
                 }
                 if made || force {
                     self.spawn_media_job(false);
@@ -429,13 +426,13 @@ impl App {
                             });
                             self.x.arch_job = Some(rx);
                         } else {
-                            self.status = format!("Backup saved, but the second-copy folder {} is not available (is the drive plugged in?).", extra);
+                            self.status = crate::i18n::trf("Backup saved, but the second-copy folder {} is not available (is the drive plugged in?).", &["Backup saved, but the second-copy folder ", " is not available (is the drive plugged in?)."], &[(extra).to_string()]);
                         }
                     }
                 }
             }
             Err(e) => {
-                self.status = format!("Backup failed: {}", e);
+                self.status = crate::i18n::trf("Backup failed: {}", &["Backup failed: ", ""], &[(e).to_string()]);
                 self.notice = Some(self.status.clone());
             }
         }
@@ -467,7 +464,7 @@ impl App {
             self.end_practice();
         }
         if self.dirty && !self.persist() {
-            self.status = "Your changes could not be saved, so the tree was not switched.".into();
+            self.status = crate::i18n::tr("Your changes could not be saved, so the tree was not switched.").into();
             return;
         }
         self.editing = None;

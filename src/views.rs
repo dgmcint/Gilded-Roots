@@ -5,10 +5,10 @@ use super::*;
 /// The Select / Hand choice on the chart toolbars. Select: click people as usual. Hand: drag to
 /// move the chart around (the chart can also be moved by its scroll bars or the mouse wheel).
 pub(crate) fn hand_switch(ui: &mut egui::Ui, hand: bool, act: &mut Option<Action>) {
-    if ui.selectable_label(!hand, "Select").on_hover_text("Click a person to go to them (H switches to the hand)").clicked() && hand {
+    if ui.selectable_label(!hand, crate::i18n::tr("Select")).on_hover_text(crate::i18n::tr("Click a person to go to them (H switches to the hand)")).clicked() && hand {
         *act = Some(Action::SetHand(false));
     }
-    if ui.selectable_label(hand, "Hand").on_hover_text("Drag the chart to move around it (H switches back to Select)").clicked() && !hand {
+    if ui.selectable_label(hand, crate::i18n::tr("Hand")).on_hover_text(crate::i18n::tr("Drag the chart to move around it (H switches back to Select)")).clicked() && !hand {
         *act = Some(Action::SetHand(true));
     }
     // H flips between the two, unless someone is typing
@@ -49,13 +49,13 @@ pub(crate) fn ditto(ui: &mut egui::Ui, text: &mut String, style: impl FnOnce(egu
         *last = text.trim().to_string();
     }
     if r.has_focus() && text.is_empty() && !last.trim().is_empty() {
-        r = r.on_hover_text(format!("Ctrl+D (Cmd+D on a Mac): same as last, \"{}\"", last.trim()));
+        r = r.on_hover_text(crate::i18n::trf("Ctrl+D (Cmd+D on a Mac): same as last, \"{}\"", &["Ctrl+D (Cmd+D on a Mac): same as last, \"", "\""], &[(last.trim()).to_string()]));
     }
     r
 }
 
 pub(crate) fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>) {
-    ui.label("Zoom:");
+    ui.label(crate::i18n::tr("Zoom:"));
     if ui.add_enabled(z > 0.26, egui::Button::new("-")).clicked() {
         *act = Some(Action::SetZoom((z - if z > 0.65 { 0.1 } else { 0.05 }).max(0.25)));
     }
@@ -65,7 +65,7 @@ pub(crate) fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>)
     if ui.add_enabled(z < 1.79, egui::Button::new("+")).clicked() {
         *act = Some(Action::SetZoom((z + if z >= 0.6 { 0.1 } else { 0.05 }).min(1.8)));
     }
-    if ui.button("Fit").on_hover_text("Fit the whole chart in the window").clicked() {
+    if ui.button(crate::i18n::tr("Fit")).on_hover_text(crate::i18n::tr("Fit the whole chart in the window")).clicked() {
         *act = Some(Action::Fit);
     }
 }
@@ -90,7 +90,7 @@ impl App {
         let maxd = self.settings.gens.clamp(3, 8);
         self.nav_bar(ui, act);
         ui.horizontal(|ui| {
-            ui.label("Generations:");
+            ui.label(crate::i18n::tr("Generations:"));
             if ui.add_enabled(maxd > 3, egui::Button::new("-")).clicked() {
                 *act = Some(Action::SetGens(maxd - 1));
             }
@@ -105,7 +105,7 @@ impl App {
             // the tab toolbar has Print when it is shown
             if !self.settings.tb_tab {
                 ui.separator();
-                if ui.button("Print").clicked() {
+                if ui.button(crate::i18n::tr("Print")).clicked() {
                     *act = Some(Action::PrintDescendants);
                 }
             }
@@ -123,7 +123,7 @@ impl App {
             *act = Some(Action::SetZoom(zw.min(zh).clamp(0.25, 1.8)));
         }
         if nodes.len() == 1 {
-            ui.label("No children recorded yet. Open the Individual tab and use Add child.");
+            ui.label(crate::i18n::tr("No children recorded yet. Open the Individual tab and use Add child."));
         }
         let (bw, bh, pitch, gap, top) = (250.0f32 * z, 40.0f32 * z, 46.0f32 * z, 34.0f32 * z, 10.0f32 * z);
         let tw = maxd as f32 * (bw + gap);
@@ -219,34 +219,34 @@ impl App {
 impl App {
     /// The actions for one person in a chart: open, view tree, quick edit, add a relative.
     pub(crate) fn person_menu(&self, ui: &mut egui::Ui, id: u32, act: &mut Option<Action>) {
-        if ui.button("Open individual page").clicked() {
+        if ui.button(crate::i18n::tr("Open individual page")).clicked() {
             *act = Some(Action::Open(id));
             ui.close_menu();
         }
-        ui.menu_button("View their tree", |ui| {
+        ui.menu_button(crate::i18n::tr("View their tree"), |ui| {
             for (lbl, w) in [("Ancestors (pedigree)", 0u8), ("Descendants", 1), ("Family", 2)] {
-                if ui.button(lbl).clicked() {
+                if ui.button(crate::i18n::trv(lbl)).clicked() {
                     *act = Some(Action::ViewTree(id, w));
                     ui.close_menu();
                 }
             }
         });
-        if ui.button("Quick edit...").clicked() {
+        if ui.button(crate::i18n::tr("Quick edit...")).clicked() {
             *act = Some(Action::QuickEdit(id));
             ui.close_menu();
         }
         if let Some(p) = self.db.people.get(&id) {
             let links = tools::search_links(p);
-            ui.menu_button("Search websites", |ui| {
+            ui.menu_button(crate::i18n::tr("Search websites"), |ui| {
                 for (site, url) in links {
-                    if ui.button(site).clicked() {
+                    if ui.button(crate::i18n::trv(site)).clicked() {
                         ui.ctx().open_url(egui::OpenUrl::new_tab(url));
                         ui.close_menu();
                     }
                 }
             });
         }
-        ui.menu_button("Groups", |ui| {
+        ui.menu_button(crate::i18n::tr("Groups"), |ui| {
             for (i, g) in self.db.groups.iter().enumerate() {
                 let inside = g.ids.contains(&id);
                 if ui.button(if inside { format!("Take out of \"{}\"", g.name) } else { format!("Add to \"{}\"", g.name) }).clicked() {
@@ -257,12 +257,12 @@ impl App {
             if !self.db.groups.is_empty() {
                 ui.separator();
             }
-            if ui.button("Groups...").clicked() {
+            if ui.button(crate::i18n::tr("Groups...")).clicked() {
                 *act = Some(Action::GroupsOpen(id));
                 ui.close_menu();
             }
         });
-        ui.menu_button("Add a relative", |ui| {
+        ui.menu_button(crate::i18n::tr("Add a relative"), |ui| {
             let (f, m) = self.db.parents(id);
             let first_fam = self.db.fams_of(id).first().copied();
             let items: [(&str, Kind, bool); 6] = [
@@ -274,7 +274,7 @@ impl App {
                 ("Child...", Kind::Child(first_fam), true),
             ];
             for (lbl, k, on) in items {
-                if ui.add_enabled(on, egui::Button::new(lbl)).clicked() {
+                if ui.add_enabled(on, egui::Button::new(crate::i18n::trv(lbl))).clicked() {
                     *act = Some(Action::AddFor(id, k));
                     ui.close_menu();
                 }
@@ -282,7 +282,7 @@ impl App {
         });
         let sets = self.db.parent_families(id);
         if sets.len() > 1 {
-            ui.menu_button("Show which parents", |ui| {
+            ui.menu_button(crate::i18n::tr("Show which parents"), |ui| {
                 let shown = self.db.famc(id);
                 for f in &sets {
                     let fm = &self.db.fams[f];
@@ -297,11 +297,11 @@ impl App {
             });
         }
         ui.separator();
-        if ui.button("Centre chart on this person").clicked() {
+        if ui.button(crate::i18n::tr("Centre chart on this person")).clicked() {
             *act = Some(Action::Select(id));
             ui.close_menu();
         }
-        if ui.button("Make this the home person").clicked() {
+        if ui.button(crate::i18n::tr("Make this the home person")).clicked() {
             *act = Some(Action::SetHome(id));
             ui.close_menu();
         }
@@ -338,14 +338,14 @@ impl App {
             }
         }
         if fams.is_empty() {
-            ui.weak("No spouse or children recorded");
+            ui.weak(crate::i18n::tr("No spouse or children recorded"));
         }
         ui.separator();
-        if ui.button("Add spouse...").clicked() {
+        if ui.button(crate::i18n::tr("Add spouse...")).clicked() {
             *act = Some(Action::AddFor(id, Kind::Spouse));
             ui.close_menu();
         }
-        if ui.button("Add child...").clicked() {
+        if ui.button(crate::i18n::tr("Add child...")).clicked() {
             *act = Some(Action::AddFor(id, Kind::Child(fams.first().copied())));
             ui.close_menu();
         }
@@ -360,10 +360,10 @@ impl App {
             }
         }
         if sibs.is_empty() {
-            ui.weak("No brothers or sisters recorded");
+            ui.weak(crate::i18n::tr("No brothers or sisters recorded"));
         }
         ui.separator();
-        if ui.button("Add brother or sister...").clicked() {
+        if ui.button(crate::i18n::tr("Add brother or sister...")).clicked() {
             *act = Some(Action::AddFor(id, Kind::Sibling));
             ui.close_menu();
         }
@@ -457,14 +457,14 @@ impl App {
             if c.len() > 22 { format!("{}...", c[..21].iter().collect::<String>()) } else { s.to_string() }
         };
         ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new("Trail").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Trail")).small().weak());
             let last = t.len() - 1;
             for (n, id) in t.iter().enumerate() {
                 let name = short(&display_name(&self.db.people[id]));
                 if n == last {
                     ui.label(RichText::new(name).strong().color(accent));
                 } else {
-                    if ui.link(name).on_hover_text("Go back to this person").clicked() {
+                    if ui.link(name).on_hover_text(crate::i18n::tr("Go back to this person")).clicked() {
                         *act = Some(Action::Select(*id));
                     }
                     ui.label(RichText::new(">").weak());
@@ -487,18 +487,18 @@ impl App {
         ui.horizontal_wrapped(|ui| {
             // Back, Forward and Home are on the main toolbar when it is shown
             if !self.settings.tb_main {
-                if ui.add_enabled(!self.back.is_empty(), egui::Button::new("< Back")).clicked() {
+                if ui.add_enabled(!self.back.is_empty(), egui::Button::new(crate::i18n::tr("< Back"))).clicked() {
                     *act = Some(Action::Back);
                 }
-                if ui.add_enabled(!self.fwd.is_empty(), egui::Button::new("Forward >")).clicked() {
+                if ui.add_enabled(!self.fwd.is_empty(), egui::Button::new(crate::i18n::tr("Forward >"))).clicked() {
                     *act = Some(Action::Forward);
                 }
-                let hb = ui.button("Home").on_hover_text("Go to the home person. Right-click to make the current person the home person.");
+                let hb = ui.button(crate::i18n::tr("Home")).on_hover_text(crate::i18n::tr("Go to the home person. Right-click to make the current person the home person."));
                 if hb.clicked() {
                     *act = Some(Action::GoHome);
                 }
                 hb.context_menu(|ui| {
-                    if ui.button("Make the current person the home person").clicked() {
+                    if ui.button(crate::i18n::tr("Make the current person the home person")).clicked() {
                         *act = Some(Action::SetHome(sel));
                         ui.close_menu();
                     }
@@ -514,7 +514,7 @@ impl App {
                 }
             }
             ui.add_enabled_ui(!recent.is_empty(), |ui| {
-                ui.menu_button("Recent", |ui| pick(ui, act, &recent));
+                ui.menu_button(crate::i18n::tr("Recent"), |ui| pick(ui, act, &recent));
             });
             let marked = self.db.bookmarks.contains(&sel);
             ui.menu_button(if marked { "Bookmarks \u{2605}" } else { "Bookmarks" }, |ui| {
@@ -531,7 +531,7 @@ impl App {
             ui.separator();
             let sets = self.db.parent_families(sel);
             ui.add_enabled_ui(!sets.is_empty(), |ui| {
-                ui.menu_button("Parents", |ui| {
+                ui.menu_button(crate::i18n::tr("Parents"), |ui| {
                     for f in &sets {
                         let fm = &self.db.fams[f];
                         let mut ids: Vec<u32> = Vec::new();
@@ -546,8 +546,8 @@ impl App {
                             ui.horizontal(|ui| {
                                 ui.label(RichText::new(if bio { "Biological parents" } else { "Other parents" }).small().weak());
                                 if shown {
-                                    ui.label(RichText::new("shown on chart").small().weak());
-                                } else if ui.small_button("Show on chart").clicked() {
+                                    ui.label(RichText::new(crate::i18n::tr("shown on chart")).small().weak());
+                                } else if ui.small_button(crate::i18n::tr("Show on chart")).clicked() {
                                     *act = Some(Action::ShowParents(*f));
                                     ui.close_menu();
                                 }
@@ -559,15 +559,15 @@ impl App {
             });
             let sibs = self.db.siblings(sel);
             ui.add_enabled_ui(!sibs.is_empty(), |ui| {
-                ui.menu_button("Siblings", |ui| pick(ui, act, &sibs));
+                ui.menu_button(crate::i18n::tr("Siblings"), |ui| pick(ui, act, &sibs));
             });
             let pt = self.db.partners(sel);
             ui.add_enabled_ui(!pt.is_empty(), |ui| {
-                ui.menu_button("Partners", |ui| pick(ui, act, &pt));
+                ui.menu_button(crate::i18n::tr("Partners"), |ui| pick(ui, act, &pt));
             });
             let kids = self.db.children_of(sel);
             ui.add_enabled_ui(!kids.is_empty(), |ui| {
-                ui.menu_button("Children", |ui| pick(ui, act, &kids));
+                ui.menu_button(crate::i18n::tr("Children"), |ui| pick(ui, act, &kids));
             });
         });
     }
@@ -645,7 +645,7 @@ impl App {
             .collect();
         self.nav_bar(ui, act);
         ui.horizontal(|ui| {
-            ui.label("Generations:");
+            ui.label(crate::i18n::tr("Generations:"));
             if ui.add_enabled(gens > 3, egui::Button::new("-")).clicked() {
                 *act = Some(Action::SetGens(gens - 1));
             }
@@ -660,7 +660,7 @@ impl App {
             // the tab toolbar has Print when it is shown
             if !self.settings.tb_tab {
                 ui.separator();
-                if ui.button("Print").clicked() {
+                if ui.button(crate::i18n::tr("Print")).clicked() {
                     *act = Some(Action::PrintPedigree);
                 }
             }
@@ -775,7 +775,7 @@ impl App {
                                         c,
                                         Stroke::NONE,
                                     ));
-                                    if ra.on_hover_text("Show this person's ancestors").clicked() {
+                                    if ra.on_hover_text(crate::i18n::tr("Show this person's ancestors")).clicked() {
                                         *act = Some(Action::Select(id));
                                     }
                                 }
@@ -818,11 +818,11 @@ impl App {
                                 let n_sib = self.db.siblings(id).len();
                                 let r_a = Rect::from_min_size(pos2(rect.min.x, rect.max.y + 8.0), vec2(w, 22.0));
                                 ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_a), |ui| {
-                                    ui.menu_button(format!("Spouse & children ({})", n_sc), |ui| self.spouse_children_menu(ui, id, act));
+                                    ui.menu_button(crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[(n_sc).to_string()]), |ui| self.spouse_children_menu(ui, id, act));
                                 });
                                 let r_b = Rect::from_min_size(pos2(rect.min.x, rect.max.y + 36.0), vec2(w, 22.0));
                                 ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_b), |ui| {
-                                    ui.menu_button(format!("Siblings ({})", n_sib), |ui| self.siblings_menu(ui, id, act));
+                                    ui.menu_button(crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[(n_sib).to_string()]), |ui| self.siblings_menu(ui, id, act));
                                 });
                             }
                             if r2.double_clicked() {
@@ -926,10 +926,10 @@ impl App {
                     }
                 }
                 ui.separator();
-                if ui.add_enabled(fx > 0, egui::Button::new("<").small()).on_hover_text("Move this spouse earlier in the list").clicked() {
+                if ui.add_enabled(fx > 0, egui::Button::new("<").small()).on_hover_text(crate::i18n::tr("Move this spouse earlier in the list")).clicked() {
                     *act = Some(Action::MoveFamily(id, fid, true));
                 }
-                if ui.add_enabled(fx + 1 < ids.len(), egui::Button::new(">").small()).on_hover_text("Move this spouse later in the list").clicked() {
+                if ui.add_enabled(fx + 1 < ids.len(), egui::Button::new(">").small()).on_hover_text(crate::i18n::tr("Move this spouse later in the list")).clicked() {
                     *act = Some(Action::MoveFamily(id, fid, false));
                 }
             });
@@ -942,8 +942,8 @@ impl App {
                     None => {
                         cols[n].group(|ui| {
                             ui.set_width(ui.available_width());
-                            ui.label(RichText::new(tag).small().weak());
-                            ui.weak("not recorded");
+                            ui.label(RichText::new(crate::i18n::trv(tag)).small().weak());
+                            ui.weak(crate::i18n::tr("not recorded"));
                         });
                     }
                 }
@@ -962,23 +962,23 @@ impl App {
         }
         ui.vertical_centered(|ui| {
             if m.is_empty() {
-                ui.weak("Marriage details not recorded");
+                ui.weak(crate::i18n::tr("Marriage details not recorded"));
             } else {
                 ui.label(m.join("  -  "));
             }
         });
         ui.add_space(6.0);
-        ui.label(RichText::new(format!("Children ({})", f.kids.len())).strong());
+        ui.label(RichText::new(crate::i18n::trf("Children ({})", &["Children (", ")"], &[(f.kids.len()).to_string()])).strong());
         if f.kids.is_empty() {
-            ui.weak("No children recorded");
+            ui.weak(crate::i18n::tr("No children recorded"));
         } else {
             let many = f.kids.len() > 1;
             egui::Grid::new("kids").num_columns(5).spacing([22.0, 5.0]).show(ui, |ui| {
-                ui.label(RichText::new("Order").small().weak());
-                ui.label(RichText::new("Name").small().weak());
-                ui.label(RichText::new("Born").small().weak());
-                ui.label(RichText::new("Died").small().weak());
-                ui.label(RichText::new("Parent link").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Order")).small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Name")).small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Born")).small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Died")).small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Parent link")).small().weak());
                 ui.end_row();
                 for (i, k) in f.kids.iter().enumerate() {
                     let Some(c) = self.db.people.get(k) else { continue };
@@ -986,10 +986,10 @@ impl App {
                         if !many {
                             return;
                         }
-                        if ui.add_enabled(i > 0, egui::Button::new("^").small()).on_hover_text("Move up").clicked() {
+                        if ui.add_enabled(i > 0, egui::Button::new("^").small()).on_hover_text(crate::i18n::tr("Move up")).clicked() {
                             *act = Some(Action::MoveChild(fid, *k, true));
                         }
-                        if ui.add_enabled(i + 1 < f.kids.len(), egui::Button::new("v").small()).on_hover_text("Move down").clicked() {
+                        if ui.add_enabled(i + 1 < f.kids.len(), egui::Button::new("v").small()).on_hover_text(crate::i18n::tr("Move down")).clicked() {
                             *act = Some(Action::MoveChild(fid, *k, false));
                         }
                     });
@@ -1012,13 +1012,13 @@ impl App {
         }
         ui.add_space(6.0);
         ui.horizontal(|ui| {
-            if ui.button("Add child").clicked() {
+            if ui.button(crate::i18n::tr("Add child")).clicked() {
                 *act = Some(Action::Add(Kind::Child(Some(fid))));
             }
-            if f.kids.len() > 1 && ui.button("Sort children by birth").on_hover_text("Put the children in order of birth (or christening) date. Undo puts them back.").clicked() {
+            if f.kids.len() > 1 && ui.button(crate::i18n::tr("Sort children by birth")).on_hover_text(crate::i18n::tr("Put the children in order of birth (or christening) date. Undo puts them back.")).clicked() {
                 *act = Some(Action::SortChildren(fid));
             }
-            if ui.button("Print family group sheet").clicked() {
+            if ui.button(crate::i18n::tr("Print family group sheet")).clicked() {
                 *act = Some(Action::PrintFamily);
             }
         });
@@ -1026,16 +1026,16 @@ impl App {
 
     /// Parents, siblings, partners and other relationships of the selected person: the right side.
     pub(crate) fn family_side(&self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, fx: usize) {
-        ui.label(RichText::new("Relationships").strong().size(16.0));
+        ui.label(RichText::new(crate::i18n::tr("Relationships")).strong().size(16.0));
         ui.add_space(4.0);
         let sets = self.db.parent_families(id);
         if sets.is_empty() {
-            ui.weak("No parents recorded");
+            ui.weak(crate::i18n::tr("No parents recorded"));
             ui.horizontal(|ui| {
-                if ui.small_button("Add father").clicked() {
+                if ui.small_button(crate::i18n::tr("Add father")).clicked() {
                     *act = Some(Action::Add(Kind::Father));
                 }
-                if ui.small_button("Add mother").clicked() {
+                if ui.small_button(crate::i18n::tr("Add mother")).clicked() {
                     *act = Some(Action::Add(Kind::Mother));
                 }
             });
@@ -1059,7 +1059,7 @@ impl App {
         }
         let sibs = self.db.siblings(id);
         if !sibs.is_empty() {
-            egui::CollapsingHeader::new(format!("Siblings ({})", sibs.len())).id_salt("fam_sibs").default_open(false).show(ui, |ui| {
+            egui::CollapsingHeader::new(crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[(sibs.len()).to_string()])).id_salt("fam_sibs").default_open(false).show(ui, |ui| {
                 let mine = self.db.parent_families(id);
                 for sid in &sibs {
                     let half = !mine.iter().any(|f| self.db.fams[f].kids.contains(sid) && self.db.fams[f].h.is_some() && self.db.fams[f].w.is_some());
@@ -1078,11 +1078,11 @@ impl App {
             });
         }
         ui.add_space(6.0);
-        ui.label(RichText::new("Partners and children").strong());
+        ui.label(RichText::new(crate::i18n::tr("Partners and children")).strong());
         let fams = self.db.fams_of(id);
         if fams.is_empty() {
-            ui.weak("No partner recorded");
-            if ui.small_button("Add spouse").clicked() {
+            ui.weak(crate::i18n::tr("No partner recorded"));
+            if ui.small_button(crate::i18n::tr("Add spouse")).clicked() {
                 *act = Some(Action::Add(Kind::Spouse));
             }
         }
@@ -1097,7 +1097,7 @@ impl App {
             match other {
                 Some(o) => self.mini_card(ui, o, &tag, false, act),
                 None => {
-                    ui.weak("Partner not recorded");
+                    ui.weak(crate::i18n::tr("Partner not recorded"));
                 }
             }
             ui.horizontal(|ui| {
@@ -1112,7 +1112,7 @@ impl App {
                             ui.weak(life(c));
                         });
                     }
-                    if fams.len() > 1 && i != fx && ui.small_button("Show this family").clicked() {
+                    if fams.len() > 1 && i != fx && ui.small_button(crate::i18n::tr("Show this family")).clicked() {
                         *act = Some(Action::Fx(i));
                     }
                 });
@@ -1123,7 +1123,7 @@ impl App {
         let assoc_of = self.db.kin_extras(id).assoc_of;
         if !assoc.is_empty() || !assoc_of.is_empty() {
             ui.add_space(4.0);
-            ui.label(RichText::new("Other relationships").strong());
+            ui.label(RichText::new(crate::i18n::tr("Other relationships")).strong());
             for (o, role) in &assoc {
                 if let Some(p) = self.db.people.get(o) {
                     ui.horizontal_wrapped(|ui| {
@@ -1137,7 +1137,7 @@ impl App {
             for (o, role) in &assoc_of {
                 if let Some(p) = self.db.people.get(o) {
                     ui.horizontal_wrapped(|ui| {
-                        ui.weak(format!("is the {} of", role));
+                        ui.weak(crate::i18n::trf("is the {} of", &["is the ", " of"], &[(role).to_string()]));
                         if ui.link(display_name(p)).clicked() {
                             *act = Some(Action::Select(*o));
                         }
@@ -1192,12 +1192,12 @@ impl App {
     }
 
     pub(crate) fn family_empty(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
-        ui.label("No family group yet.");
+        ui.label(crate::i18n::tr("No family group yet."));
         ui.horizontal(|ui| {
-            if ui.button("Add spouse").clicked() {
+            if ui.button(crate::i18n::tr("Add spouse")).clicked() {
                 *act = Some(Action::Add(Kind::Spouse));
             }
-            if ui.button("Add child").clicked() {
+            if ui.button(crate::i18n::tr("Add child")).clicked() {
                 *act = Some(Action::Add(Kind::Child(None)));
             }
         });

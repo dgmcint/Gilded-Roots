@@ -125,12 +125,12 @@ impl App {
     pub(crate) fn journal_panel(&mut self, ui: &mut egui::Ui, id: u32) {
         let entries: Vec<usize> = self.db.journal.iter().enumerate().filter(|(_, j)| j.people.contains(&id)).map(|(i, _)| i).collect();
         if entries.is_empty() {
-            ui.label(RichText::new("No searches recorded yet. Note each search, even the ones that found nothing: it saves looking twice.").italics().weak());
+            ui.label(RichText::new(crate::i18n::tr("No searches recorded yet. Note each search, even the ones that found nothing: it saves looking twice.")).italics().weak());
         }
         for i in entries.iter().rev() {
             self.journal_card(ui, *i, false);
         }
-        if ui.button("Add a journal entry...").clicked() {
+        if ui.button(crate::i18n::tr("Add a journal entry...")).clicked() {
             self.x.journal_new = Some(Journal { date: print_date(&today()), people: vec![id], ..Default::default() });
             self.x.journal_open = true;
         }
@@ -148,23 +148,23 @@ impl App {
                     _ => ("Not finished", Color32::GRAY),
                 };
                 ui.label(RichText::new(j.date.as_str()).strong());
-                ui.label(RichText::new(txt).color(col).small());
+                ui.label(RichText::new(crate::i18n::trv(txt)).color(col).small());
             });
             if !j.goal.is_empty() {
-                ui.label(RichText::new(format!("Looking for: {}", j.goal)).size(14.0));
+                ui.label(RichText::new(crate::i18n::trf("Looking for: {}", &["Looking for: ", ""], &[(j.goal).to_string()])).size(14.0));
             }
             if !j.place.is_empty() {
-                ui.label(RichText::new(format!("Where: {}", j.place)).weak());
+                ui.label(RichText::new(crate::i18n::trf("Where: {}", &["Where: ", ""], &[(j.place).to_string()])).weak());
             }
             if let Some(s) = j.sid.and_then(|s| self.db.sources.get(&s)) {
-                ui.label(RichText::new(format!("Source: {}", s.title)).weak());
+                ui.label(RichText::new(crate::i18n::trf("Source: {}", &["Source: ", ""], &[(s.title).to_string()])).weak());
             }
             if !j.notes.is_empty() {
                 ui.add(egui::Label::new(j.notes.as_str()).wrap());
             }
             if show_people && !j.people.is_empty() {
                 let names: Vec<String> = j.people.iter().filter(|p| self.db.people.contains_key(p)).map(|p| self.db.label(*p)).collect();
-                ui.label(RichText::new(format!("About: {}", names.join(", "))).small().weak());
+                ui.label(RichText::new(crate::i18n::trf("About: {}", &["About: ", ""], &[(names.join(", ")).to_string()])).small().weak());
             }
         });
     }
@@ -181,24 +181,24 @@ impl App {
         let mut edit: Option<usize> = None;
         let mut go: Option<u32> = None;
         let sources: Vec<(u32, String)> = self.db.sources.iter().map(|(k, s)| (*k, s.title.clone())).collect();
-        egui::Window::new("Research journal").open(&mut open).default_size([640.0, 600.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Research journal")).open(&mut open).default_size([640.0, 600.0]).show(ctx, |ui| {
             if let Some(j) = self.x.journal_new.as_mut() {
                 egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.label(RichText::new(if self.x.journal_edit.is_some() { "Edit entry" } else { "New entry" }).strong());
                     egui::Grid::new("jform").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-                        ui.label("Date");
+                        ui.label(crate::i18n::tr("Date"));
                         ui.add(egui::TextEdit::singleline(&mut j.date).desired_width(160.0));
                         ui.end_row();
-                        ui.label("Looking for");
-                        ui.add(egui::TextEdit::singleline(&mut j.goal).hint_text("e.g. Thomas's marriage record").desired_width(380.0));
+                        ui.label(crate::i18n::tr("Looking for"));
+                        ui.add(egui::TextEdit::singleline(&mut j.goal).hint_text(crate::i18n::tr("e.g. Thomas's marriage record")).desired_width(380.0));
                         ui.end_row();
-                        ui.label("Where");
-                        ui.add(egui::TextEdit::singleline(&mut j.place).hint_text("archive, website, book, relative...").desired_width(380.0));
+                        ui.label(crate::i18n::tr("Where"));
+                        ui.add(egui::TextEdit::singleline(&mut j.place).hint_text(crate::i18n::tr("archive, website, book, relative...")).desired_width(380.0));
                         ui.end_row();
-                        ui.label("Source");
+                        ui.label(crate::i18n::tr("Source"));
                         let cur = j.sid.and_then(|s| sources.iter().find(|x| x.0 == s)).map(|x| x.1.clone()).unwrap_or_else(|| "(none)".into());
                         egui::ComboBox::from_id_salt("jsrc").selected_text(cur).width(380.0).show_ui(ui, |ui| {
-                            if ui.selectable_label(j.sid.is_none(), "(none)").clicked() {
+                            if ui.selectable_label(j.sid.is_none(), crate::i18n::tr("(none)")).clicked() {
                                 j.sid = None;
                             }
                             for (k, t) in &sources {
@@ -208,35 +208,35 @@ impl App {
                             }
                         });
                         ui.end_row();
-                        ui.label("Result");
+                        ui.label(crate::i18n::tr("Result"));
                         ui.horizontal(|ui| {
                             for (v, l) in [("found", "Found"), ("partial", "Partly"), ("nothing", "Nothing"), ("", "Not finished")] {
-                                if ui.selectable_label(j.result == v, l).clicked() {
+                                if ui.selectable_label(j.result == v, crate::i18n::trv(l)).clicked() {
                                     j.result = v.to_string();
                                 }
                             }
                         });
                         ui.end_row();
-                        ui.label("What I learned");
+                        ui.label(crate::i18n::tr("What I learned"));
                         ui.add(egui::TextEdit::multiline(&mut j.notes).desired_rows(4).desired_width(380.0));
                         ui.end_row();
                     });
                     ui.horizontal(|ui| {
-                        if ui.button(RichText::new("Save entry").strong()).clicked() {
+                        if ui.button(RichText::new(crate::i18n::tr("Save entry")).strong()).clicked() {
                             save = true;
                         }
-                        if ui.button("Cancel").clicked() {
+                        if ui.button(crate::i18n::tr("Cancel")).clicked() {
                             cancel = true;
                         }
                     });
                 });
                 ui.add_space(6.0);
-            } else if ui.button("+ New entry").clicked() {
+            } else if ui.button(crate::i18n::tr("+ New entry")).clicked() {
                 self.x.journal_new = Some(Journal { date: print_date(&today()), people: self.sel.into_iter().collect(), ..Default::default() });
             }
             ui.horizontal(|ui| {
-                ui.add(egui::TextEdit::singleline(&mut self.x.journal_find).hint_text("Filter by words or names").desired_width(240.0));
-                ui.label(RichText::new(format!("{} entries", self.db.journal.len())).weak());
+                ui.add(egui::TextEdit::singleline(&mut self.x.journal_find).hint_text(crate::i18n::tr("Filter by words or names")).desired_width(240.0));
+                ui.label(RichText::new(crate::i18n::trf("{} entries", &["", " entries"], &[(self.db.journal.len()).to_string()])).weak());
             });
             ui.separator();
             let q = self.x.journal_find.trim().to_lowercase();
@@ -250,14 +250,14 @@ impl App {
                     self.journal_card(ui, i, true);
                     ui.horizontal(|ui| {
                         for p in j.people.iter().filter(|p| self.db.people.contains_key(p)) {
-                            if ui.small_button(format!("Go to {}", self.db.people[p].name)).clicked() {
+                            if ui.small_button(crate::i18n::trf("Go to {}", &["Go to ", ""], &[(self.db.people[p].name).to_string()])).clicked() {
                                 go = Some(*p);
                             }
                         }
-                        if ui.small_button("Edit").clicked() {
+                        if ui.small_button(crate::i18n::tr("Edit")).clicked() {
                             edit = Some(i);
                         }
-                        if ui.small_button("Delete").clicked() {
+                        if ui.small_button(crate::i18n::tr("Delete")).clicked() {
                             remove = Some(i);
                         }
                     });
@@ -305,18 +305,18 @@ impl App {
         }
         let mut open = true;
         let mut del: Option<usize> = None;
-        egui::Window::new("Historical events").open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
-            ui.label("These appear in a person's timeline when they happened during that person's life. World events always show; regional ones show when the person's places are in that region.");
-            if ui.checkbox(&mut self.settings.show_history, "Show historical events in timelines").changed() {
+        egui::Window::new(crate::i18n::tr("Historical events")).open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
+            ui.label(crate::i18n::tr("These appear in a person's timeline when they happened during that person's life. World events always show; regional ones show when the person's places are in that region."));
+            if ui.checkbox(&mut self.settings.show_history, crate::i18n::tr("Show historical events in timelines")).changed() {
                 save_settings(&self.settings);
             }
             ui.separator();
-            ui.label(RichText::new("Add your own (a local flood, a mine closing, a move of the whole family...)").strong());
+            ui.label(RichText::new(crate::i18n::tr("Add your own (a local flood, a mine closing, a move of the whole family...)")).strong());
             ui.horizontal(|ui| {
                 ui.add(egui::DragValue::new(&mut self.x.hist_new.0).range(1000..=2100).prefix("from "));
                 ui.add(egui::DragValue::new(&mut self.x.hist_new.1).range(1000..=2100).prefix("to "));
-                ui.add(egui::TextEdit::singleline(&mut self.x.hist_new.2).hint_text("what happened").desired_width(240.0));
-                if ui.add_enabled(!self.x.hist_new.2.trim().is_empty(), egui::Button::new("Add")).clicked() {
+                ui.add(egui::TextEdit::singleline(&mut self.x.hist_new.2).hint_text(crate::i18n::tr("what happened")).desired_width(240.0));
+                if ui.add_enabled(!self.x.hist_new.2.trim().is_empty(), egui::Button::new(crate::i18n::tr("Add"))).clicked() {
                     let (a, b, t) = (self.x.hist_new.0, self.x.hist_new.1.max(self.x.hist_new.0), self.x.hist_new.2.trim().to_string());
                     self.db.history.push((a, b, t, String::new()));
                     self.x.hist_new.2.clear();
@@ -326,7 +326,7 @@ impl App {
             ui.separator();
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 if !self.db.history.is_empty() {
-                    ui.label(RichText::new("Yours").strong());
+                    ui.label(RichText::new(crate::i18n::tr("Yours")).strong());
                     for (i, (a, b, t, _)) in self.db.history.iter().enumerate() {
                         ui.horizontal(|ui| {
                             ui.label(if a == b { a.to_string() } else { format!("{}-{}", a, b) });
@@ -338,12 +338,12 @@ impl App {
                     }
                     ui.separator();
                 }
-                ui.label(RichText::new("Built in").strong());
+                ui.label(RichText::new(crate::i18n::tr("Built in")).strong());
                 for (a, b, t, r) in HISTORY {
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(if a == b { a.to_string() } else { format!("{}-{}", a, b) }).monospace());
-                        ui.label(*t);
-                        ui.label(RichText::new(*r).small().weak());
+                        ui.label(crate::i18n::trv(*t));
+                        ui.label(RichText::new(crate::i18n::trv(*r)).small().weak());
                     });
                 }
             });

@@ -38,7 +38,7 @@ pub(crate) fn rel_combo(ui: &mut egui::Ui, id_key: impl std::hash::Hash, cur: &s
     let mut out = None;
     egui::ComboBox::from_id_salt(id_key).selected_text(rel_name(cur)).width(120.0).show_ui(ui, |ui| {
         for (w, lbl) in PARENT_RELS {
-            if ui.selectable_label(rel_name(cur) == *lbl, *lbl).clicked() {
+            if ui.selectable_label(rel_name(cur) == *lbl, crate::i18n::trv(*lbl)).clicked() {
                 out = Some(if *w == "Natural" { String::new() } else { w.to_string() });
             }
         }
@@ -662,7 +662,7 @@ impl App {
         if let Some(prev) = self.undo.pop() {
             self.redo.push(Snap { z: pack(&self.last_json), label: prev.label.clone(), at: prev.at });
             self.load_snapshot(unpack(&prev.z));
-            self.status = format!("Undone: {}.", prev.label);
+            self.status = crate::i18n::trf("Undone: {}.", &["Undone: ", "."], &[(prev.label).to_string()]);
         }
     }
 
@@ -670,7 +670,7 @@ impl App {
         if let Some(next) = self.redo.pop() {
             self.undo.push(Snap { z: pack(&self.last_json), label: next.label.clone(), at: next.at });
             self.load_snapshot(unpack(&next.z));
-            self.status = format!("Redone: {}.", next.label);
+            self.status = crate::i18n::trf("Redone: {}.", &["Redone: ", "."], &[(next.label).to_string()]);
         }
     }
 }

@@ -2,6 +2,17 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: languages (work in progress)
+
+- **Languages:** View > Language chooses the program's language from 21 (English, Czech, Welsh,
+  Danish, German, Spanish, French, Italian, Hungarian, Dutch, Norwegian, Polish, Portuguese,
+  Finnish, Swedish, Tagalog, Russian, Ukrainian, Japanese, Chinese and Korean), each listed in its
+  own words. It changes at once, and is remembered. The groundwork is done: menus, buttons, tabs,
+  toolbars, windows, tooltips and messages can all be translated, and anything not translated yet
+  stays in English. The translations themselves are being added.
+- Japanese, Chinese and Korean letters now show, in names as well as in the program, using the
+  fonts that come with the computer.
+
 ## 1.0.5 (13 November 2026)
 
 - **Toolbars:** a main toolbar under the menus (Back, Forward, Home, Add person, Edit, Find, Quick jump, Undo, Redo,

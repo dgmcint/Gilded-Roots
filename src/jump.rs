@@ -273,7 +273,7 @@ impl App {
         let mut pick: Option<usize> = if enter && n > 0 { Some(self.x.jump_sel.min(n - 1)) } else { None };
         let mut close = esc;
         let cur = self.x.jump_sel;
-        egui::Window::new("Quick jump")
+        egui::Window::new(crate::i18n::tr("Quick jump"))
             .title_bar(false)
             .collapsible(false)
             .resizable(false)
@@ -281,7 +281,7 @@ impl App {
             .anchor(Align2::CENTER_TOP, [0.0, 70.0])
             .order(egui::Order::Foreground)
             .show(ctx, |ui| {
-                let r = ui.add(egui::TextEdit::singleline(&mut q).hint_text("Type a name, a year, an ID, or what you want to do...").desired_width(f32::INFINITY).font(egui::TextStyle::Heading));
+                let r = ui.add(egui::TextEdit::singleline(&mut q).hint_text(crate::i18n::tr("Type a name, a year, an ID, or what you want to do...")).desired_width(f32::INFINITY).font(egui::TextStyle::Heading));
                 r.request_focus();
                 ui.add_space(4.0);
                 egui::ScrollArea::vertical().max_height(380.0).show(ui, |ui| {
@@ -300,10 +300,10 @@ impl App {
                         }
                     }
                     if results.is_empty() {
-                        ui.label(RichText::new("Nothing matches.").italics().weak());
+                        ui.label(RichText::new(crate::i18n::tr("Nothing matches.")).italics().weak());
                     }
                 });
-                ui.label(RichText::new("Up/Down to choose, Enter to go, Esc to close").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Up/Down to choose, Enter to go, Esc to close")).small().weak());
             });
         if q != self.x.jump_q {
             self.x.jump_sel = 0;

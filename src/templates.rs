@@ -115,12 +115,12 @@ pub(crate) fn build(t: usize, vals: &[String]) -> (String, String, String, Strin
 
 /// The "Fill in from a template" part of the source editor.
 pub(crate) fn template_ui(ui: &mut egui::Ui, s: &mut SourceRec, which: &mut usize, vals: &mut Vec<String>) {
-    egui::CollapsingHeader::new("Fill in from a template").id_salt("src_template").show(ui, |ui| {
-        ui.label(RichText::new("Choose the kind of record and fill in what you know; the title, author and publication details above are written out for you.").small().weak());
+    egui::CollapsingHeader::new(crate::i18n::tr("Fill in from a template")).id_salt("src_template").show(ui, |ui| {
+        ui.label(RichText::new(crate::i18n::tr("Choose the kind of record and fill in what you know; the title, author and publication details above are written out for you.")).small().weak());
         let t = (*which).min(TEMPLATES.len() - 1);
-        egui::ComboBox::from_id_salt("tpl_pick").selected_text(TEMPLATES[t].name).width(280.0).show_ui(ui, |ui| {
+        egui::ComboBox::from_id_salt("tpl_pick").selected_text(crate::i18n::trv(TEMPLATES[t].name)).width(280.0).show_ui(ui, |ui| {
             for (i, tp) in TEMPLATES.iter().enumerate() {
-                if ui.selectable_value(which, i, tp.name).clicked() {
+                if ui.selectable_value(which, i, crate::i18n::trv(tp.name)).clicked() {
                     vals.clear();
                 }
             }
@@ -129,25 +129,25 @@ pub(crate) fn template_ui(ui: &mut egui::Ui, s: &mut SourceRec, which: &mut usiz
         vals.resize(tp.fields.len(), String::new());
         egui::Grid::new("tpl_fields").num_columns(2).spacing([10.0, 4.0]).show(ui, |ui| {
             for (i, (label, example)) in tp.fields.iter().enumerate() {
-                ui.label(*label);
-                ui.add(egui::TextEdit::singleline(&mut vals[i]).hint_text(format!("e.g. {}", example)).desired_width(300.0));
+                ui.label(crate::i18n::trv(*label));
+                ui.add(egui::TextEdit::singleline(&mut vals[i]).hint_text(crate::i18n::trf("e.g. {}", &["e.g. ", ""], &[(example).to_string()])).desired_width(300.0));
                 ui.end_row();
             }
         });
         let filled = vals.iter().any(|v| !v.trim().is_empty());
         let (title, author, publ, url) = if filled { build(*which, vals) } else { Default::default() };
         if !title.is_empty() {
-            ui.label(RichText::new(format!("Title: {}", title)).small());
+            ui.label(RichText::new(crate::i18n::trf("Title: {}", &["Title: ", ""], &[(title).to_string()])).small());
             if !author.is_empty() {
-                ui.label(RichText::new(format!("Author: {}", author)).small());
+                ui.label(RichText::new(crate::i18n::trf("Author: {}", &["Author: ", ""], &[(author).to_string()])).small());
             }
             if !publ.is_empty() {
-                ui.label(RichText::new(format!("Publication: {}", publ)).small());
+                ui.label(RichText::new(crate::i18n::trf("Publication: {}", &["Publication: ", ""], &[(publ).to_string()])).small());
             }
         }
         let has_own = !s.title.trim().is_empty() || !s.author.trim().is_empty() || !s.publ.trim().is_empty();
-        let b = ui.add_enabled(!title.is_empty(), egui::Button::new("Use these for this source"));
-        let b = if has_own { b.on_hover_text("Replaces the title, author and publication details above. Undo puts them back.") } else { b };
+        let b = ui.add_enabled(!title.is_empty(), egui::Button::new(crate::i18n::tr("Use these for this source")));
+        let b = if has_own { b.on_hover_text(crate::i18n::tr("Replaces the title, author and publication details above. Undo puts them back.")) } else { b };
         if b.clicked() {
             s.title = title;
             s.author = author;

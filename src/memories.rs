@@ -66,23 +66,23 @@ impl App {
                 }
             }
             ui.separator();
-            ui.menu_button(RichText::new("+ Add").strong(), |ui| {
-                if ui.button("Photos, documents or recordings...").on_hover_text("Any file: photos, PDFs, letters, certificates, sound or video").clicked() {
+            ui.menu_button(RichText::new(crate::i18n::tr("+ Add")).strong(), |ui| {
+                if ui.button(crate::i18n::tr("Photos, documents or recordings...")).on_hover_text(crate::i18n::tr("Any file: photos, PDFs, letters, certificates, sound or video")).clicked() {
                     *act = Some(Action::AttachFiles);
                     ui.close_menu();
                 }
-                if ui.button("Write a story...").clicked() {
+                if ui.button(crate::i18n::tr("Write a story...")).clicked() {
                     self.x.story = Some(StoryEdit { who: id, idx: None, title: String::new(), text: String::new() });
                     ui.close_menu();
                 }
-                if self.rec.is_none() && ui.button("Record a spoken story").clicked() {
+                if self.rec.is_none() && ui.button(crate::i18n::tr("Record a spoken story")).clicked() {
                     *act = Some(Action::StartRec);
                     ui.close_menu();
                 }
             });
             if let Some(r) = &self.rec {
                 let secs = r.started.elapsed().as_secs();
-                if ui.button(format!("Stop recording ({}:{:02})", secs / 60, secs % 60)).clicked() {
+                if ui.button(crate::i18n::trf("Stop recording ({}:{:02})", &["Stop recording (", ":", ")"], &[(secs / 60).to_string(), format!("{:02}", secs % 60)])).clicked() {
                     *act = Some(Action::StopRec);
                 }
                 let level = (r.peak.swap(0, Ordering::Relaxed) as f32 / 32768.0).sqrt().clamp(0.0, 1.0);
@@ -99,7 +99,7 @@ impl App {
                 if self.rec.is_none() {
                     let cur = if self.settings.mic.is_empty() { "Microphone: system default".to_string() } else { format!("Microphone: {}", self.settings.mic) };
                     egui::ComboBox::from_id_salt("mic").selected_text(cur).show_ui(ui, |ui| {
-                        if ui.selectable_label(self.settings.mic.is_empty(), "System default").clicked() {
+                        if ui.selectable_label(self.settings.mic.is_empty(), crate::i18n::tr("System default")).clicked() {
                             self.settings.mic.clear();
                             save_settings(&self.settings);
                         }
@@ -114,7 +114,7 @@ impl App {
             }
         });
         if media.is_empty() && tagged == 0 {
-            ui.label(RichText::new("Nothing here yet. Use + Add for photos, documents, stories and recordings.").italics().weak());
+            ui.label(RichText::new(crate::i18n::tr("Nothing here yet. Use + Add for photos, documents, stories and recordings.")).italics().weak());
             return;
         }
         let show = |k: u8| kind == 0 || kind == k;
@@ -128,12 +128,12 @@ impl App {
                         ui.set_width(w);
                         let size = vec2(w, (w * 0.74).round());
                         if online_photo(m) {
-                            if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open")).clicked() {
+                            if ui.add_sized(size, egui::Button::new(crate::i18n::tr("Photo stored online\nClick to open"))).clicked() {
                                 ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
                             }
                         } else if m.thumb.is_empty() || m.thumb == "-" {
                             let label = if m.thumb == "-" { "No preview\nClick to open" } else { "Loading..." };
-                            if ui.add_sized(size, egui::Button::new(label)).clicked() {
+                            if ui.add_sized(size, egui::Button::new(crate::i18n::trv(label))).clicked() {
                                 // still making its preview: open it in our own viewer; only a photo
                                 // that cannot be previewed at all goes to the computer's own app
                                 if m.thumb.is_empty() {
@@ -144,13 +144,13 @@ impl App {
                             }
                         } else {
                             let r = ui.add(egui::Image::new(img_uri(&mprev(&m.thumb))).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
-                            if r.on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text("Open; tag faces and choose the profile photo there").clicked() {
+                            if r.on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text(crate::i18n::tr("Open; tag faces and choose the profile photo there")).clicked() {
                                 self.viewing = Some((id, *i));
                             }
                         }
                         if editing {
                             if let Some(mm) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(*i)) {
-                                ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text("Caption").desired_width(w));
+                                ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text(crate::i18n::tr("Caption")).desired_width(w));
                             }
                         } else {
                             let cap = if m.caption.is_empty() { m.name.as_str() } else { m.caption.as_str() };
@@ -180,7 +180,7 @@ impl App {
                     _ if is_pdf(&m.file) => "PDF",
                     _ => "Document",
                 };
-                fixed_label(ui, 70.0, RichText::new(badge).small().color(ui.visuals().selection.bg_fill));
+                fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().selection.bg_fill));
                 if editing {
                     if let Some(mm) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(*i)) {
                         ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text(m.name.as_str()).desired_width(260.0));
@@ -189,12 +189,12 @@ impl App {
                     ui.label(cap.as_str());
                 }
                 if online {
-                    ui.hyperlink_to("Open online", m.path.as_str());
+                    ui.hyperlink_to(crate::i18n::tr("Open online"), m.path.as_str());
                 } else if m.file.is_empty() {
-                    ui.label(RichText::new(format!("File not found (the GEDCOM file named it {})", if m.path.is_empty() { "nothing" } else { m.path.as_str() })).small().weak());
+                    ui.label(RichText::new(crate::i18n::trf("File not found (the GEDCOM file named it {})", &["File not found (the GEDCOM file named it ", ")"], &[(if m.path.is_empty() { "nothing" } else { m.path.as_str() }).to_string()])).small().weak());
                 } else {
                     let label = if *k == 3 { "Play" } else if *k == 4 || is_pdf(&m.file) { "Read" } else { "Open" };
-                    if ui.small_button(label).clicked() {
+                    if ui.small_button(crate::i18n::trv(label)).clicked() {
                         if *k == 4 && m.file.ends_with(".txt") {
                             story_open = Some(*i);
                         } else if is_pdf(&m.file) {
@@ -204,7 +204,7 @@ impl App {
                         }
                     }
                 }
-                if editing && ui.small_button("Remove").on_hover_text("Take it off this person. The file stays in the media folder; Undo (Ctrl+Z) puts it back.").clicked() {
+                if editing && ui.small_button(crate::i18n::tr("Remove")).on_hover_text(crate::i18n::tr("Take it off this person. The file stays in the media folder; Undo (Ctrl+Z) puts it back.")).clicked() {
                     remove = Some(*i);
                 }
             });
@@ -224,7 +224,7 @@ impl App {
             }
         }
         if editing {
-            ui.label(RichText::new("Photos, documents and recordings are kept on this computer only, in the media folder.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Photos, documents and recordings are kept on this computer only, in the media folder.")).small().weak());
         }
     }
 }

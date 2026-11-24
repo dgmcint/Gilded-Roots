@@ -46,7 +46,7 @@ impl App {
             return;
         }
         let mut open = true;
-        egui::Window::new("Special letters").open(&mut open).default_width(330.0).resizable(false).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Special letters")).open(&mut open).default_width(330.0).resizable(false).show(ctx, |ui| {
             let target = self.x.last_text_focus;
             ui.label(
                 RichText::new(if target.is_some() {
@@ -57,10 +57,10 @@ impl App {
                 .small()
                 .weak(),
             );
-            ui.checkbox(&mut self.x.letters_caps, "Capitals");
+            ui.checkbox(&mut self.x.letters_caps, crate::i18n::tr("Capitals"));
             for (group, letters) in LETTER_GROUPS {
                 ui.add_space(4.0);
-                ui.label(RichText::new(*group).small().strong());
+                ui.label(RichText::new(crate::i18n::trv(*group)).small().strong());
                 ui.horizontal_wrapped(|ui| {
                     ui.spacing_mut().item_spacing = egui::vec2(3.0, 3.0);
                     for c in letters.chars() {

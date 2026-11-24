@@ -1091,15 +1091,15 @@ impl App {
         }
         let mut open = true;
         let mut print: Option<String> = None;
-        egui::Window::new("Blank census forms").open(&mut open).resizable(false).default_width(520.0).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Blank census forms")).open(&mut open).resizable(false).default_width(520.0).show(ctx, |ui| {
             let s = &mut self.x.census;
             if s.lines == 0 {
                 s.lines = 20;
             }
-            ui.label("Print a blank worksheet to copy a census entry onto, with that year's questions as the column headings.");
+            ui.label(crate::i18n::tr("Print a blank worksheet to copy a census entry onto, with that year's questions as the column headings."));
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                ui.label("Country");
+                ui.label(crate::i18n::tr("Country"));
                 for (i, (name, ready)) in COUNTRIES.iter().enumerate() {
                     let label = if *ready { name.to_string() } else { format!("{} (coming)", name) };
                     if ui.add_enabled(*ready, egui::SelectableLabel::new(s.country == i, label)).clicked() {
@@ -1110,7 +1110,7 @@ impl App {
             });
             ui.separator();
             let list = forms(COUNTRIES[s.country].0);
-            ui.label("Census year");
+            ui.label(crate::i18n::tr("Census year"));
             ui.horizontal_wrapped(|ui| {
                 for f in list {
                     let label = if f.country == "Canada" && (f.year == 1906 || f.year == 1916) { format!("{} Prairies", f.year) } else { f.year.to_string() };
@@ -1121,29 +1121,23 @@ impl App {
             });
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                ui.label("Lines on each sheet");
+                ui.label(crate::i18n::tr("Lines on each sheet"));
                 ui.add(egui::Slider::new(&mut s.lines, 10..=24));
             });
             if let Some(f) = s.year.and_then(|y| list.iter().find(|f| f.year == y)) {
                 ui.separator();
                 ui.label(RichText::new(f.title()).strong());
-                ui.label(format!(
-                    "Census day {}. {} columns, one line per {}{}.",
-                    f.day,
-                    f.columns(),
-                    if f.households { "household" } else { "person" },
-                    if f.sheets.len() > 1 { format!(", on {} sheets", f.sheets.len()) } else { String::new() }
-                ));
+                ui.label(crate::i18n::trf("Census day {}. {} columns, one line per {}{}.", &["Census day ", ". ", " columns, one line per ", "", "."], &[(f.day).to_string(), (f.columns()).to_string(), (if f.households { "household" } else { "person" }).to_string(), (if f.sheets.len() > 1 { format!(", on {} sheets", f.sheets.len()) } else { String::new() }).to_string()]));
                 if !f.note.is_empty() {
-                    ui.label(RichText::new(f.note).small());
+                    ui.label(RichText::new(crate::i18n::trv(f.note)).small());
                 }
                 ui.add_space(4.0);
-                if ui.button("Print or save as PDF...").clicked() {
+                if ui.button(crate::i18n::tr("Print or save as PDF...")).clicked() {
                     print = Some(f.html(s.lines));
                 }
-                ui.label(RichText::new("Prints on Letter paper, sideways (landscape).").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Prints on Letter paper, sideways (landscape).")).small().weak());
             } else {
-                ui.label(RichText::new("Choose a year.").italics().weak());
+                ui.label(RichText::new(crate::i18n::tr("Choose a year.")).italics().weak());
             }
         });
         if let Some(h) = print {

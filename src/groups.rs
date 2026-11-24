@@ -346,15 +346,15 @@ impl App {
         }
         let mut open = true;
         let mut change: Option<Box<dyn FnOnce(&mut App)>> = None;
-        egui::Window::new("Groups").open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Groups")).open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
             ui.label(
-                RichText::new("A group is a set of people you pick out, by relationship or by what is recorded about them. Groups are kept with the tree. Use one to show those people in the People tab, print a list, export a GEDCOM file of just them, or start a new tree from them.")
+                RichText::new(crate::i18n::tr("A group is a set of people you pick out, by relationship or by what is recorded about them. Groups are kept with the tree. Use one to show those people in the People tab, print a list, export a GEDCOM file of just them, or start a new tree from them."))
                     .small()
                     .weak(),
             );
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label("Group");
+                ui.label(crate::i18n::tr("Group"));
                 let names: Vec<String> = self.db.groups.iter().map(|g| format!("{} ({})", g.name, g.ids.iter().filter(|i| self.db.people.contains_key(i)).count())).collect();
                 let cur = self.cur_group();
                 egui::ComboBox::from_id_salt("group_pick")
@@ -365,9 +365,9 @@ impl App {
                             ui.selectable_value(&mut self.x.group_cur, i, n);
                         }
                     });
-                ui.add(egui::TextEdit::singleline(&mut self.x.group_name).hint_text("name for a new group").desired_width(170.0));
+                ui.add(egui::TextEdit::singleline(&mut self.x.group_name).hint_text(crate::i18n::tr("name for a new group")).desired_width(170.0));
                 let name = self.x.group_name.trim().to_string();
-                if ui.add_enabled(!name.is_empty(), egui::Button::new("New group")).clicked() {
+                if ui.add_enabled(!name.is_empty(), egui::Button::new(crate::i18n::tr("New group"))).clicked() {
                     change = Some(Box::new(move |a: &mut App| {
                         a.db.groups.push(Group { name, ..Default::default() });
                         a.x.group_cur = a.db.groups.len() - 1;
@@ -375,16 +375,16 @@ impl App {
                     }));
                 }
                 if let Some(i) = cur {
-                    ui.menu_button("More", |ui| {
+                    ui.menu_button(crate::i18n::tr("More"), |ui| {
                         let name = self.x.group_name.trim().to_string();
-                        if ui.add_enabled(!name.is_empty(), egui::Button::new("Rename to the name typed")).clicked() {
+                        if ui.add_enabled(!name.is_empty(), egui::Button::new(crate::i18n::tr("Rename to the name typed"))).clicked() {
                             change = Some(Box::new(move |a: &mut App| {
                                 a.db.groups[i].name = name;
                                 a.x.group_name.clear();
                             }));
                             ui.close_menu();
                         }
-                        if ui.button("Copy this group").clicked() {
+                        if ui.button(crate::i18n::tr("Copy this group")).clicked() {
                             change = Some(Box::new(move |a: &mut App| {
                                 let mut g = a.db.groups[i].clone();
                                 g.name = format!("{} (copy)", g.name);
@@ -393,7 +393,7 @@ impl App {
                             }));
                             ui.close_menu();
                         }
-                        if ui.button("Delete this group").on_hover_text("Only the group goes; nobody is deleted from the tree. Undo brings it back.").clicked() {
+                        if ui.button(crate::i18n::tr("Delete this group")).on_hover_text(crate::i18n::tr("Only the group goes; nobody is deleted from the tree. Undo brings it back.")).clicked() {
                             change = Some(Box::new(move |a: &mut App| {
                                 a.db.groups.remove(i);
                                 a.x.group_cur = 0;
@@ -408,7 +408,7 @@ impl App {
             });
             let Some(gi) = self.cur_group() else {
                 ui.add_space(8.0);
-                ui.label("Type a name, such as \"Harwood line\" or \"Born in Idaho\", and press New group.");
+                ui.label(crate::i18n::tr("Type a name, such as \"Harwood line\" or \"Born in Idaho\", and press New group."));
                 return;
             };
             let members: Vec<u32> = self.db.groups[gi].ids.iter().copied().filter(|i| self.db.people.contains_key(i)).collect();
@@ -416,43 +416,43 @@ impl App {
             ui.columns(2, |cols| {
                 let ui = &mut cols[0];
                 // ---- by relationship
-                ui.label(RichText::new("By relationship").strong());
+                ui.label(RichText::new(crate::i18n::tr("By relationship")).strong());
                 let start = self.x.group_who.filter(|i| self.db.people.contains_key(i)).or(self.sel);
                 ui.horizontal(|ui| {
-                    ui.label("Start from");
+                    ui.label(crate::i18n::tr("Start from"));
                     ui.label(RichText::new(start.map(|i| self.db.label(i)).unwrap_or_else(|| "(nobody chosen)".into())).strong());
                 });
                 ui.horizontal(|ui| {
-                    if ui.small_button("Use the person selected now").clicked() {
+                    if ui.small_button(crate::i18n::tr("Use the person selected now")).clicked() {
                         self.x.group_who = self.sel;
                     }
                     if let Some(h) = self.db.home {
-                        if ui.small_button("Use the home person").clicked() {
+                        if ui.small_button(crate::i18n::tr("Use the home person")).clicked() {
                             self.x.group_who = Some(h);
                         }
                     }
                 });
-                egui::ComboBox::from_id_salt("group_rel").width(220.0).selected_text(REL_KINDS[self.x.group_rel.min(REL_KINDS.len() - 1)]).show_ui(ui, |ui| {
+                egui::ComboBox::from_id_salt("group_rel").width(220.0).selected_text(crate::i18n::trv(REL_KINDS[self.x.group_rel.min(REL_KINDS.len() - 1)])).show_ui(ui, |ui| {
                     for (i, l) in REL_KINDS.iter().enumerate() {
-                        ui.selectable_value(&mut self.x.group_rel, i, *l);
+                        ui.selectable_value(&mut self.x.group_rel, i, crate::i18n::trv(*l));
                     }
                 });
                 if self.x.group_rel <= 2 {
                     ui.horizontal(|ui| {
-                        ui.label("Generations");
+                        ui.label(crate::i18n::tr("Generations"));
                         ui.add(egui::DragValue::new(&mut self.x.group_gens).range(0..=99));
                         ui.label(RichText::new(if self.x.group_gens == 0 { "(all)" } else { "" }).weak());
                     });
                 }
-                ui.checkbox(&mut self.x.group_sibs, "With their brothers and sisters");
-                ui.checkbox(&mut self.x.group_spouses, "With their spouses");
+                ui.checkbox(&mut self.x.group_sibs, crate::i18n::tr("With their brothers and sisters"));
+                ui.checkbox(&mut self.x.group_spouses, crate::i18n::tr("With their spouses"));
                 let found = start.map(|s| related(&self.db, &self.db.index(), s, self.x.group_rel, self.x.group_gens, self.x.group_spouses, self.x.group_sibs)).unwrap_or_default();
-                ui.label(RichText::new(format!("{} people", found.len())).weak());
+                ui.label(RichText::new(crate::i18n::trf("{} people", &["", " people"], &[(found.len()).to_string()])).weak());
                 ui.horizontal(|ui| {
                     let what = start.map(|s| format!("{} of {}", REL_KINDS[self.x.group_rel.min(REL_KINDS.len() - 1)].to_lowercase(), self.db.label(s))).unwrap_or_default();
                     let f1 = found.clone();
                     let w1 = what.clone();
-                    if ui.add_enabled(!found.is_empty(), egui::Button::new("Add to group")).clicked() {
+                    if ui.add_enabled(!found.is_empty(), egui::Button::new(crate::i18n::tr("Add to group"))).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let g = &mut a.db.groups[gi];
                             g.ids.extend(f1);
@@ -460,7 +460,7 @@ impl App {
                         }));
                     }
                     let f2 = found.clone();
-                    if ui.add_enabled(!found.is_empty(), egui::Button::new("Take out of group")).clicked() {
+                    if ui.add_enabled(!found.is_empty(), egui::Button::new(crate::i18n::tr("Take out of group"))).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let g = &mut a.db.groups[gi];
                             g.ids.retain(|x| !f2.contains(x));
@@ -470,13 +470,13 @@ impl App {
                 });
                 ui.add_space(10.0);
                 // ---- by what is recorded
-                ui.label(RichText::new("By what is recorded").strong());
+                ui.label(RichText::new(crate::i18n::tr("By what is recorded")).strong());
                 let fi = self.x.group_field.min(FIELDS.len() - 1);
                 let (fname, kind) = FIELDS[fi];
                 ui.horizontal(|ui| {
-                    egui::ComboBox::from_id_salt("group_field").width(170.0).selected_text(fname).show_ui(ui, |ui| {
+                    egui::ComboBox::from_id_salt("group_field").width(170.0).selected_text(crate::i18n::trv(fname)).show_ui(ui, |ui| {
                         for (i, (l, _)) in FIELDS.iter().enumerate() {
-                            ui.selectable_value(&mut self.x.group_field, i, *l);
+                            ui.selectable_value(&mut self.x.group_field, i, crate::i18n::trv(*l));
                         }
                     });
                     let tests: &[&str] = match kind {
@@ -486,9 +486,9 @@ impl App {
                     };
                     if !tests.is_empty() {
                         let t = self.x.group_test.min(tests.len() - 1);
-                        egui::ComboBox::from_id_salt("group_test").width(110.0).selected_text(tests[t]).show_ui(ui, |ui| {
+                        egui::ComboBox::from_id_salt("group_test").width(110.0).selected_text(crate::i18n::trv(tests[t])).show_ui(ui, |ui| {
                             for (i, l) in tests.iter().enumerate() {
-                                ui.selectable_value(&mut self.x.group_test, i, *l);
+                                ui.selectable_value(&mut self.x.group_test, i, crate::i18n::trv(*l));
                             }
                         });
                     }
@@ -504,11 +504,11 @@ impl App {
                 let ready = !needs_value(kind, test) || !self.x.group_val.trim().is_empty();
                 let hits = if ready { matching(&self.db, fi, test, &self.x.group_val) } else { BTreeSet::new() };
                 let in_group = hits.iter().filter(|x| self.db.groups[gi].ids.contains(x)).count();
-                ui.label(RichText::new(format!("{} people match ({} of them already in the group)", hits.len(), in_group)).weak());
+                ui.label(RichText::new(crate::i18n::trf("{} people match ({} of them already in the group)", &["", " people match (", " of them already in the group)"], &[(hits.len()).to_string(), (in_group).to_string()])).weak());
                 let rule = rule_text(fi, test, &self.x.group_val);
                 ui.horizontal(|ui| {
                     let (h1, r1) = (hits.clone(), rule.clone());
-                    if ui.add_enabled(ready && !hits.is_empty(), egui::Button::new("Add matches")).clicked() {
+                    if ui.add_enabled(ready && !hits.is_empty(), egui::Button::new(crate::i18n::tr("Add matches"))).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let g = &mut a.db.groups[gi];
                             g.ids.extend(h1);
@@ -516,7 +516,7 @@ impl App {
                         }));
                     }
                     let (h2, r2) = (hits.clone(), rule.clone());
-                    if ui.add_enabled(ready, egui::Button::new("Keep only matches")).on_hover_text("Narrow the group down to the people in it who match").clicked() {
+                    if ui.add_enabled(ready, egui::Button::new(crate::i18n::tr("Keep only matches"))).on_hover_text(crate::i18n::tr("Narrow the group down to the people in it who match")).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let g = &mut a.db.groups[gi];
                             g.ids.retain(|x| h2.contains(x));
@@ -524,7 +524,7 @@ impl App {
                         }));
                     }
                     let (h3, r3) = (hits, rule);
-                    if ui.add_enabled(ready, egui::Button::new("Take out matches")).clicked() {
+                    if ui.add_enabled(ready, egui::Button::new(crate::i18n::tr("Take out matches"))).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let g = &mut a.db.groups[gi];
                             g.ids.retain(|x| !h3.contains(x));
@@ -534,7 +534,7 @@ impl App {
                 });
                 ui.add_space(10.0);
                 ui.horizontal(|ui| {
-                    if ui.button("Add everyone").clicked() {
+                    if ui.button(crate::i18n::tr("Add everyone")).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let all: Vec<u32> = a.db.people.keys().copied().collect();
                             let g = &mut a.db.groups[gi];
@@ -542,7 +542,7 @@ impl App {
                             g.how.push("Added everyone".into());
                         }));
                     }
-                    if ui.add_enabled(!members.is_empty(), egui::Button::new("Empty the group")).clicked() {
+                    if ui.add_enabled(!members.is_empty(), egui::Button::new(crate::i18n::tr("Empty the group"))).clicked() {
                         change = Some(Box::new(move |a: &mut App| {
                             let g = &mut a.db.groups[gi];
                             g.ids.clear();
@@ -552,7 +552,7 @@ impl App {
                 });
                 if !self.db.groups[gi].how.is_empty() {
                     ui.add_space(6.0);
-                    egui::CollapsingHeader::new(RichText::new("How this group was made").small()).id_salt("group_how").show(ui, |ui| {
+                    egui::CollapsingHeader::new(RichText::new(crate::i18n::tr("How this group was made")).small()).id_salt("group_how").show(ui, |ui| {
                         for h in &self.db.groups[gi].how {
                             ui.label(RichText::new(h).small().weak());
                         }
@@ -561,20 +561,20 @@ impl App {
 
                 // ---- the people in it, and what to do with them
                 let ui = &mut cols[1];
-                ui.label(RichText::new(format!("In this group: {} people", members.len())).strong());
+                ui.label(RichText::new(crate::i18n::trf("In this group: {} people", &["In this group: ", " people"], &[(members.len()).to_string()])).strong());
                 ui.horizontal_wrapped(|ui| {
-                    if ui.add_enabled(!members.is_empty(), egui::Button::new("Show in People tab")).on_hover_text("List them in the People tab, where they can be sorted, edited and saved as a spreadsheet").clicked() {
+                    if ui.add_enabled(!members.is_empty(), egui::Button::new(crate::i18n::tr("Show in People tab"))).on_hover_text(crate::i18n::tr("List them in the People tab, where they can be sorted, edited and saved as a spreadsheet")).clicked() {
                         self.x.table_only = crate::table::Only::Group;
                         self.x.table_group = gi;
                         self.view = View::Table;
                     }
-                    if ui.add_enabled(!members.is_empty(), egui::Button::new("Print list")).clicked() {
+                    if ui.add_enabled(!members.is_empty(), egui::Button::new(crate::i18n::tr("Print list"))).clicked() {
                         self.x.group_print = Some(gi);
                     }
-                    if ui.add_enabled(!members.is_empty(), egui::Button::new("Export GEDCOM...")).on_hover_text("A GEDCOM file with only these people, with their photos and sources").clicked() {
+                    if ui.add_enabled(!members.is_empty(), egui::Button::new(crate::i18n::tr("Export GEDCOM..."))).on_hover_text(crate::i18n::tr("A GEDCOM file with only these people, with their photos and sources")).clicked() {
                         self.x.group_export = Some(gi);
                     }
-                    if ui.add_enabled(!members.is_empty() && self.x.practice.is_none(), egui::Button::new("Start a new tree from them...")).on_hover_text("Copy these people into a new tree of their own. This tree is not changed.").clicked() {
+                    if ui.add_enabled(!members.is_empty() && self.x.practice.is_none(), egui::Button::new(crate::i18n::tr("Start a new tree from them..."))).on_hover_text(crate::i18n::tr("Copy these people into a new tree of their own. This tree is not changed.")).clicked() {
                         self.x.group_split = Some((gi, self.db.groups[gi].name.clone()));
                     }
                 });
@@ -584,7 +584,7 @@ impl App {
                 egui::ScrollArea::vertical().id_salt("group_members").auto_shrink([false, false]).show(ui, |ui| {
                     for (_, id) in sorted.iter().take(2000) {
                         ui.horizontal(|ui| {
-                            if ui.small_button("x").on_hover_text("Take out of the group").clicked() {
+                            if ui.small_button("x").on_hover_text(crate::i18n::tr("Take out of the group")).clicked() {
                                 let id = *id;
                                 change = Some(Box::new(move |a: &mut App| {
                                     a.db.groups[gi].ids.remove(&id);
@@ -596,7 +596,7 @@ impl App {
                         });
                     }
                     if sorted.len() > 2000 {
-                        ui.weak(format!("...and {} more (see them all with Show in People tab)", sorted.len() - 2000));
+                        ui.weak(crate::i18n::trf("...and {} more (see them all with Show in People tab)", &["...and ", " more (see them all with Show in People tab)"], &[(sorted.len() - 2000).to_string()]));
                     }
                 });
             });
@@ -622,7 +622,7 @@ impl App {
             if let Some(g) = self.db.groups.get(gi) {
                 let part = keep_only(&self.db, &g.ids);
                 let name = format!("{}.ged", sanitize(&g.name));
-                if let Some(path) = rfd::FileDialog::new().set_title("Save the group as a GEDCOM file").set_directory(start_dir()).set_file_name(&name).save_file() {
+                if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Save the group as a GEDCOM file")).set_directory(start_dir()).set_file_name(&name).save_file() {
                     remember_dir(&path);
                     self.status = match write_gedcom(&part, &path, false) {
                         Ok(s) | Err(s) => s,
@@ -635,25 +635,25 @@ impl App {
             let mut go = false;
             let tree = sanitize_tree_name(&name);
             let exists = !tree.is_empty() && base_dir().join("More trees").join(&tree).exists();
-            egui::Window::new("Start a new tree from a group").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::i18n::tr("Start a new tree from a group")).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
                 let n = self.db.groups.get(gi).map_or(0, |g| g.ids.iter().filter(|i| self.db.people.contains_key(i)).count());
-                ui.label(format!("Copy the {} people in this group, with their families, sources, notes and photos, into a new tree.", n));
-                ui.label(RichText::new("This tree stays as it is. The new tree opens when it is made; switch back any time with File > Trees.").small().weak());
+                ui.label(crate::i18n::trf("Copy the {} people in this group, with their families, sources, notes and photos, into a new tree.", &["Copy the ", " people in this group, with their families, sources, notes and photos, into a new tree."], &[(n).to_string()]));
+                ui.label(RichText::new(crate::i18n::tr("This tree stays as it is. The new tree opens when it is made; switch back any time with File > Trees.")).small().weak());
                 ui.horizontal(|ui| {
-                    ui.label("Name for the new tree");
+                    ui.label(crate::i18n::tr("Name for the new tree"));
                     let mut s = name.clone();
                     if ui.text_edit_singleline(&mut s).changed() {
                         self.x.group_split = Some((gi, s));
                     }
                 });
                 if exists {
-                    ui.colored_label(egui::Color32::from_rgb(200, 120, 40), "A tree with that name already exists. Choose another name.");
+                    ui.colored_label(egui::Color32::from_rgb(200, 120, 40), crate::i18n::tr("A tree with that name already exists. Choose another name."));
                 }
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(!tree.is_empty() && !exists, egui::Button::new("Make the new tree")).clicked() {
+                    if ui.add_enabled(!tree.is_empty() && !exists, egui::Button::new(crate::i18n::tr("Make the new tree"))).clicked() {
                         go = true;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
                         self.x.group_split = None;
                     }
                 });
@@ -669,7 +669,7 @@ impl App {
                             self.switch_tree(&tree);
                             self.x.groups_open = false;
                             ctx.send_viewport_cmd(egui::ViewportCommand::Title(format!("Gilded Roots - {}", tree_title(&tree))));
-                            self.status = format!("Made the tree \"{}\" with {} people, and opened it.", tree, n);
+                            self.status = crate::i18n::trf("Made the tree \"{}\" with {} people, and opened it.", &["Made the tree \"", "\" with ", " people, and opened it."], &[(tree).to_string(), (n).to_string()]);
                         }
                         Err(e) => self.status = e,
                     }

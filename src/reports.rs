@@ -196,10 +196,10 @@ pub(crate) fn cite_list(
             };
             egui::ComboBox::from_id_salt((id_key, i, "src")).selected_text(shown).width(300.0).show_ui(ui, |ui| {
                 egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
-                    if ui.selectable_label(false, "+ New source...").clicked() {
+                    if ui.selectable_label(false, crate::i18n::tr("+ New source...")).clicked() {
                         new_for = Some(i);
                     }
-                    if ui.selectable_label(c.sid.is_none(), "Just type the source name").clicked() {
+                    if ui.selectable_label(c.sid.is_none(), crate::i18n::tr("Just type the source name")).clicked() {
                         if let Some(t) = c.sid.and_then(|s| titles.iter().find(|t| t.0 == s)) {
                             c.text = t.1.clone();
                         }
@@ -215,23 +215,23 @@ pub(crate) fn cite_list(
                 });
             });
             if let Some(s) = c.sid.filter(|s| sources.contains_key(s)) {
-                if ui.small_button("Open source").on_hover_text("See or edit the source itself; changes apply everywhere it is cited").clicked() {
+                if ui.small_button(crate::i18n::tr("Open source")).on_hover_text(crate::i18n::tr("See or edit the source itself; changes apply everywhere it is cited")).clicked() {
                     *open_src = Some(s);
                 }
             }
-            if ui.small_button("Remove").clicked() {
+            if ui.small_button(crate::i18n::tr("Remove")).clicked() {
                 remove = Some(i);
             }
         });
         ui.horizontal(|ui| {
             ui.add_space(20.0);
             if c.sid.is_none() {
-                ui.add(egui::TextEdit::singleline(&mut c.text).hint_text("source name, e.g. 1940 US Census").desired_width(230.0));
+                ui.add(egui::TextEdit::singleline(&mut c.text).hint_text(crate::i18n::tr("source name, e.g. 1940 US Census")).desired_width(230.0));
             }
-            ui.add(egui::TextEdit::singleline(&mut c.page).hint_text("page, line or entry").desired_width(200.0));
-            egui::ComboBox::from_id_salt((id_key, i, "quay")).selected_text(quality_label(&c.quality)).width(170.0).show_ui(ui, |ui| {
+            ui.add(egui::TextEdit::singleline(&mut c.page).hint_text(crate::i18n::tr("page, line or entry")).desired_width(200.0));
+            egui::ComboBox::from_id_salt((id_key, i, "quay")).selected_text(crate::i18n::trv(quality_label(&c.quality))).width(170.0).show_ui(ui, |ui| {
                 for q in ["", "0", "1", "2", "3"] {
-                    ui.selectable_value(&mut c.quality, q.to_string(), quality_label(q));
+                    ui.selectable_value(&mut c.quality, q.to_string(), crate::i18n::trv(quality_label(q)));
                 }
             });
         });
@@ -241,40 +241,40 @@ pub(crate) fn cite_list(
             egui::CollapsingHeader::new(if has_more { "Transcription, web address, notes, pictures (filled in)" } else { "Transcription, web address, notes, pictures" })
                 .id_salt((id_key, i, "more"))
                 .show(ui, |ui| {
-                    ui.label("Text from the source (copy it exactly as written)");
+                    ui.label(crate::i18n::tr("Text from the source (copy it exactly as written)"));
                     ui.add(egui::TextEdit::multiline(&mut c.data).desired_rows(3).desired_width(f32::INFINITY));
                     ui.horizontal(|ui| {
-                        ui.label("Date of the entry");
+                        ui.label(crate::i18n::tr("Date of the entry"));
                         ui.add(egui::TextEdit::singleline(&mut c.ddate).desired_width(110.0));
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Web address of this record");
-                        ui.add(egui::TextEdit::singleline(&mut c.url).hint_text("https://...").desired_width(260.0));
+                        ui.label(crate::i18n::tr("Web address of this record"));
+                        ui.add(egui::TextEdit::singleline(&mut c.url).hint_text(crate::i18n::tr("https://...")).desired_width(260.0));
                         if is_url(&c.url) {
-                            ui.hyperlink_to("Open", c.url.clone());
+                            ui.hyperlink_to(crate::i18n::tr("Open"), c.url.clone());
                         }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Looked at on");
-                        ui.add(egui::TextEdit::singleline(&mut c.accessed).hint_text("e.g. 5 Jan 2024").desired_width(130.0));
+                        ui.label(crate::i18n::tr("Looked at on"));
+                        ui.add(egui::TextEdit::singleline(&mut c.accessed).hint_text(crate::i18n::tr("e.g. 5 Jan 2024")).desired_width(130.0));
                     });
-                    ui.label("Your notes on this citation");
+                    ui.label(crate::i18n::tr("Your notes on this citation"));
                     ui.add(egui::TextEdit::multiline(&mut c.note).desired_rows(2).desired_width(f32::INFINITY));
-                    ui.label("Pictures of the record (a census page, a certificate)");
+                    ui.label(crate::i18n::tr("Pictures of the record (a census page, a certificate)"));
                     let mut drop_pic: Option<usize> = None;
                     for (k, m) in c.media.iter().enumerate() {
                         ui.horizontal(|ui| {
                             let name = if m.name.is_empty() { m.file.clone() } else { m.name.clone() };
                             if !m.file.is_empty() {
-                                if ui.link(&name).on_hover_text("Open").clicked() {
+                                if ui.link(&name).on_hover_text(crate::i18n::tr("Open")).clicked() {
                                     open_path(&mfile(&m.file));
                                 }
                             } else if is_url(&m.path) {
                                 ui.hyperlink_to(&name, m.path.clone());
                             } else {
-                                ui.label(format!("{} (file not found)", name));
+                                ui.label(crate::i18n::trf("{} (file not found)", &["", " (file not found)"], &[(name).to_string()]));
                             }
-                            if ui.small_button("Remove").on_hover_text("Takes the picture off this citation; the file stays in the media folder").clicked() {
+                            if ui.small_button(crate::i18n::tr("Remove")).on_hover_text(crate::i18n::tr("Takes the picture off this citation; the file stays in the media folder")).clicked() {
                                 drop_pic = Some(k);
                             }
                         });
@@ -282,10 +282,10 @@ pub(crate) fn cite_list(
                     if let Some(k) = drop_pic {
                         c.media.remove(k);
                     }
-                    if ui.small_button("Add picture...").clicked() {
+                    if ui.small_button(crate::i18n::tr("Add picture...")).clicked() {
                         if let Some(paths) = rfd::FileDialog::new()
-                            .set_title("Add a picture of the record")
-                            .add_filter("Pictures and PDFs", &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff", "pdf"])
+                            .set_title(crate::i18n::tr("Add a picture of the record"))
+                            .add_filter(crate::i18n::tr("Pictures and PDFs"), &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff", "pdf"])
                             .pick_files()
                         {
                             for p in paths {
@@ -313,7 +313,7 @@ pub(crate) fn cite_list(
         }
         *open_src = Some(id);
     }
-    if ui.button("Add source").clicked() {
+    if ui.button(crate::i18n::tr("Add source")).clicked() {
         cites.push(Source { about: new_about.to_string(), ..Default::default() });
     }
 }
@@ -327,7 +327,7 @@ pub(crate) fn cites_section(
     next: &mut u32,
     open_src: &mut Option<u32>,
 ) {
-    egui::CollapsingHeader::new(format!("Sources ({})", cites.len())).id_salt((id_key, "sec")).show(ui, |ui| {
+    egui::CollapsingHeader::new(crate::i18n::trf("Sources ({})", &["Sources (", ")"], &[(cites.len()).to_string()])).id_salt((id_key, "sec")).show(ui, |ui| {
         cite_list(ui, id_key, cites, None, "", sources, next, open_src);
     });
 }
@@ -420,9 +420,9 @@ impl App {
         match std::fs::write(&path, html) {
             Ok(_) => {
                 open_path(&path);
-                self.status = "Opened a print page in your browser. Use its Print button, or choose Save as PDF.".to_string();
+                self.status = crate::i18n::tr("Opened a print page in your browser. Use its Print button, or choose Save as PDF.").to_string();
             }
-            Err(e) => self.status = format!("Could not make the print page: {}", e),
+            Err(e) => self.status = crate::i18n::trf("Could not make the print page: {}", &["Could not make the print page: ", ""], &[(e).to_string()]),
         }
     }
 

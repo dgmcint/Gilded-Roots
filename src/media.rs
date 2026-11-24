@@ -272,9 +272,9 @@ pub(crate) fn try_device(dev: &cpal::Device, buf: &Arc<Mutex<Vec<i16>>>, peak: &
 impl App {
     pub(crate) fn attach_files(&mut self, id: u32) {
         if let Some(paths) = rfd::FileDialog::new()
-            .set_title("Add photos or documents")
-            .add_filter("Photos, PDFs, documents and recordings", &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff", "pdf", "doc", "docx", "rtf", "txt", "odt", "htm", "html", "wav", "mp3", "m4a", "ogg", "flac", "aac", "mp4", "mov"])
-            .add_filter("All files", &["*"])
+            .set_title(crate::i18n::tr("Add photos or documents"))
+            .add_filter(crate::i18n::tr("Photos, PDFs, documents and recordings"), &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff", "pdf", "doc", "docx", "rtf", "txt", "odt", "htm", "html", "wav", "mp3", "m4a", "ogg", "flac", "aac", "mp4", "mov"])
+            .add_filter(crate::i18n::tr("All files"), &["*"])
             .pick_files()
         {
             let mut n = 0;
@@ -287,7 +287,7 @@ impl App {
                     }
                 }
             }
-            self.status = format!("Added {} file(s).", n);
+            self.status = crate::i18n::trf("Added {} file(s).", &["Added ", " file(s)."], &[(n).to_string()]);
             self.dirty = true;
         }
     }
@@ -388,16 +388,16 @@ impl App {
         };
         let label_cache: HashMap<u32, String> = self.db.people.get(&pid).and_then(|p| p.media.get(idx)).map(|m| m.faces.iter().map(|f| (f.who, self.db.label(f.who))).collect()).unwrap_or_default();
         let lc = label_cache;
-        egui::Window::new("Photo").open(&mut open).default_size([720.0, 640.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Photo")).open(&mut open).default_size([720.0, 640.0]).show(ctx, |ui| {
             let p = self.db.people.get_mut(&pid).unwrap();
             let imgs: Vec<usize> = p.media.iter().enumerate().filter(|(_, m)| is_image(&m.file)).map(|(i, _)| i).collect();
             let pos = imgs.iter().position(|&i| i == idx).unwrap_or(0);
             ui.horizontal(|ui| {
-                if ui.add_enabled(pos > 0, egui::Button::new("< Previous")).clicked() {
+                if ui.add_enabled(pos > 0, egui::Button::new(crate::i18n::tr("< Previous"))).clicked() {
                     nav = Some(imgs[pos - 1]);
                 }
-                ui.label(format!("{} of {}", pos + 1, imgs.len()));
-                if ui.add_enabled(pos + 1 < imgs.len(), egui::Button::new("Next >")).clicked() {
+                ui.label(crate::i18n::trf("{} of {}", &["", " of ", ""], &[(pos + 1).to_string(), (imgs.len()).to_string()]));
+                if ui.add_enabled(pos + 1 < imgs.len(), egui::Button::new(crate::i18n::tr("Next >"))).clicked() {
                     nav = Some(imgs[pos + 1]);
                 }
             });
@@ -455,43 +455,43 @@ impl App {
             if let Some(r) = self.x.tag_box {
                 painter.rect_stroke(to_scr(r), 2.0_f32, Stroke::new(2.5_f32, accent));
             }
-            ui.add(egui::TextEdit::singleline(&mut m.caption).hint_text("Caption").desired_width(f32::INFINITY));
+            ui.add(egui::TextEdit::singleline(&mut m.caption).hint_text(crate::i18n::tr("Caption")).desired_width(f32::INFINITY));
             ui.horizontal(|ui| {
-                if ui.button("Open full size").clicked() {
+                if ui.button(crate::i18n::tr("Open full size")).clicked() {
                     open_media(&m.file);
                 }
-                if ui.button("Use as profile photo").clicked() {
+                if ui.button(crate::i18n::tr("Use as profile photo")).clicked() {
                     portrait = Some(file_name.clone());
                 }
-                if ui.selectable_label(self.x.crop_mode, "Crop for profile photo").on_hover_text("Drag a box around the part of the picture to show as the profile photo").clicked() {
+                if ui.selectable_label(self.x.crop_mode, crate::i18n::tr("Crop for profile photo")).on_hover_text(crate::i18n::tr("Drag a box around the part of the picture to show as the profile photo")).clicked() {
                     self.x.crop_mode = !self.x.crop_mode;
                     self.x.tag_mode = false;
                     self.x.tag_box = None;
                     self.x.tag_drag = None;
                 }
                 let lbl = if self.x.tag_mode { "Stop tagging faces" } else { "Tag faces" };
-                if ui.selectable_label(self.x.tag_mode, lbl).on_hover_text("Drag a box around someone's face, then choose who it is").clicked() {
+                if ui.selectable_label(self.x.tag_mode, crate::i18n::trv(lbl)).on_hover_text(crate::i18n::tr("Drag a box around someone's face, then choose who it is")).clicked() {
                     self.x.tag_mode = !self.x.tag_mode;
                     self.x.crop_mode = false;
                     self.x.tag_box = None;
                     self.x.tag_drag = None;
                 }
-                if ui.button("Remove photo").clicked() {
+                if ui.button(crate::i18n::tr("Remove photo")).clicked() {
                     remove = true;
                 }
             });
             if self.x.tag_mode && self.x.tag_box.is_none() {
-                ui.label(RichText::new("Drag a box around a face on the picture.").italics().weak());
+                ui.label(RichText::new(crate::i18n::tr("Drag a box around a face on the picture.")).italics().weak());
             }
             if self.x.crop_mode {
                 if self.x.tag_box.is_none() {
-                    ui.label(RichText::new("Drag a box around the part to show as the profile photo.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Drag a box around the part to show as the profile photo.")).italics().weak());
                 } else {
                     ui.horizontal(|ui| {
-                        if ui.button(RichText::new("Use this part as the profile photo").strong()).clicked() {
+                        if ui.button(RichText::new(crate::i18n::tr("Use this part as the profile photo")).strong()).clicked() {
                             crop_pick = self.x.tag_box;
                         }
-                        if ui.button("Cancel").clicked() {
+                        if ui.button(crate::i18n::tr("Cancel")).clicked() {
                             tag_cancel = true;
                         }
                     });
@@ -500,9 +500,9 @@ impl App {
             if self.x.tag_mode && self.x.tag_box.is_some() {
                 ui.group(|ui| {
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new("Who is this?").strong());
-                        ui.add(egui::TextEdit::singleline(&mut self.x.tag_q).hint_text("Type a name").desired_width(220.0)).request_focus();
-                        if ui.button("Cancel").clicked() {
+                        ui.label(RichText::new(crate::i18n::tr("Who is this?")).strong());
+                        ui.add(egui::TextEdit::singleline(&mut self.x.tag_q).hint_text(crate::i18n::tr("Type a name")).desired_width(220.0)).request_focus();
+                        if ui.button(crate::i18n::tr("Cancel")).clicked() {
                             tag_cancel = true;
                         }
                     });
@@ -515,17 +515,17 @@ impl App {
             }
             if !names.is_empty() {
                 ui.add_space(4.0);
-                ui.label(RichText::new("Tagged in this photo").strong());
+                ui.label(RichText::new(crate::i18n::tr("Tagged in this photo")).strong());
                 for (k, _, name) in &names {
                     ui.horizontal(|ui| {
                         ui.label(name.as_str());
-                        if ui.small_button("Go to").clicked() {
+                        if ui.small_button(crate::i18n::tr("Go to")).clicked() {
                             face_go = Some(*k);
                         }
-                        if ui.small_button("Use as their profile picture").clicked() {
+                        if ui.small_button(crate::i18n::tr("Use as their profile picture")).clicked() {
                             face_portrait = Some(*k);
                         }
-                        if ui.small_button("Remove tag").clicked() {
+                        if ui.small_button(crate::i18n::tr("Remove tag")).clicked() {
                             face_remove = Some(*k);
                         }
                     });
@@ -545,7 +545,7 @@ impl App {
             self.x.tag_box = None;
             self.x.crop_mode = false;
             self.dirty = true;
-            self.status = "Profile photo cropped.".to_string();
+            self.status = crate::i18n::tr("Profile photo cropped.").to_string();
         }
         if let (Some(who), Some(r)) = (tag_pick, self.x.tag_box) {
             if let Some(m) = self.db.people.get_mut(&pid).and_then(|p| p.media.get_mut(idx)) {
@@ -553,7 +553,7 @@ impl App {
             }
             self.x.tag_box = None;
             self.dirty = true;
-            self.status = format!("Tagged {}. The photo now shows on their page too.", self.db.label(who));
+            self.status = crate::i18n::trf("Tagged {}. The photo now shows on their page too.", &["Tagged ", ". The photo now shows on their page too."], &[(self.db.label(who)).to_string()]);
         }
         if let Some(k) = face_remove {
             if let Some(m) = self.db.people.get_mut(&pid).and_then(|p| p.media.get_mut(idx)) {
@@ -571,7 +571,7 @@ impl App {
                     q.portrait_crop = None;
                 }
                 self.dirty = true;
-                self.status = format!("Profile picture set for {}.", self.db.label(who));
+                self.status = crate::i18n::trf("Profile picture set for {}.", &["Profile picture set for ", "."], &[(self.db.label(who)).to_string()]);
             }
         }
         if let Some(k) = face_go {
@@ -595,7 +595,7 @@ impl App {
                 p.portrait_crop = None;
             }
             self.dirty = true;
-            self.status = "Profile photo set. It now shows in the pedigree boxes.".to_string();
+            self.status = crate::i18n::tr("Profile photo set. It now shows in the pedigree boxes.").to_string();
         }
         if remove {
             if let Some(p) = self.db.people.get_mut(&pid) {
@@ -629,7 +629,7 @@ impl App {
             }
         }
         if cands.is_empty() {
-            self.status = "No microphone found. Check System Settings > Sound > Input, and that Gilded Roots is allowed under Privacy & Security > Microphone.".to_string();
+            self.status = crate::i18n::tr("No microphone found. Check System Settings > Sound > Input, and that Gilded Roots is allowed under Privacy & Security > Microphone.").to_string();
             return;
         }
         let buf = Arc::new(Mutex::new(Vec::<i16>::new()));
@@ -640,16 +640,13 @@ impl App {
             match try_device(&dev, &buf, &peak) {
                 Ok((stream, channels, rate)) => {
                     self.rec = Some(Recorder { _stream: stream, buf, channels, rate, started: std::time::Instant::now(), person, peak });
-                    self.status = format!("Recording from {}. Watch the level bar: if it stays empty when you talk, pick a different microphone.", name);
+                    self.status = crate::i18n::trf("Recording from {}. Watch the level bar: if it stays empty when you talk, pick a different microphone.", &["Recording from ", ". Watch the level bar: if it stays empty when you talk, pick a different microphone."], &[(name).to_string()]);
                     return;
                 }
                 Err(e) => last = format!("{}: {}", name, e),
             }
         }
-        self.status = format!(
-            "Could not start any microphone (last error - {}). Check System Settings > Sound > Input for a working microphone, close other apps that use it, and check Privacy & Security > Microphone.",
-            last
-        );
+        self.status = crate::i18n::trf("Could not start any microphone (last error - {}). Check System Settings > Sound > Input for a working microphone, close other apps that use it, and check Privacy & Security > Microphone.", &["Could not start any microphone (last error - ", "). Check System Settings > Sound > Input for a working microphone, close other apps that use it, and check Privacy & Security > Microphone."], &[(last).to_string()]);
     }
 
     pub(crate) fn stop_recording(&mut self) {
@@ -658,12 +655,12 @@ impl App {
         drop(_stream);
         let samples = buf.lock().map(|v| v.clone()).unwrap_or_default();
         if samples.is_empty() {
-            self.status = "Nothing was recorded. Check your microphone settings.".to_string();
+            self.status = crate::i18n::tr("Nothing was recorded. Check your microphone settings.").to_string();
             return;
         }
         let top = samples.iter().map(|x| x.unsigned_abs()).max().unwrap_or(0);
         if top < 8 {
-            self.status = "The recording was completely silent, so it was not saved. On a Mac, open System Settings > Privacy & Security > Microphone and switch on Gilded Roots, then try again.".to_string();
+            self.status = crate::i18n::tr("The recording was completely silent, so it was not saved. On a Mac, open System Settings > Privacy & Security > Microphone and switch on Gilded Roots, then try again.").to_string();
             return;
         }
         let file = format!("{}-story.wav", stamp());
@@ -681,10 +678,10 @@ impl App {
                 if let Some(p) = self.db.people.get_mut(&person) {
                     p.media.push(Media { file, name: "Recorded story.wav".to_string(), caption: "Recorded story".to_string(), ..Default::default() });
                 }
-                self.status = "Story saved. You'll find it under Photos, documents and stories.".to_string();
+                self.status = crate::i18n::tr("Story saved. You'll find it under Photos, documents and stories.").to_string();
                 self.dirty = true;
             }
-            Err(e) => self.status = format!("Could not save the recording: {}", e),
+            Err(e) => self.status = crate::i18n::trf("Could not save the recording: {}", &["Could not save the recording: ", ""], &[(e).to_string()]),
         }
     }
 }
@@ -741,7 +738,7 @@ impl App {
             return;
         }
         ui.add_space(6.0);
-        ui.label(RichText::new(format!("Tagged in {} other photo(s)", tags.len())).strong());
+        ui.label(RichText::new(crate::i18n::trf("Tagged in {} other photo(s)", &["Tagged in ", " other photo(s)"], &[(tags.len()).to_string()])).strong());
         let mut open: Option<(u32, usize)> = None;
         ui.horizontal_wrapped(|ui| {
             for (owner, i, r) in &tags {
@@ -752,7 +749,7 @@ impl App {
                 ui.vertical(|ui| {
                     let (rect, resp) = ui.allocate_exact_size(vec2(90.0, 90.0), Sense::click());
                     put_photo(ui, rect, &uri, *r, 6.0);
-                    if resp.on_hover_text(format!("From {}'s photos", who)).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                    if resp.on_hover_text(crate::i18n::trf("From {}'s photos", &["From ", "'s photos"], &[(who).to_string()])).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                         open = Some((*owner, *i));
                     }
                 });
@@ -816,22 +813,22 @@ impl App {
         }
         let counts = self.x.mem_counts.1;
         ui.horizontal_wrapped(|ui| {
-            ui.heading("Memories");
+            ui.heading(crate::i18n::tr("Memories"));
             ui.add_space(8.0);
             ui.add_enabled_ui(self.sel.is_some(), |ui| {
-                ui.menu_button(RichText::new("+ Add").strong(), |ui| {
-                    ui.label(RichText::new(format!("For {}", sel_name)).small().weak());
-                    if ui.button("Photos, documents or recordings...").clicked() {
+                ui.menu_button(RichText::new(crate::i18n::tr("+ Add")).strong(), |ui| {
+                    ui.label(RichText::new(crate::i18n::trf("For {}", &["For ", ""], &[(sel_name).to_string()])).small().weak());
+                    if ui.button(crate::i18n::tr("Photos, documents or recordings...")).clicked() {
                         *act = Some(Action::AttachFiles);
                         ui.close_menu();
                     }
-                    if ui.button("Write a story...").clicked() {
+                    if ui.button(crate::i18n::tr("Write a story...")).clicked() {
                         if let Some(s) = self.sel {
                             self.x.story = Some(StoryEdit { who: s, idx: None, title: String::new(), text: String::new() });
                         }
                         ui.close_menu();
                     }
-                    if ui.button("Record a spoken story").clicked() {
+                    if ui.button(crate::i18n::tr("Record a spoken story")).clicked() {
                         *act = Some(Action::StartRec);
                         self.view = View::Person;
                         if let Some(d) = self.settings.dock.iter_mut().find(|d| d.sec == "media") {
@@ -839,7 +836,7 @@ impl App {
                         }
                         ui.close_menu();
                     }
-                    if ui.button("Write a note...").clicked() {
+                    if ui.button(crate::i18n::tr("Write a note...")).clicked() {
                         self.view = View::Person;
                         if let Some(d) = self.settings.dock.iter_mut().find(|d| d.sec == "notes") {
                             d.on = true;
@@ -850,7 +847,7 @@ impl App {
                 });
             })
             .response
-            .on_disabled_hover_text("Select a person first");
+            .on_disabled_hover_text(crate::i18n::tr("Select a person first"));
             ui.separator();
             for (k, l) in TAB_KINDS {
                 let label = if k == 6 { l.to_string() } else { format!("{} ({})", l, counts[k as usize]) };
@@ -867,20 +864,20 @@ impl App {
             return;
         }
         ui.horizontal(|ui| {
-            ui.checkbox(&mut self.gal_only, "Only the selected person");
-            if ui.checkbox(&mut self.settings.mem_by_person, "Show by person").on_hover_text("Group the memories under each person's name").changed() {
+            ui.checkbox(&mut self.gal_only, crate::i18n::tr("Only the selected person"));
+            if ui.checkbox(&mut self.settings.mem_by_person, crate::i18n::tr("Show by person")).on_hover_text(crate::i18n::tr("Group the memories under each person's name")).changed() {
                 save_settings(&self.settings);
             }
-            ui.add(egui::TextEdit::singleline(&mut self.gal_find).hint_text("Filter by name or caption").desired_width(220.0));
+            ui.add(egui::TextEdit::singleline(&mut self.gal_find).hint_text(crate::i18n::tr("Filter by name or caption")).desired_width(220.0));
             ui.separator();
             if !self.x.gal_pick {
-                if ui.button("Select...").on_hover_text("Click several items to tick them, then remove them in one go").clicked() {
+                if ui.button(crate::i18n::tr("Select...")).on_hover_text(crate::i18n::tr("Click several items to tick them, then remove them in one go")).clicked() {
                     self.x.gal_pick = true;
                     self.x.gal_sel.clear();
                 }
             }
             let online = self.db.people.values().map(|p| p.media.iter().filter(|m| online_photo(m)).count()).sum::<usize>();
-            if online > 0 && ui.button(format!("Remove online links ({})...", online)).on_hover_text("Take off every link to a photo stored on a website (Ancestry, MyHeritage...). Nothing on your computer is deleted.").clicked() {
+            if online > 0 && ui.button(crate::i18n::trf("Remove online links ({})...", &["Remove online links (", ")..."], &[(online).to_string()])).on_hover_text(crate::i18n::tr("Take off every link to a photo stored on a website (Ancestry, MyHeritage...). Nothing on your computer is deleted.")).clicked() {
                 self.x.gal_online_confirm = true;
             }
         });
@@ -906,12 +903,12 @@ impl App {
         }
         let files = self.x.unlinked.as_ref().map(|u| u.1.clone()).unwrap_or_default();
         ui.horizontal(|ui| {
-            ui.label(RichText::new(format!("{} file(s) in the media folder that no one in the tree uses.", files.len())).weak());
-            if ui.button("Refresh").clicked() {
+            ui.label(RichText::new(crate::i18n::trf("{} file(s) in the media folder that no one in the tree uses.", &["", " file(s) in the media folder that no one in the tree uses."], &[(files.len()).to_string()])).weak());
+            if ui.button(crate::i18n::tr("Refresh")).clicked() {
                 self.x.unlinked = None;
                 forget_media_index();
             }
-            if ui.button("Open media folder").clicked() {
+            if ui.button(crate::i18n::tr("Open media folder")).clicked() {
                 open_path(&media_dir());
             }
         });
@@ -922,7 +919,7 @@ impl App {
         }).small().weak());
         ui.separator();
         if files.is_empty() {
-            ui.label("Every file in the media folder is linked to someone.");
+            ui.label(crate::i18n::tr("Every file in the media folder is linked to someone."));
             return;
         }
         let mut add: Option<String> = None;
@@ -938,16 +935,16 @@ impl App {
                         _ if is_pdf(name) => "PDF",
                         _ => "Document",
                     };
-                    fixed_label(ui, 70.0, RichText::new(badge).small().color(ui.visuals().selection.bg_fill));
+                    fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().selection.bg_fill));
                     fixed_label(ui, 360.0, name.as_str());
                     fixed_label(ui, 70.0, RichText::new(size_words(*size)).small().weak());
-                    if ui.small_button("Open").clicked() {
+                    if ui.small_button(crate::i18n::tr("Open")).clicked() {
                         open_media(name);
                     }
-                    if ui.add_enabled(who.is_some(), egui::Button::new("Add").small()).on_hover_text("Put this file on the selected person").clicked() {
+                    if ui.add_enabled(who.is_some(), egui::Button::new(crate::i18n::tr("Add")).small()).on_hover_text(crate::i18n::tr("Put this file on the selected person")).clicked() {
                         add = Some(name.clone());
                     }
-                    if ui.small_button("Move to Removed files").on_hover_text("Moved to the Removed files folder in your Gilded Roots folder, not deleted").clicked() {
+                    if ui.small_button(crate::i18n::tr("Move to Removed files")).on_hover_text(crate::i18n::tr("Moved to the Removed files folder in your Gilded Roots folder, not deleted")).clicked() {
                         remove = Some(name.clone());
                     }
                 });
@@ -958,7 +955,7 @@ impl App {
                 let shown = f.split_once('-').filter(|(a, _)| a.chars().all(|c| c.is_ascii_digit())).map(|(_, b)| b.to_string()).unwrap_or_else(|| f.clone());
                 p.media.push(Media { file: f.clone(), name: shown, ..Default::default() });
                 self.dirty = true;
-                self.status = format!("Added {} to {}.", f, self.db.label(s));
+                self.status = crate::i18n::trf("Added {} to {}.", &["Added ", " to ", "."], &[(f).to_string(), (self.db.label(s)).to_string()]);
                 self.x.unlinked = None;
             }
         }
@@ -1001,7 +998,7 @@ impl App {
     fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, items: &[MemItem]) {
         ui.separator();
         if items.is_empty() {
-            ui.label("Nothing here yet. Select a person and use + Add.");
+            ui.label(crate::i18n::tr("Nothing here yet. Select a person and use + Add."));
             return;
         }
         if self.x.gal_pick {
@@ -1009,18 +1006,18 @@ impl App {
             let shown: HashSet<(u32, usize)> = items.iter().map(|x| (x.0, x.1)).collect();
             self.x.gal_sel.retain(|k| shown.contains(k));
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("{} selected", self.x.gal_sel.len())).strong());
-                if ui.button("Select all").clicked() {
+                ui.label(RichText::new(crate::i18n::trf("{} selected", &["", " selected"], &[(self.x.gal_sel.len()).to_string()])).strong());
+                if ui.button(crate::i18n::tr("Select all")).clicked() {
                     self.x.gal_sel = shown.clone();
                 }
-                if ui.button("Select none").clicked() {
+                if ui.button(crate::i18n::tr("Select none")).clicked() {
                     self.x.gal_sel.clear();
                 }
-                if ui.add_enabled(!self.x.gal_sel.is_empty(), egui::Button::new("Remove selected...")).clicked() {
+                if ui.add_enabled(!self.x.gal_sel.is_empty(), egui::Button::new(crate::i18n::tr("Remove selected..."))).clicked() {
                     self.x.gal_confirm = true;
                     self.x.gal_freed = files_freed_by(&self.db, &self.x.gal_sel);
                 }
-                if ui.button("Done").clicked() {
+                if ui.button(crate::i18n::tr("Done")).clicked() {
                     self.x.gal_pick = false;
                     self.x.gal_sel.clear();
                 }
@@ -1088,10 +1085,10 @@ impl App {
                     if let Some((id, name, n)) = head {
                         ui.add_space(6.0);
                         ui.horizontal(|ui| {
-                            if ui.link(RichText::new(name.as_str()).strong().size(15.0)).on_hover_text("Open their page").clicked() {
+                            if ui.link(RichText::new(name.as_str()).strong().size(15.0)).on_hover_text(crate::i18n::tr("Open their page")).clicked() {
                                 *act = Some(Action::Open(*id));
                             }
-                            ui.label(RichText::new(format!("{} item(s)", n)).small().weak());
+                            ui.label(RichText::new(crate::i18n::trf("{} item(s)", &["", " item(s)"], &[(n).to_string()])).small().weak());
                         });
                     } else {
                         ui.horizontal_top(|ui| {
@@ -1114,25 +1111,25 @@ impl App {
             let freed = self.x.gal_freed.clone();
             let notes = self.x.gal_sel.iter().filter(|k| k.1 == NOTE_ITEM).count();
             let del = &mut self.x.gal_del_files;
-            egui::Window::new("Remove selected items").id(egui::Id::new("gal_remove")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
-                ui.label(format!("Remove {} item(s) from the people they belong to?", n));
+            egui::Window::new(crate::i18n::tr("Remove selected items")).id(egui::Id::new("gal_remove")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
+                ui.label(crate::i18n::trf("Remove {} item(s) from the people they belong to?", &["Remove ", " item(s) from the people they belong to?"], &[(n).to_string()]));
                 if notes > 0 {
-                    ui.label(RichText::new(format!("{} of them are notes: the whole of each person's Notes box is cleared.", notes)).small());
+                    ui.label(RichText::new(crate::i18n::trf("{} of them are notes: the whole of each person's Notes box is cleared.", &["", " of them are notes: the whole of each person's Notes box is cleared."], &[(notes).to_string()])).small());
                 }
                 if freed.is_empty() {
-                    ui.label(RichText::new("Undo (Ctrl+Z) brings them back. Files that are still used by someone else stay where they are.").small().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Undo (Ctrl+Z) brings them back. Files that are still used by someone else stay where they are.")).small().weak());
                 } else {
                     ui.add_space(4.0);
-                    ui.checkbox(del, format!("Also take the {} file(s) out of the media folder", freed.len()));
-                    ui.label(RichText::new("Only files that no one else in the tree uses. They are moved to the \"Removed files\" folder in your Gilded Roots folder, not deleted, so you can put one back or delete them yourself later.").small().weak());
+                    ui.checkbox(del, crate::i18n::trf("Also take the {} file(s) out of the media folder", &["Also take the ", " file(s) out of the media folder"], &[(freed.len()).to_string()]));
+                    ui.label(RichText::new(crate::i18n::tr("Only files that no one else in the tree uses. They are moved to the \"Removed files\" folder in your Gilded Roots folder, not deleted, so you can put one back or delete them yourself later.")).small().weak());
                     ui.label(RichText::new(if *del { "Undo (Ctrl+Z) brings the items back; moved files go back from the Removed files folder." } else { "Left unticked, the files stay in your media folder and Undo (Ctrl+Z) brings everything back." }).small().weak());
                 }
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
-                    if ui.button(RichText::new("Remove").strong()).clicked() {
+                    if ui.button(RichText::new(crate::i18n::tr("Remove")).strong()).clicked() {
                         go = true;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
                         cancel = true;
                     }
                 });
@@ -1161,16 +1158,16 @@ impl App {
             let online = self.db.people.values().map(|p| p.media.iter().filter(|m| online_photo(m)).count()).sum::<usize>();
             let people = self.db.people.values().filter(|p| p.media.iter().any(online_photo)).count();
             let (mut go, mut cancel) = (false, false);
-            egui::Window::new("Remove online links").id(egui::Id::new("gal_online")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
-                ui.label(format!("Remove all {} links to photos stored on websites, from {} people?", online, people));
-                ui.label(RichText::new("These came with a tree from Ancestry, MyHeritage or a similar site: the file held a web address instead of the picture. Nothing on your computer is deleted, and Undo (Ctrl+Z) brings the links back.").small().weak());
-                ui.label(RichText::new("To keep a picture, download it from the website first and add it with + Add.").small().weak());
+            egui::Window::new(crate::i18n::tr("Remove online links")).id(egui::Id::new("gal_online")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
+                ui.label(crate::i18n::trf("Remove all {} links to photos stored on websites, from {} people?", &["Remove all ", " links to photos stored on websites, from ", " people?"], &[(online).to_string(), (people).to_string()]));
+                ui.label(RichText::new(crate::i18n::tr("These came with a tree from Ancestry, MyHeritage or a similar site: the file held a web address instead of the picture. Nothing on your computer is deleted, and Undo (Ctrl+Z) brings the links back.")).small().weak());
+                ui.label(RichText::new(crate::i18n::tr("To keep a picture, download it from the website first and add it with + Add.")).small().weak());
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
-                    if ui.button(RichText::new("Remove links").strong()).clicked() {
+                    if ui.button(RichText::new(crate::i18n::tr("Remove links")).strong()).clicked() {
                         go = true;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
                         cancel = true;
                     }
                 });
@@ -1184,7 +1181,7 @@ impl App {
                 self.x.gal_sel.clear();
                 self.viewing = None;
                 self.dirty = true;
-                self.status = format!("Removed {} online photo link(s). Undo (Ctrl+Z) brings them back.", n);
+                self.status = crate::i18n::trf("Removed {} online photo link(s). Undo (Ctrl+Z) brings them back.", &["Removed ", " online photo link(s). Undo (Ctrl+Z) brings them back."], &[(n).to_string()]);
             }
         }
         if let Some((who, i)) = story_open {
@@ -1222,7 +1219,7 @@ impl App {
                     }
                     if self.x.gal_pick {
                         let mut on = self.x.gal_sel.contains(&key);
-                        if ui.checkbox(&mut on, RichText::new("Note").small()).changed() {
+                        if ui.checkbox(&mut on, RichText::new(crate::i18n::tr("Note")).small()).changed() {
                             if on {
                                 self.x.gal_sel.insert(key);
                             } else {
@@ -1230,14 +1227,14 @@ impl App {
                             }
                         }
                     } else {
-                        ui.label(RichText::new("Note").small().weak());
+                        ui.label(RichText::new(crate::i18n::tr("Note")).small().weak());
                     }
                 } else {
                     // gone since the list was made (just removed): skip until it is redone
                     let Some(m) = self.db.people.get(id).and_then(|p| p.media.get(*i)) else { return };
                     if *kind == 1 && online_photo(m) {
                         let picked = self.x.gal_sel.contains(&(*id, *i));
-                        if ui.add_sized(size, egui::Button::new("Photo stored online\nClick to open in browser").selected(picked)).clicked() {
+                        if ui.add_sized(size, egui::Button::new(crate::i18n::tr("Photo stored online\nClick to open in browser")).selected(picked)).clicked() {
                             if self.x.gal_pick {
                                 if !self.x.gal_sel.remove(&(*id, *i)) {
                                     self.x.gal_sel.insert((*id, *i));
@@ -1323,17 +1320,17 @@ impl App {
         let mut open = true;
         let mut save = false;
         let who = self.db.people.get(&st.who).map(|p| p.name.clone()).unwrap_or_default();
-        egui::Window::new(format!("Story about {}", who)).id(egui::Id::new("story_win")).open(&mut open).default_size([620.0, 520.0]).show(ctx, |ui| {
-            ui.add(egui::TextEdit::singleline(&mut st.title).hint_text("Title, for example \"How Grandpa met Grandma\"").font(egui::TextStyle::Heading).desired_width(f32::INFINITY));
+        egui::Window::new(crate::i18n::trf("Story about {}", &["Story about ", ""], &[(who).to_string()])).id(egui::Id::new("story_win")).open(&mut open).default_size([620.0, 520.0]).show(ctx, |ui| {
+            ui.add(egui::TextEdit::singleline(&mut st.title).hint_text(crate::i18n::tr("Title, for example \"How Grandpa met Grandma\"")).font(egui::TextStyle::Heading).desired_width(f32::INFINITY));
             ui.add_space(4.0);
             egui::ScrollArea::vertical().max_height(400.0).show(ui, |ui| {
                 ui.add(egui::TextEdit::multiline(&mut st.text).desired_rows(18).desired_width(f32::INFINITY).font(egui::TextStyle::Body));
             });
             ui.horizontal(|ui| {
-                if ui.add_enabled(!st.text.trim().is_empty(), egui::Button::new("Save story")).clicked() {
+                if ui.add_enabled(!st.text.trim().is_empty(), egui::Button::new(crate::i18n::tr("Save story"))).clicked() {
                     save = true;
                 }
-                ui.label(RichText::new("Saved as a text file with this person's photos and documents.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Saved as a text file with this person's photos and documents.")).small().weak());
             });
         });
         if save {
@@ -1344,7 +1341,7 @@ impl App {
                 _ => format!("{}-{}.txt", stamp(), sanitize(&title)),
             };
             let Some(target) = safe_media_path(&file) else {
-                self.status = "Could not save the story: its file name is not allowed.".to_string();
+                self.status = crate::i18n::tr("Could not save the story: its file name is not allowed.").to_string();
                 return;
             };
             match atomic_write(&target, st.text.as_bytes()) {
@@ -1356,9 +1353,9 @@ impl App {
                         }
                     }
                     self.dirty = true;
-                    self.status = format!("Saved the story \"{}\".", title);
+                    self.status = crate::i18n::trf("Saved the story \"{}\".", &["Saved the story \"", "\"."], &[(title).to_string()]);
                 }
-                Err(e) => self.status = format!("Could not save the story: {}", e),
+                Err(e) => self.status = crate::i18n::trf("Could not save the story: {}", &["Could not save the story: ", ""], &[(e).to_string()]),
             }
         } else if !open {
             self.x.story = None;

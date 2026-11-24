@@ -568,10 +568,10 @@ pub const WHERE_FROM: &[(&str, &str)] = &[
 
 /// The "where do I get the file?" list, folded away until wanted.
 pub fn where_from_help(ui: &mut egui::Ui) {
-    egui::CollapsingHeader::new("Where do I get the file?").default_open(false).show(ui, |ui| {
+    egui::CollapsingHeader::new(crate::i18n::tr("Where do I get the file?")).default_open(false).show(ui, |ui| {
         for (co, how) in WHERE_FROM {
-            ui.label(RichText::new(*co).strong());
-            ui.label(RichText::new(*how).small());
+            ui.label(RichText::new(crate::i18n::trv(*co)).strong());
+            ui.label(RichText::new(crate::i18n::trv(*how)).small());
             ui.add_space(3.0);
         }
     });
@@ -847,7 +847,7 @@ impl App {
         ui.horizontal_wrapped(|ui| {
             ui.heading("DNA");
             if self.db.dna.is_empty() {
-                ui.label(RichText::new("No DNA tests yet.").weak());
+                ui.label(RichText::new(crate::i18n::tr("No DNA tests yet.")).weak());
             } else {
                 if self.x.dna.sel >= self.db.dna.len() {
                     self.x.dna.sel = 0;
@@ -861,21 +861,21 @@ impl App {
                         }
                     }
                 });
-                if ui.button("Test details...").clicked() {
+                if ui.button(crate::i18n::tr("Test details...")).clicked() {
                     self.x.dna.details = true;
                 }
             }
             let mut add: Option<u8> = None;
-            ui.menu_button("+ Add a DNA test", |ui| {
-                if ui.button("Autosomal (ethnicity and cousin matches)").on_hover_text("AncestryDNA, 23andMe, MyHeritage, Family Finder, Living DNA").clicked() {
+            ui.menu_button(crate::i18n::tr("+ Add a DNA test"), |ui| {
+                if ui.button(crate::i18n::tr("Autosomal (ethnicity and cousin matches)")).on_hover_text(crate::i18n::tr("AncestryDNA, 23andMe, MyHeritage, Family Finder, Living DNA")).clicked() {
                     add = Some(0);
                     ui.close_menu();
                 }
-                if ui.button("Y-DNA (father's father's line)").on_hover_text("Taken by men: Y-37, Y-111, Big Y...").clicked() {
+                if ui.button(crate::i18n::tr("Y-DNA (father's father's line)")).on_hover_text(crate::i18n::tr("Taken by men: Y-37, Y-111, Big Y...")).clicked() {
                     add = Some(1);
                     ui.close_menu();
                 }
-                if ui.button("mtDNA (mother's mother's line)").on_hover_text("Taken by anyone: HVR1, HVR2, full sequence").clicked() {
+                if ui.button(crate::i18n::tr("mtDNA (mother's mother's line)")).on_hover_text(crate::i18n::tr("Taken by anyone: HVR1, HVR2, full sequence")).clicked() {
                     add = Some(2);
                     ui.close_menu();
                 }
@@ -892,9 +892,9 @@ impl App {
         });
         if self.db.dna.is_empty() {
             ui.add_space(20.0);
-            ui.label("Keep DNA test results here. Autosomal tests give an ethnicity estimate (shown as a table, a chart and a map) and a list of cousin matches. Y-DNA follows the father's father's line and mtDNA the mother's mother's line: each has a haplogroup, its own matches, and a map of that line through your tree.");
+            ui.label(crate::i18n::tr("Keep DNA test results here. Autosomal tests give an ethnicity estimate (shown as a table, a chart and a map) and a list of cousin matches. Y-DNA follows the father's father's line and mtDNA the mother's mother's line: each has a haplogroup, its own matches, and a map of that line through your tree."));
             ui.add_space(6.0);
-            ui.label("Click \"+ Add a DNA test\" to start. Match lists can be imported from the CSV file that 23andMe, MyHeritage, FamilyTreeDNA and GEDmatch let you download, and an ethnicity estimate can be pasted straight from the testing company's web page.");
+            ui.label(crate::i18n::tr("Click \"+ Add a DNA test\" to start. Match lists can be imported from the CSV file that 23andMe, MyHeritage, FamilyTreeDNA and GEDmatch let you download, and an ethnicity estimate can be pasted straight from the testing company's web page."));
             ui.add_space(12.0);
             self.dna_estimator(ui);
             return;
@@ -906,7 +906,7 @@ impl App {
         }
         ui.horizontal(|ui| {
             for (k, l) in [(0u8, "Ethnicity"), (1, "Matches"), (2, "How related?")] {
-                if ui.selectable_label(self.x.dna.tab == k, l).clicked() {
+                if ui.selectable_label(self.x.dna.tab == k, crate::i18n::trv(l)).clicked() {
                     self.x.dna.tab = k;
                 }
             }
@@ -934,11 +934,11 @@ impl App {
             ui.vertical(|ui| {
                 ui.set_width(left_w);
                 ui.horizontal_wrapped(|ui| {
-                    if ui.button("+ Add a region").clicked() {
+                    if ui.button(crate::i18n::tr("+ Add a region")).clicked() {
                         self.db.dna[si].regions.push(Region { name: String::new(), pct: 0.0 });
                         changed = true;
                     }
-                    if ui.button("Paste from the testing site...").on_hover_text("Copy the list of regions and percentages from the company's web page and paste it in").clicked() {
+                    if ui.button(crate::i18n::tr("Paste from the testing site...")).on_hover_text(crate::i18n::tr("Copy the list of regions and percentages from the company's web page and paste it in")).clicked() {
                         self.x.dna.paste = Some(String::new());
                     }
                 });
@@ -947,7 +947,7 @@ impl App {
                     let mut remove: Option<usize> = None;
                     egui::Grid::new("dna_regions").num_columns(4).striped(true).spacing([8.0, 4.0]).show(ui, |ui| {
                         ui.label(RichText::new("").small());
-                        ui.label(RichText::new("Region").strong());
+                        ui.label(RichText::new(crate::i18n::tr("Region")).strong());
                         ui.label(RichText::new("%").strong());
                         ui.label("");
                         ui.end_row();
@@ -957,13 +957,13 @@ impl App {
                             let (r, _) = ui.allocate_exact_size(vec2(12.0, 12.0), Sense::hover());
                             ui.painter().rect_filled(r, 2.0_f32, pal(rank));
                             let reg = &mut self.db.dna[si].regions[i];
-                            if ui.add_sized([(left_w - 150.0).max(150.0), 20.0], egui::TextEdit::singleline(&mut reg.name).hint_text("e.g. Scotland")).changed() {
+                            if ui.add_sized([(left_w - 150.0).max(150.0), 20.0], egui::TextEdit::singleline(&mut reg.name).hint_text(crate::i18n::tr("e.g. Scotland"))).changed() {
                                 changed = true;
                             }
                             if ui.add(egui::DragValue::new(&mut reg.pct).range(0.0..=100.0).speed(0.5).suffix("%")).changed() {
                                 changed = true;
                             }
-                            if ui.small_button("x").on_hover_text("Remove this region").clicked() {
+                            if ui.small_button("x").on_hover_text(crate::i18n::tr("Remove this region")).clicked() {
                                 remove = Some(i);
                             }
                             ui.end_row();
@@ -977,9 +977,9 @@ impl App {
                 ui.add_space(4.0);
                 let tot_txt = format!("Total {:.0}%", total);
                 if regions.is_empty() {
-                    ui.label(RichText::new("No regions yet.").weak());
+                    ui.label(RichText::new(crate::i18n::tr("No regions yet.")).weak());
                 } else if (total - 100.0).abs() > 2.0 {
-                    ui.colored_label(Color32::from_rgb(220, 120, 40), format!("{} (the regions usually add up to about 100%)", tot_txt));
+                    ui.colored_label(Color32::from_rgb(220, 120, 40), crate::i18n::trf("{} (the regions usually add up to about 100%)", &["", " (the regions usually add up to about 100%)"], &[(tot_txt).to_string()]));
                 } else {
                     ui.label(RichText::new(tot_txt).weak());
                 }
@@ -987,7 +987,7 @@ impl App {
                 // bar chart, largest first
                 let named: Vec<&Region> = regions.iter().filter(|r| r.pct > 0.0).collect();
                 if !named.is_empty() {
-                    ui.label(RichText::new("Chart").strong());
+                    ui.label(RichText::new(crate::i18n::tr("Chart")).strong());
                     let maxp = named.iter().map(|r| r.pct).fold(1.0f32, f32::max);
                     for (i, r) in named.iter().enumerate() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(left_w, 22.0), Sense::hover());
@@ -1008,9 +1008,9 @@ impl App {
             // map
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("Where the regions are").strong());
+                    ui.label(RichText::new(crate::i18n::tr("Where the regions are")).strong());
                     ui.separator();
-                    ui.label("Map style");
+                    ui.label(crate::i18n::tr("Map style"));
                     if mapview::style_picker(ui, &mut self.settings.map_style) {
                         save_settings(&self.settings);
                     }
@@ -1075,9 +1075,9 @@ impl App {
                 }
                 let missing: Vec<&str> = regions.iter().filter(|r| r.pct > 0.0 && !r.name.trim().is_empty() && region_place(&r.name).is_none()).map(|r| r.name.as_str()).collect();
                 if !missing.is_empty() {
-                    ui.label(RichText::new(format!("Not on the map (name not recognised): {}", missing.join(", "))).small().weak());
+                    ui.label(RichText::new(crate::i18n::trf("Not on the map (name not recognised): {}", &["Not on the map (name not recognised): ", ""], &[(missing.join(", ")).to_string()])).small().weak());
                 }
-                ui.label(RichText::new("Circles are placed in the middle of each region; their size follows the percentage.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Circles are placed in the middle of each region; their size follows the percentage.")).small().weak());
             });
         });
         if changed {
@@ -1089,20 +1089,20 @@ impl App {
     fn dna_matches(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let si = self.x.dna.sel;
         ui.horizontal_wrapped(|ui| {
-            if ui.button("+ Add a match").clicked() {
+            if ui.button(crate::i18n::tr("+ Add a match")).clicked() {
                 self.x.dna.edit = Some((usize::MAX, DnaMatch::default()));
                 self.x.dna.link_q.clear();
             }
-            if ui.button("Import a match list...").on_hover_text("A CSV, text or Excel file: the match list downloaded from 23andMe, MyHeritage, FamilyTreeDNA or GEDmatch, or your own spreadsheet").clicked() {
-                if let Some(path) = rfd::FileDialog::new().add_filter("Match list (CSV, text or Excel)", &["csv", "txt", "tsv", "xlsx", "xls"]).set_directory(start_dir()).pick_file() {
+            if ui.button(crate::i18n::tr("Import a match list...")).on_hover_text(crate::i18n::tr("A CSV, text or Excel file: the match list downloaded from 23andMe, MyHeritage, FamilyTreeDNA or GEDmatch, or your own spreadsheet")).clicked() {
+                if let Some(path) = rfd::FileDialog::new().add_filter(crate::i18n::tr("Match list (CSV, text or Excel)"), &["csv", "txt", "tsv", "xlsx", "xls"]).set_directory(start_dir()).pick_file() {
                     remember_dir(&path);
                     match read_table_text(&path) {
                         Ok(text) => {
                             let rows = parse_csv(&text);
                             if is_raw_dna(&text) {
-                                self.status = "That is a raw DNA data file (your own DNA readings), not a match list. Download the match list instead: see \"Where do I get the file?\".".to_string();
+                                self.status = crate::i18n::tr("That is a raw DNA data file (your own DNA readings), not a match list. Download the match list instead: see \"Where do I get the file?\".").to_string();
                             } else if rows.len() < 2 {
-                                self.status = "That file has no rows to import.".to_string();
+                                self.status = crate::i18n::tr("That file has no rows to import.").to_string();
                             } else {
                                 let map = guess_map(&rows[0]);
                                 self.x.dna.import = Some(Import { file: path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default(), rows, map });
@@ -1113,7 +1113,7 @@ impl App {
                 }
             }
             ui.separator();
-            ui.add(egui::TextEdit::singleline(&mut self.x.dna.find).hint_text("Filter by name or notes").desired_width(180.0));
+            ui.add(egui::TextEdit::singleline(&mut self.x.dna.find).hint_text(crate::i18n::tr("Filter by name or notes")).desired_width(180.0));
             egui::ComboBox::from_id_salt("dna_side").selected_text(if self.x.dna.side.is_empty() { "Any side".to_string() } else { self.x.dna.side.clone() }).width(100.0).show_ui(ui, |ui| {
                 for s in ["", "Paternal", "Maternal", "Both", "Unknown"] {
                     if ui.selectable_label(self.x.dna.side == s, if s.is_empty() { "Any side" } else { s }).clicked() {
@@ -1121,7 +1121,7 @@ impl App {
                     }
                 }
             });
-            ui.label("At least");
+            ui.label(crate::i18n::tr("At least"));
             ui.add(egui::DragValue::new(&mut self.x.dna.min_cm).range(0.0..=4000.0).speed(5.0).suffix(" cM"));
         });
         where_from_help(ui);
@@ -1150,7 +1150,7 @@ impl App {
             let o = if s == 0 || s == 2 || s == 3 { o.reverse() } else { o };
             if self.x.dna.asc { o.reverse() } else { o }
         });
-        ui.label(RichText::new(format!("{} of {} match(es)", idx.len(), t.matches.len())).weak());
+        ui.label(RichText::new(crate::i18n::trf("{} of {} match(es)", &["", " of ", " match(es)"], &[(idx.len()).to_string(), (t.matches.len()).to_string()])).weak());
         // closeness summary
         let mut counts = vec![0usize; GROUPS.len()];
         for m in &t.matches {
@@ -1162,8 +1162,8 @@ impl App {
         let mut go: Option<u32> = None;
         let mut sort_click: Option<u8> = None;
         egui::SidePanel::right("dna_side_panel").resizable(true).default_width(320.0).show_inside(ui, |ui| {
-            ui.label(RichText::new("Matches by closeness").strong());
-            ui.label(RichText::new("Grouped by shared cM").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Matches by closeness")).strong());
+            ui.label(RichText::new(crate::i18n::tr("Grouped by shared cM")).small().weak());
             ui.add_space(4.0);
             let maxc = counts.iter().copied().max().unwrap_or(0).max(1);
             let w = ui.available_width();
@@ -1177,17 +1177,17 @@ impl App {
                     p.rect_filled(Rect::from_min_size(pos2(bx, rect.min.y + 4.0), vec2(bw.max(2.0), 12.0)), 2.0_f32, pal(i));
                 }
                 p.text(pos2(bx + bw + 5.0, rect.center().y), Align2::LEFT_CENTER, counts[i].to_string(), FontId::proportional(11.5), ui.visuals().weak_text_color());
-                resp.on_hover_text(format!("{}\nAbout {:.0} cM on average", g.1, g.0));
+                resp.on_hover_text(crate::i18n::trf("{}\nAbout {:.0} cM on average", &["", "\nAbout ", " cM on average"], &[(g.1).to_string(), format!("{:.0}", g.0)]));
             }
         });
         egui::ScrollArea::both().auto_shrink([false, false]).show(ui, |ui| {
             egui::Grid::new("dna_match_grid").striped(true).num_columns(9).spacing([12.0, 5.0]).show(ui, |ui| {
                 for (k, l) in [(1u8, "Name"), (0, "Shared cM"), (2, "Segments"), (3, "Longest"), (9, "Company's prediction"), (9, "Likely (from cM)"), (4, "Side"), (9, "In my tree"), (9, "")] {
                     if k == 9 {
-                        ui.label(RichText::new(l).strong());
+                        ui.label(RichText::new(crate::i18n::trv(l)).strong());
                     } else {
                         let arrow = if self.x.dna.sort == k { if self.x.dna.asc { " ^" } else { " v" } } else { "" };
-                        if ui.add(egui::Label::new(RichText::new(format!("{}{}", l, arrow)).strong()).sense(Sense::click())).on_hover_text("Click to sort").clicked() {
+                        if ui.add(egui::Label::new(RichText::new(format!("{}{}", l, arrow)).strong()).sense(Sense::click())).on_hover_text(crate::i18n::tr("Click to sort")).clicked() {
                             sort_click = Some(k);
                         }
                     }
@@ -1204,7 +1204,7 @@ impl App {
                     ui.label(m.segments.map(|s| s.to_string()).unwrap_or_default());
                     ui.label(m.longest.map(|s| format!("{:.0}", s)).unwrap_or_default());
                     ui.label(m.predicted.as_str());
-                    ui.label(RichText::new(likely(m.cm)).weak());
+                    ui.label(RichText::new(crate::i18n::trv(likely(m.cm))).weak());
                     ui.label(m.side.as_str());
                     match m.link.filter(|p| self.db.people.contains_key(p)) {
                         Some(p) => {
@@ -1216,7 +1216,7 @@ impl App {
                             ui.label("");
                         }
                     }
-                    if ui.small_button("Edit").clicked() {
+                    if ui.small_button(crate::i18n::tr("Edit")).clicked() {
                         open_edit = Some(i);
                     }
                     ui.end_row();
@@ -1224,7 +1224,7 @@ impl App {
             });
             if t.matches.is_empty() {
                 ui.add_space(10.0);
-                ui.label(RichText::new("No matches yet. Add them one at a time, or import the list your testing company lets you download. AncestryDNA does not offer a match download, so type in the matches you are working on.").weak());
+                ui.label(RichText::new(crate::i18n::tr("No matches yet. Add them one at a time, or import the list your testing company lets you download. AncestryDNA does not offer a match download, so type in the matches you are working on.")).weak());
             }
         });
         if let Some(k) = sort_click {
@@ -1245,13 +1245,13 @@ impl App {
     }
 
     fn dna_estimator(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new("How might we be related?").size(16.0).strong());
-        ui.label("Type the shared cM for a match to see which relationships usually share about that much DNA.");
+        ui.label(RichText::new(crate::i18n::tr("How might we be related?")).size(16.0).strong());
+        ui.label(crate::i18n::tr("Type the shared cM for a match to see which relationships usually share about that much DNA."));
         ui.horizontal(|ui| {
-            ui.label("Shared cM");
-            ui.add(egui::TextEdit::singleline(&mut self.x.dna.est).hint_text("e.g. 850").desired_width(90.0));
+            ui.label(crate::i18n::tr("Shared cM"));
+            ui.add(egui::TextEdit::singleline(&mut self.x.dna.est).hint_text(crate::i18n::tr("e.g. 850")).desired_width(90.0));
             if let Some(c) = first_number(&self.x.dna.est) {
-                if ui.button("Open DNA Painter's Shared cM tool").on_hover_text("Detailed probabilities from real results (opens a web page)").clicked() {
+                if ui.button(crate::i18n::tr("Open DNA Painter's Shared cM tool")).on_hover_text(crate::i18n::tr("Detailed probabilities from real results (opens a web page)")).clicked() {
                     ui.ctx().open_url(egui::OpenUrl::new_tab(format!("https://dnapainter.com/tools/sharedcmv4/{}", c.round() as i64)));
                 }
             }
@@ -1260,30 +1260,30 @@ impl App {
             ui.add_space(4.0);
             let best = likely_groups(c);
             if best.is_empty() {
-                ui.label("Type an amount above 0.");
+                ui.label(crate::i18n::tr("Type an amount above 0."));
             }
             for (n, g) in best.iter().enumerate() {
                 let (avg, long, _) = GROUPS[*g];
-                ui.label(RichText::new(format!("{}{} (about {:.0} cM on average)", if n == 0 { "Most likely: " } else { "Also possible: " }, long, avg)).strong());
+                ui.label(RichText::new(crate::i18n::trf("{}{} (about {:.0} cM on average)", &["", "", " (about ", " cM on average)"], &[(if n == 0 { "Most likely: " } else { "Also possible: " }).to_string(), (long).to_string(), format!("{:.0}", avg)])).strong());
             }
             if c > 3800.0 {
-                ui.label("More than a parent shares: possibly an identical twin, or a second copy of your own test.");
+                ui.label(crate::i18n::tr("More than a parent shares: possibly an identical twin, or a second copy of your own test."));
             }
         }
         ui.add_space(10.0);
-        ui.label(RichText::new("Average DNA shared by relationship").strong());
+        ui.label(RichText::new(crate::i18n::tr("Average DNA shared by relationship")).strong());
         egui::Grid::new("dna_groups").striped(true).spacing([16.0, 4.0]).show(ui, |ui| {
-            ui.label(RichText::new("About").strong());
-            ui.label(RichText::new("Relationships").strong());
+            ui.label(RichText::new(crate::i18n::tr("About")).strong());
+            ui.label(RichText::new(crate::i18n::tr("Relationships")).strong());
             ui.end_row();
             for (avg, long, _) in GROUPS {
-                ui.label(format!("{:.0} cM", avg));
-                ui.label(*long);
+                ui.label(crate::i18n::trf("{:.0} cM", &["", " cM"], &[format!("{:.0}", avg)]));
+                ui.label(crate::i18n::trv(*long));
                 ui.end_row();
             }
         });
         ui.add_space(6.0);
-        ui.label(RichText::new("These are averages worked out from how DNA is inherited. Real amounts vary widely around them: a 1st cousin can share anywhere from about half to double the average, and distant cousins often show more than the average or nothing at all. Use them as a guide alongside your tree, dates and places.").small().weak());
+        ui.label(RichText::new(crate::i18n::tr("These are averages worked out from how DNA is inherited. Real amounts vary widely around them: a 1st cousin can share anywhere from about half to double the average, and distant cousins often show more than the average or nothing at all. Use them as a guide alongside your tree, dates and places.")).small().weak());
     }
 
     fn dna_windows(&mut self, ctx: &egui::Context, _act: &mut Option<Action>) {
@@ -1292,14 +1292,14 @@ impl App {
         if self.x.dna.details {
             let mut open = true;
             let mut delete = false;
-            egui::Window::new("DNA test details").open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::i18n::tr("DNA test details")).open(&mut open).resizable(false).show(ctx, |ui| {
                 let who = self.db.dna[si].person.filter(|p| self.db.people.contains_key(p)).map(|p| self.db.label(p)).unwrap_or_else(|| "Not chosen".to_string());
                 egui::Grid::new("dna_details").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-                    ui.label("Who took the test");
+                    ui.label(crate::i18n::tr("Who took the test"));
                     ui.label(RichText::new(who).strong());
                     ui.end_row();
                     ui.label("");
-                    ui.add(egui::TextEdit::singleline(&mut self.x.dna.person_q).hint_text("Type a name to choose someone").desired_width(260.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.x.dna.person_q).hint_text(crate::i18n::tr("Type a name to choose someone")).desired_width(260.0));
                     ui.end_row();
                     let q = self.x.dna.person_q.trim().to_string();
                     if !q.is_empty() {
@@ -1313,11 +1313,11 @@ impl App {
                             ui.end_row();
                         }
                     }
-                    ui.label("Type of test");
+                    ui.label(crate::i18n::tr("Type of test"));
                     let t = &mut self.db.dna[si];
                     egui::ComboBox::from_id_salt("dna_kind").selected_text(KINDS.get(t.kind as usize).copied().unwrap_or("Autosomal")).show_ui(ui, |ui| {
                         for (k, n) in KINDS.iter().enumerate() {
-                            if ui.selectable_label(t.kind as usize == k, *n).clicked() {
+                            if ui.selectable_label(t.kind as usize == k, crate::i18n::trv(*n)).clicked() {
                                 t.kind = k as u8;
                             }
                         }
@@ -1325,41 +1325,41 @@ impl App {
                     ui.end_row();
                     if t.kind == 1 && t.person.and_then(|p| self.db.people.get(&p)).is_some_and(|p| p.sex == "F") {
                         ui.label("");
-                        ui.colored_label(Color32::from_rgb(220, 120, 40), "Only men carry Y-DNA. A woman's father's line is traced by testing her father, brother or a paternal uncle or cousin.");
+                        ui.colored_label(Color32::from_rgb(220, 120, 40), crate::i18n::tr("Only men carry Y-DNA. A woman's father's line is traced by testing her father, brother or a paternal uncle or cousin."));
                         ui.end_row();
                     }
-                    ui.label("Testing company");
+                    ui.label(crate::i18n::tr("Testing company"));
                     let t = &mut self.db.dna[si];
                     egui::ComboBox::from_id_salt("dna_co").selected_text(if t.company.is_empty() { "Choose".to_string() } else { t.company.clone() }).show_ui(ui, |ui| {
                         for c in COMPANIES {
-                            if ui.selectable_label(t.company == *c, *c).clicked() {
+                            if ui.selectable_label(t.company == *c, crate::i18n::trv(*c)).clicked() {
                                 t.company = c.to_string();
                             }
                         }
                     });
                     ui.end_row();
-                    ui.label("Kit number or user name");
+                    ui.label(crate::i18n::tr("Kit number or user name"));
                     ui.add(egui::TextEdit::singleline(&mut t.kit).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Results date");
-                    ui.add(egui::TextEdit::singleline(&mut t.date).hint_text("e.g. Mar 2024").desired_width(260.0));
+                    ui.label(crate::i18n::tr("Results date"));
+                    ui.add(egui::TextEdit::singleline(&mut t.date).hint_text(crate::i18n::tr("e.g. Mar 2024")).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Notes");
+                    ui.label(crate::i18n::tr("Notes"));
                     ui.add(egui::TextEdit::multiline(&mut t.notes).desired_rows(3).desired_width(260.0));
                     ui.end_row();
                 });
                 ui.separator();
                 if self.x.dna.confirm_delete {
-                    ui.colored_label(Color32::from_rgb(220, 120, 40), "Delete this test with its ethnicity estimate and all its matches?");
+                    ui.colored_label(Color32::from_rgb(220, 120, 40), crate::i18n::tr("Delete this test with its ethnicity estimate and all its matches?"));
                     ui.horizontal(|ui| {
-                        if ui.button("Yes, delete it").clicked() {
+                        if ui.button(crate::i18n::tr("Yes, delete it")).clicked() {
                             delete = true;
                         }
-                        if ui.button("Keep it").clicked() {
+                        if ui.button(crate::i18n::tr("Keep it")).clicked() {
                             self.x.dna.confirm_delete = false;
                         }
                     });
-                } else if ui.button("Delete this test...").clicked() {
+                } else if ui.button(crate::i18n::tr("Delete this test...")).clicked() {
                     self.x.dna.confirm_delete = true;
                 }
             });
@@ -1382,24 +1382,24 @@ impl App {
         if let Some(mut text) = self.x.dna.paste.take() {
             let mut open = true;
             let mut keep = true;
-            egui::Window::new("Paste an ethnicity estimate").open(&mut open).default_width(460.0).show(ctx, |ui| {
-                ui.label("On the testing company's site, select the list of regions with their percentages, copy it, and paste it here. You can also type one region per line, such as \"Scotland 32%\".");
+            egui::Window::new(crate::i18n::tr("Paste an ethnicity estimate")).open(&mut open).default_width(460.0).show(ctx, |ui| {
+                ui.label(crate::i18n::tr("On the testing company's site, select the list of regions with their percentages, copy it, and paste it here. You can also type one region per line, such as \"Scotland 32%\"."));
                 egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
                     ui.add(egui::TextEdit::multiline(&mut text).desired_rows(10).desired_width(f32::INFINITY));
                 });
                 let found = parse_regions(&text);
-                ui.label(format!("Found {} region(s){}", found.len(), if found.is_empty() { String::new() } else { format!(", adding up to {:.0}%", found.iter().map(|r| r.pct).sum::<f32>()) }));
+                ui.label(crate::i18n::trf("Found {} region(s){}", &["Found ", " region(s)", ""], &[(found.len()).to_string(), (if found.is_empty() { String::new() } else { format!(", adding up to {:.0}%", found.iter().map(|r| r.pct).sum::<f32>()) }).to_string()]));
                 for r in found.iter().take(12) {
                     ui.label(RichText::new(format!("{}  {}%", r.name, r.pct)).small());
                 }
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(!found.is_empty(), egui::Button::new("Replace the estimate with these")).clicked() {
+                    if ui.add_enabled(!found.is_empty(), egui::Button::new(crate::i18n::tr("Replace the estimate with these"))).clicked() {
                         self.db.dna[si].regions = found.clone();
                         self.x.next_label = Some("Pasted a DNA ethnicity estimate".to_string());
                         self.dirty = true;
                         keep = false;
                     }
-                    if ui.add_enabled(!found.is_empty(), egui::Button::new("Add to the estimate")).clicked() {
+                    if ui.add_enabled(!found.is_empty(), egui::Button::new(crate::i18n::tr("Add to the estimate"))).clicked() {
                         self.db.dna[si].regions.extend(found.clone());
                         self.x.next_label = Some("Added to a DNA ethnicity estimate".to_string());
                         self.dirty = true;
@@ -1424,32 +1424,32 @@ impl App {
                     }
                 };
                 egui::Grid::new("dna_edit").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-                    ui.label("Name");
+                    ui.label(crate::i18n::tr("Name"));
                     ui.add(egui::TextEdit::singleline(&mut m.name).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Shared cM");
+                    ui.label(crate::i18n::tr("Shared cM"));
                     ui.horizontal(|ui| {
-                        num(ui, &mut m.cm, "e.g. 212");
+                        num(ui, &mut m.cm, crate::i18n::tr("e.g. 212"));
                         if let Some(c) = m.cm {
-                            ui.label(RichText::new(likely(Some(c))).weak());
+                            ui.label(RichText::new(crate::i18n::trv(likely(Some(c)))).weak());
                         }
                     });
                     ui.end_row();
-                    ui.label("Percent shared");
-                    num(ui, &mut m.pct, "if no cM");
+                    ui.label(crate::i18n::tr("Percent shared"));
+                    num(ui, &mut m.pct, crate::i18n::tr("if no cM"));
                     ui.end_row();
-                    ui.label("Segments");
+                    ui.label(crate::i18n::tr("Segments"));
                     let mut seg = m.segments.map(|x| x as f32);
-                    num(ui, &mut seg, "e.g. 9");
+                    num(ui, &mut seg, crate::i18n::tr("e.g. 9"));
                     m.segments = seg.map(|x| x as u32);
                     ui.end_row();
-                    ui.label("Longest segment (cM)");
-                    num(ui, &mut m.longest, "e.g. 45");
+                    ui.label(crate::i18n::tr("Longest segment (cM)"));
+                    num(ui, &mut m.longest, crate::i18n::tr("e.g. 45"));
                     ui.end_row();
-                    ui.label("Company's prediction");
-                    ui.add(egui::TextEdit::singleline(&mut m.predicted).hint_text("e.g. 2nd-3rd cousin").desired_width(260.0));
+                    ui.label(crate::i18n::tr("Company's prediction"));
+                    ui.add(egui::TextEdit::singleline(&mut m.predicted).hint_text(crate::i18n::tr("e.g. 2nd-3rd cousin")).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Side");
+                    ui.label(crate::i18n::tr("Side"));
                     egui::ComboBox::from_id_salt("dna_m_side").selected_text(if m.side.is_empty() { "Not known".to_string() } else { m.side.clone() }).show_ui(ui, |ui| {
                         for s in SIDES {
                             if ui.selectable_label(m.side == *s, if s.is_empty() { "Not known" } else { s }).clicked() {
@@ -1458,17 +1458,17 @@ impl App {
                         }
                     });
                     ui.end_row();
-                    ui.label("In my tree");
+                    ui.label(crate::i18n::tr("In my tree"));
                     let cur = m.link.filter(|p| self.db.people.contains_key(p)).map(|p| self.db.label(p)).unwrap_or_else(|| "Not linked".to_string());
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(cur).strong());
-                        if m.link.is_some() && ui.small_button("Unlink").clicked() {
+                        if m.link.is_some() && ui.small_button(crate::i18n::tr("Unlink")).clicked() {
                             m.link = None;
                         }
                     });
                     ui.end_row();
                     ui.label("");
-                    ui.add(egui::TextEdit::singleline(&mut self.x.dna.link_q).hint_text("Type a name to link this match").desired_width(260.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.x.dna.link_q).hint_text(crate::i18n::tr("Type a name to link this match")).desired_width(260.0));
                     ui.end_row();
                     let q = self.x.dna.link_q.trim().to_string();
                     if !q.is_empty() {
@@ -1481,16 +1481,16 @@ impl App {
                             ui.end_row();
                         }
                     }
-                    ui.label("Notes");
-                    ui.add(egui::TextEdit::multiline(&mut m.notes).hint_text("Shared surnames, where their tree goes, messages...").desired_rows(3).desired_width(260.0));
+                    ui.label(crate::i18n::tr("Notes"));
+                    ui.add(egui::TextEdit::multiline(&mut m.notes).hint_text(crate::i18n::tr("Shared surnames, where their tree goes, messages...")).desired_rows(3).desired_width(260.0));
                     ui.end_row();
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(!m.name.trim().is_empty(), egui::Button::new("Save")).clicked() {
+                    if ui.add_enabled(!m.name.trim().is_empty(), egui::Button::new(crate::i18n::tr("Save"))).clicked() {
                         done = true;
                     }
-                    if i != usize::MAX && ui.button("Delete this match").clicked() {
+                    if i != usize::MAX && ui.button(crate::i18n::tr("Delete this match")).clicked() {
                         delete = true;
                     }
                 });
@@ -1519,17 +1519,17 @@ impl App {
         if let Some(mut imp) = self.x.dna.import.take() {
             let mut open = true;
             let mut add: Option<Vec<DnaMatch>> = None;
-            egui::Window::new("Import DNA matches").open(&mut open).default_width(620.0).show(ctx, |ui| {
-                ui.label(format!("{}: {} row(s)", imp.file, imp.rows.len().saturating_sub(1)));
-                ui.label(RichText::new("Check which column holds each detail. Most are found automatically; change any that are wrong.").small());
+            egui::Window::new(crate::i18n::tr("Import DNA matches")).open(&mut open).default_width(620.0).show(ctx, |ui| {
+                ui.label(crate::i18n::trf("{}: {} row(s)", &["", ": ", " row(s)"], &[(imp.file).to_string(), (imp.rows.len().saturating_sub(1)).to_string()]));
+                ui.label(RichText::new(crate::i18n::tr("Check which column holds each detail. Most are found automatically; change any that are wrong.")).small());
                 let headers = imp.rows[0].clone();
                 egui::Grid::new("dna_imp").num_columns(2).spacing([10.0, 4.0]).show(ui, |ui| {
                     for (fi, f) in FIELDS.iter().enumerate() {
-                        ui.label(*f);
+                        ui.label(crate::i18n::trv(*f));
                         let slot = imp.map.get_mut(fi);
                         let shown = slot.and_then(|c| headers.get(c)).cloned().unwrap_or_else(|| "(not in this file)".to_string());
                         egui::ComboBox::from_id_salt(("dna_imp_col", fi)).selected_text(shown).width(260.0).show_ui(ui, |ui| {
-                            if ui.selectable_label(slot.is_none(), "(not in this file)").clicked() {
+                            if ui.selectable_label(slot.is_none(), crate::i18n::tr("(not in this file)")).clicked() {
                                 *slot = None;
                             }
                             for (ci, h) in headers.iter().enumerate() {
@@ -1545,10 +1545,10 @@ impl App {
                 let existing: HashSet<(String, i64)> = self.db.dna[si].matches.iter().map(|m| (m.name.to_lowercase(), (m.cm.unwrap_or(-1.0) * 10.0) as i64)).collect();
                 let new: Vec<DnaMatch> = found.iter().filter(|m| !existing.contains(&(m.name.to_lowercase(), (m.cm.unwrap_or(-1.0) * 10.0) as i64))).cloned().collect();
                 ui.separator();
-                ui.label(RichText::new("First rows, as they will be added").strong());
+                ui.label(RichText::new(crate::i18n::tr("First rows, as they will be added")).strong());
                 egui::Grid::new("dna_imp_prev").striped(true).spacing([12.0, 3.0]).show(ui, |ui| {
                     for h in ["Name", "cM", "%", "Segments", "Longest", "Prediction", "Side"] {
-                        ui.label(RichText::new(h).small().strong());
+                        ui.label(RichText::new(crate::i18n::trv(h)).small().strong());
                     }
                     ui.end_row();
                     for m in found.iter().take(6) {
@@ -1563,12 +1563,12 @@ impl App {
                     }
                 });
                 if found.iter().all(|m| m.cm.is_none()) && found.iter().any(|m| m.pct.is_some()) {
-                    ui.label(RichText::new("This file gives percent shared rather than cM (as 23andMe does). The percent is kept; type the cM in later if you know it.").small().weak());
+                    ui.label(RichText::new(crate::i18n::tr("This file gives percent shared rather than cM (as 23andMe does). The percent is kept; type the cM in later if you know it.")).small().weak());
                 }
                 ui.separator();
                 let skip = found.len() - new.len();
-                ui.label(format!("{} new match(es){}", new.len(), if skip > 0 { format!("; {} already in the list will be skipped", skip) } else { String::new() }));
-                if ui.add_enabled(!new.is_empty(), egui::Button::new(format!("Add {} match(es)", new.len()))).clicked() {
+                ui.label(crate::i18n::trf("{} new match(es){}", &["", " new match(es)", ""], &[(new.len()).to_string(), (if skip > 0 { format!("; {} already in the list will be skipped", skip) } else { String::new() }).to_string()]));
+                if ui.add_enabled(!new.is_empty(), egui::Button::new(crate::i18n::trf("Add {} match(es)", &["Add ", " match(es)"], &[(new.len()).to_string()]))).clicked() {
                     add = Some(new);
                 }
             });
@@ -1576,7 +1576,7 @@ impl App {
                 let n = list.len();
                 self.db.dna[si].matches.extend(list);
                 self.x.next_label = Some(format!("Imported {} DNA match(es)", n));
-                self.status = format!("Added {} DNA match(es) from {}.", n, imp.file);
+                self.status = crate::i18n::trf("Added {} DNA match(es) from {}.", &["Added ", " DNA match(es) from ", "."], &[(n).to_string(), (imp.file).to_string()]);
                 self.dirty = true;
             } else if open {
                 self.x.dna.import = Some(imp);

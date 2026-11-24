@@ -152,7 +152,7 @@ impl App {
         ui.horizontal(|ui| {
             let tabs: [(u8, &str); 3] = if y { [(0, "Haplogroup and markers"), (1, "Matches"), (2, "Father's line")] } else { [(0, "Haplogroup and mutations"), (1, "Matches"), (2, "Mother's line")] };
             for (k, l) in tabs {
-                if ui.selectable_label(self.x.dna.tab == k, l).clicked() {
+                if ui.selectable_label(self.x.dna.tab == k, crate::i18n::trv(l)).clicked() {
                     self.x.dna.tab = k;
                 }
             }
@@ -172,13 +172,13 @@ impl App {
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
             let t = &mut self.db.dna[si].line;
             egui::Grid::new("line_top").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
-                ui.label("Haplogroup");
+                ui.label(crate::i18n::tr("Haplogroup"));
                 changed |= ui.add(egui::TextEdit::singleline(&mut t.haplogroup).hint_text(if y { "e.g. R-M269 or R-FGC11134" } else { "e.g. H1a1" }).font(egui::TextStyle::Heading).desired_width(320.0)).changed();
                 ui.end_row();
-                ui.label("Test level");
+                ui.label(crate::i18n::tr("Test level"));
                 egui::ComboBox::from_id_salt("line_level").selected_text(if t.level.is_empty() { "Choose".to_string() } else { t.level.clone() }).width(220.0).show_ui(ui, |ui| {
                     for l in if y { Y_LEVELS } else { MT_LEVELS } {
-                        if ui.selectable_label(t.level == *l, *l).clicked() {
+                        if ui.selectable_label(t.level == *l, crate::i18n::trv(*l)).clicked() {
                             t.level = l.to_string();
                             changed = true;
                         }
@@ -195,12 +195,12 @@ impl App {
             ui.separator();
             if y {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(format!("Y-STR markers ({})", t.markers.len())).strong());
-                    if ui.button("Paste markers...").on_hover_text("Copy the marker table from the results page and paste it in").clicked() {
+                    ui.label(RichText::new(crate::i18n::trf("Y-STR markers ({})", &["Y-STR markers (", ")"], &[(t.markers.len()).to_string()])).strong());
+                    if ui.button(crate::i18n::tr("Paste markers...")).on_hover_text(crate::i18n::tr("Copy the marker table from the results page and paste it in")).clicked() {
                         self.x.line.paste = Some(String::new());
                     }
-                    if ui.button("Import markers file...").on_hover_text("The Y-STR results file downloaded from the testing company").clicked() {
-                        if let Some(path) = rfd::FileDialog::new().add_filter("Y-STR results", &["csv", "txt", "tsv", "xlsx", "xls"]).set_directory(start_dir()).pick_file() {
+                    if ui.button(crate::i18n::tr("Import markers file...")).on_hover_text(crate::i18n::tr("The Y-STR results file downloaded from the testing company")).clicked() {
+                        if let Some(path) = rfd::FileDialog::new().add_filter(crate::i18n::tr("Y-STR results"), &["csv", "txt", "tsv", "xlsx", "xls"]).set_directory(start_dir()).pick_file() {
                             remember_dir(&path);
                             // shown in the paste window first, so the markers can be checked before they replace the old ones
                             self.x.line.paste = Some(dna::read_table_text(&path).unwrap_or_default());
@@ -219,7 +219,7 @@ impl App {
                                 ui.set_width(84.0);
                                 ui.horizontal(|ui| {
                                     ui.label(RichText::new(name.as_str()).small().weak());
-                                    if ui.add(egui::Label::new(RichText::new("x").small().weak()).sense(Sense::click())).on_hover_text("Remove").clicked() {
+                                    if ui.add(egui::Label::new(RichText::new("x").small().weak()).sense(Sense::click())).on_hover_text(crate::i18n::tr("Remove")).clicked() {
                                         remove = Some(ci * per_row + j);
                                     }
                                 });
@@ -233,21 +233,21 @@ impl App {
                     changed = true;
                 }
                 ui.horizontal(|ui| {
-                    ui.add(egui::TextEdit::singleline(&mut self.x.line.new_marker.0).hint_text("Marker, e.g. DYS393").desired_width(130.0));
-                    ui.add(egui::TextEdit::singleline(&mut self.x.line.new_marker.1).hint_text("Value").desired_width(70.0));
-                    if ui.add_enabled(!self.x.line.new_marker.0.trim().is_empty(), egui::Button::new("Add")).clicked() {
+                    ui.add(egui::TextEdit::singleline(&mut self.x.line.new_marker.0).hint_text(crate::i18n::tr("Marker, e.g. DYS393")).desired_width(130.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.x.line.new_marker.1).hint_text(crate::i18n::tr("Value")).desired_width(70.0));
+                    if ui.add_enabled(!self.x.line.new_marker.0.trim().is_empty(), egui::Button::new(crate::i18n::tr("Add"))).clicked() {
                         let (n, v) = std::mem::take(&mut self.x.line.new_marker);
                         t.markers.push((n.trim().to_uppercase(), v.trim().to_string()));
                         changed = true;
                     }
                 });
             } else {
-                ui.label(RichText::new("Mutations (differences from the reference sequence)").strong());
-                ui.label(RichText::new("Paste them as your results page lists them, e.g. \"16129A 16519C 263G 315.1C\".").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Mutations (differences from the reference sequence)")).strong());
+                ui.label(RichText::new(crate::i18n::tr("Paste them as your results page lists them, e.g. \"16129A 16519C 263G 315.1C\".")).small().weak());
                 changed |= ui.add(egui::TextEdit::multiline(&mut t.mutations).desired_rows(6).desired_width(f32::INFINITY).font(egui::TextStyle::Monospace)).changed();
                 let n = t.mutations.split(|c: char| c.is_whitespace() || c == ',').filter(|w| !w.is_empty()).count();
                 if n > 0 {
-                    ui.label(RichText::new(format!("{} mutation(s)", n)).weak());
+                    ui.label(RichText::new(crate::i18n::trf("{} mutation(s)", &["", " mutation(s)"], &[(n).to_string()])).weak());
                 }
             }
         });
@@ -260,20 +260,20 @@ impl App {
     fn line_matches(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, y: bool) {
         let si = self.x.dna.sel;
         ui.horizontal_wrapped(|ui| {
-            if ui.button("+ Add a match").clicked() {
+            if ui.button(crate::i18n::tr("+ Add a match")).clicked() {
                 self.x.line.edit = Some((usize::MAX, LineMatch::default()));
                 self.x.line.link_q.clear();
             }
-            if ui.button("Import a match list...").on_hover_text("The match file you can download from the testing company").clicked() {
-                if let Some(path) = rfd::FileDialog::new().add_filter("Match list (CSV, text or Excel)", &["csv", "txt", "tsv", "xlsx", "xls"]).set_directory(start_dir()).pick_file() {
+            if ui.button(crate::i18n::tr("Import a match list...")).on_hover_text(crate::i18n::tr("The match file you can download from the testing company")).clicked() {
+                if let Some(path) = rfd::FileDialog::new().add_filter(crate::i18n::tr("Match list (CSV, text or Excel)"), &["csv", "txt", "tsv", "xlsx", "xls"]).set_directory(start_dir()).pick_file() {
                     remember_dir(&path);
                     match dna::read_table_text(&path) {
                         Ok(text) => {
                             let rows = parse_csv(&text);
                             if dna::is_raw_dna(&text) {
-                                self.status = "That is a raw DNA data file (your own DNA readings), not a match list.".to_string();
+                                self.status = crate::i18n::tr("That is a raw DNA data file (your own DNA readings), not a match list.").to_string();
                             } else if rows.len() < 2 {
-                                self.status = "That file has no rows to import.".to_string();
+                                self.status = crate::i18n::tr("That file has no rows to import.").to_string();
                             } else {
                                 let cols = guess_line_columns(&rows[0]);
                                 self.x.line.import = Some((path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default(), rows, cols));
@@ -284,7 +284,7 @@ impl App {
                 }
             }
             ui.separator();
-            ui.add(egui::TextEdit::singleline(&mut self.x.line.find).hint_text("Filter by name, haplogroup or ancestor").desired_width(240.0));
+            ui.add(egui::TextEdit::singleline(&mut self.x.line.find).hint_text(crate::i18n::tr("Filter by name, haplogroup or ancestor")).desired_width(240.0));
         });
         dna::where_from_help(ui);
         let t = &self.db.dna[si].line;
@@ -296,13 +296,13 @@ impl App {
             })
             .collect();
         idx.sort_by_key(|&i| (t.matches[i].distance.unwrap_or(u32::MAX), t.matches[i].name.to_lowercase()));
-        ui.label(RichText::new(format!("{} of {} match(es), closest first", idx.len(), t.matches.len())).weak());
+        ui.label(RichText::new(crate::i18n::trf("{} of {} match(es), closest first", &["", " of ", " match(es), closest first"], &[(idx.len()).to_string(), (t.matches.len()).to_string()])).weak());
         let mut open_edit: Option<usize> = None;
         let mut go: Option<u32> = None;
         egui::ScrollArea::both().auto_shrink([false, false]).show(ui, |ui| {
             egui::Grid::new("line_grid").striped(true).num_columns(8).spacing([14.0, 5.0]).show(ui, |ui| {
                 for h in ["Name", "Distance", if y { "Markers" } else { "Compared" }, "Haplogroup", "Earliest known ancestor", "What it suggests", "In my tree", ""] {
-                    ui.label(RichText::new(h).strong());
+                    ui.label(RichText::new(crate::i18n::trv(h)).strong());
                 }
                 ui.end_row();
                 for &i in &idx {
@@ -317,7 +317,7 @@ impl App {
                         Some(d) => mtdna_guide(d, &m.compared),
                         None => "",
                     };
-                    ui.add_sized([300.0, 18.0], egui::Label::new(RichText::new(guide).small().weak()).truncate()).on_hover_text(guide);
+                    ui.add_sized([300.0, 18.0], egui::Label::new(RichText::new(crate::i18n::trv(guide)).small().weak()).truncate()).on_hover_text(crate::i18n::trv(guide));
                     match m.link.filter(|p| self.db.people.contains_key(p)) {
                         Some(p) => {
                             if ui.link(display_name(&self.db.people[&p])).clicked() {
@@ -328,7 +328,7 @@ impl App {
                             ui.label("");
                         }
                     }
-                    if ui.small_button("Edit").clicked() {
+                    if ui.small_button(crate::i18n::tr("Edit")).clicked() {
                         open_edit = Some(i);
                     }
                     ui.end_row();
@@ -357,7 +357,7 @@ impl App {
     fn line_map(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, y: bool) {
         let si = self.x.dna.sel;
         let Some(start) = self.db.dna[si].person.filter(|p| self.db.people.contains_key(p)) else {
-            ui.label("Choose who took the test (Test details...) to see their line.");
+            ui.label(crate::i18n::tr("Choose who took the test (Test details...) to see their line."));
             return;
         };
         let line = direct_line(&self.db, start, y);
@@ -375,9 +375,9 @@ impl App {
         egui::SidePanel::left("line_list").resizable(true).default_width(320.0).show_inside(ui, |ui| {
             ui.label(RichText::new(if y { "Father's father's line" } else { "Mother's mother's line" }).size(16.0).strong());
             if !hap.trim().is_empty() {
-                ui.label(format!("Haplogroup {}", hap.trim()));
+                ui.label(crate::i18n::trf("Haplogroup {}", &["Haplogroup ", ""], &[(hap.trim()).to_string()]));
             }
-            ui.label(RichText::new(format!("{} generation(s) in the tree", line.len())).weak());
+            ui.label(RichText::new(crate::i18n::trf("{} generation(s) in the tree", &["", " generation(s) in the tree"], &[(line.len()).to_string()])).weak());
             ui.add_space(6.0);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 for (n, (id, ll, place, date)) in pts.iter().enumerate() {
@@ -392,18 +392,14 @@ impl App {
                             let w = if place.is_empty() { "Birthplace not recorded".to_string() } else { format!("{} {}", place, show_date(date)).trim().to_string() };
                             ui.label(RichText::new(w).small().weak());
                             if !place.is_empty() && ll.is_none() {
-                                ui.label(RichText::new("Not found on the map").small().weak());
+                                ui.label(RichText::new(crate::i18n::tr("Not found on the map")).small().weak());
                             }
                         });
                     });
                 }
                 ui.add_space(8.0);
                 let last = &self.db.people[line.last().unwrap()];
-                ui.label(RichText::new(format!(
-                    "The line stops at {} because no {} is recorded. Adding them extends the line.",
-                    display_name(last),
-                    if y { "father" } else { "mother" }
-                ))
+                ui.label(RichText::new(crate::i18n::trf("The line stops at {} because no {} is recorded. Adding them extends the line.", &["The line stops at ", " because no ", " is recorded. Adding them extends the line."], &[(display_name(last)).to_string(), (if y { "father" } else { "mother" }).to_string()]))
                 .small()
                 .weak());
             });
@@ -490,16 +486,16 @@ impl App {
         if let Some(mut text) = self.x.line.paste.take() {
             let mut open = true;
             let mut keep = true;
-            egui::Window::new("Paste Y-DNA markers").open(&mut open).default_width(520.0).show(ctx, |ui| {
-                ui.label("Copy the marker table from your results page and paste it here. Two rows (marker names, then values) or pairs such as \"DYS393 13\" both work.");
+            egui::Window::new(crate::i18n::tr("Paste Y-DNA markers")).open(&mut open).default_width(520.0).show(ctx, |ui| {
+                ui.label(crate::i18n::tr("Copy the marker table from your results page and paste it here. Two rows (marker names, then values) or pairs such as \"DYS393 13\" both work."));
                 egui::ScrollArea::vertical().max_height(220.0).show(ui, |ui| {
                     ui.add(egui::TextEdit::multiline(&mut text).desired_rows(8).desired_width(f32::INFINITY).font(egui::TextStyle::Monospace));
                 });
                 let found = parse_markers(&text);
-                ui.label(format!("Found {} marker(s)", found.len()));
+                ui.label(crate::i18n::trf("Found {} marker(s)", &["Found ", " marker(s)"], &[(found.len()).to_string()]));
                 ui.label(RichText::new(found.iter().take(14).map(|(n, v)| format!("{} {}", n, v)).collect::<Vec<_>>().join(" \u{00B7} ")).small());
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(!found.is_empty(), egui::Button::new("Replace the markers with these")).clicked() {
+                    if ui.add_enabled(!found.is_empty(), egui::Button::new(crate::i18n::tr("Replace the markers with these"))).clicked() {
                         self.db.dna[si].line.markers = found.clone();
                         self.x.next_label = Some("Pasted Y-DNA markers".to_string());
                         self.dirty = true;
@@ -516,18 +512,18 @@ impl App {
             let (mut done, mut delete) = (false, false);
             egui::Window::new(if i == usize::MAX { format!("Add a {} match", if y { "Y-DNA" } else { "mtDNA" }) } else { format!("{} match", if y { "Y-DNA" } else { "mtDNA" }) }).open(&mut open).resizable(false).show(ctx, |ui| {
                 egui::Grid::new("line_edit").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-                    ui.label("Name");
+                    ui.label(crate::i18n::tr("Name"));
                     ui.add(egui::TextEdit::singleline(&mut m.name).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Genetic distance");
+                    ui.label(crate::i18n::tr("Genetic distance"));
                     let mut d = m.distance.map(|x| x.to_string()).unwrap_or_default();
                     ui.horizontal(|ui| {
-                        if ui.add(egui::TextEdit::singleline(&mut d).hint_text("e.g. 1").desired_width(60.0)).changed() {
+                        if ui.add(egui::TextEdit::singleline(&mut d).hint_text(crate::i18n::tr("e.g. 1")).desired_width(60.0)).changed() {
                             m.distance = first_number(&d).map(|x| x as u32);
                         }
                         if let Some(dd) = m.distance {
                             let g = if y { ydna_guide(dd, first_number(&m.compared).unwrap_or(0.0) as u32) } else { mtdna_guide(dd, &m.compared) };
-                            ui.add(egui::Label::new(RichText::new(g).small().weak()).wrap());
+                            ui.add(egui::Label::new(RichText::new(crate::i18n::trv(g)).small().weak()).wrap());
                         }
                     });
                     ui.end_row();
@@ -535,29 +531,29 @@ impl App {
                     egui::ComboBox::from_id_salt("line_cmp").selected_text(if m.compared.is_empty() { "Choose".to_string() } else { m.compared.clone() }).show_ui(ui, |ui| {
                         let opts: &[&str] = if y { &["12", "25", "37", "67", "111", "Big Y"] } else { &["HVR1", "HVR1 and HVR2", "Full sequence"] };
                         for o in opts {
-                            if ui.selectable_label(m.compared == *o, *o).clicked() {
+                            if ui.selectable_label(m.compared == *o, crate::i18n::trv(*o)).clicked() {
                                 m.compared = o.to_string();
                             }
                         }
                     });
                     ui.end_row();
-                    ui.label("Haplogroup");
+                    ui.label(crate::i18n::tr("Haplogroup"));
                     ui.add(egui::TextEdit::singleline(&mut m.haplogroup).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Earliest known ancestor");
-                    ui.add(egui::TextEdit::singleline(&mut m.ancestor).hint_text("e.g. John Walker, b. 1702 Ayrshire").desired_width(260.0));
+                    ui.label(crate::i18n::tr("Earliest known ancestor"));
+                    ui.add(egui::TextEdit::singleline(&mut m.ancestor).hint_text(crate::i18n::tr("e.g. John Walker, b. 1702 Ayrshire")).desired_width(260.0));
                     ui.end_row();
-                    ui.label("In my tree");
+                    ui.label(crate::i18n::tr("In my tree"));
                     let cur = m.link.filter(|p| self.db.people.contains_key(p)).map(|p| self.db.label(p)).unwrap_or_else(|| "Not linked".to_string());
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(cur).strong());
-                        if m.link.is_some() && ui.small_button("Unlink").clicked() {
+                        if m.link.is_some() && ui.small_button(crate::i18n::tr("Unlink")).clicked() {
                             m.link = None;
                         }
                     });
                     ui.end_row();
                     ui.label("");
-                    ui.add(egui::TextEdit::singleline(&mut self.x.line.link_q).hint_text("Type a name to link this match").desired_width(260.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.x.line.link_q).hint_text(crate::i18n::tr("Type a name to link this match")).desired_width(260.0));
                     ui.end_row();
                     let q = self.x.line.link_q.trim().to_string();
                     if !q.is_empty() {
@@ -570,16 +566,16 @@ impl App {
                             ui.end_row();
                         }
                     }
-                    ui.label("Notes");
+                    ui.label(crate::i18n::tr("Notes"));
                     ui.add(egui::TextEdit::multiline(&mut m.notes).desired_rows(3).desired_width(260.0));
                     ui.end_row();
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(!m.name.trim().is_empty(), egui::Button::new("Save")).clicked() {
+                    if ui.add_enabled(!m.name.trim().is_empty(), egui::Button::new(crate::i18n::tr("Save"))).clicked() {
                         done = true;
                     }
-                    if i != usize::MAX && ui.button("Delete this match").clicked() {
+                    if i != usize::MAX && ui.button(crate::i18n::tr("Delete this match")).clicked() {
                         delete = true;
                     }
                 });
@@ -606,15 +602,15 @@ impl App {
         if let Some((file, rows, mut cols)) = self.x.line.import.take() {
             let mut open = true;
             let mut add: Option<Vec<LineMatch>> = None;
-            egui::Window::new("Import matches").open(&mut open).default_width(560.0).show(ctx, |ui| {
-                ui.label(format!("{}: {} row(s)", file, rows.len().saturating_sub(1)));
+            egui::Window::new(crate::i18n::tr("Import matches")).open(&mut open).default_width(560.0).show(ctx, |ui| {
+                ui.label(crate::i18n::trf("{}: {} row(s)", &["", ": ", " row(s)"], &[(file).to_string(), (rows.len().saturating_sub(1)).to_string()]));
                 let headers = rows[0].clone();
                 egui::Grid::new("line_imp").num_columns(2).spacing([10.0, 4.0]).show(ui, |ui| {
                     for (fi, f) in LINE_FIELDS.iter().enumerate() {
-                        ui.label(*f);
+                        ui.label(crate::i18n::trv(*f));
                         let shown = cols[fi].and_then(|c| headers.get(c)).cloned().unwrap_or_else(|| "(not in this file)".to_string());
                         egui::ComboBox::from_id_salt(("line_imp_col", fi)).selected_text(shown).width(240.0).show_ui(ui, |ui| {
-                            if ui.selectable_label(cols[fi].is_none(), "(not in this file)").clicked() {
+                            if ui.selectable_label(cols[fi].is_none(), crate::i18n::tr("(not in this file)")).clicked() {
                                 cols[fi] = None;
                             }
                             for (ci, h) in headers.iter().enumerate() {
@@ -633,14 +629,14 @@ impl App {
                     for m in found.iter_mut() {
                         m.compared = lv.clone();
                     }
-                    ui.label(RichText::new(format!("The file has no markers column, so each match is marked as compared at your test level ({}).", level)).small().weak());
+                    ui.label(RichText::new(crate::i18n::trf("The file has no markers column, so each match is marked as compared at your test level ({}).", &["The file has no markers column, so each match is marked as compared at your test level (", ")."], &[(level).to_string()])).small().weak());
                 }
                 let have: HashSet<String> = self.db.dna[si].line.matches.iter().map(|m| m.name.to_lowercase()).collect();
                 let new: Vec<LineMatch> = found.into_iter().filter(|m| !have.contains(&m.name.to_lowercase())).collect();
                 for m in new.iter().take(5) {
                     ui.label(RichText::new(format!("{} \u{00B7} distance {} \u{00B7} {} \u{00B7} {}", m.name, m.distance.map(|d| d.to_string()).unwrap_or_default(), m.haplogroup, m.ancestor)).small());
                 }
-                if ui.add_enabled(!new.is_empty(), egui::Button::new(format!("Add {} match(es)", new.len()))).clicked() {
+                if ui.add_enabled(!new.is_empty(), egui::Button::new(crate::i18n::trf("Add {} match(es)", &["Add ", " match(es)"], &[(new.len()).to_string()]))).clicked() {
                     add = Some(new);
                 }
             });

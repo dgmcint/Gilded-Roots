@@ -443,16 +443,16 @@ impl App {
         let mut save: Option<(u32, Born, Age)> = None;
         let mut load: Option<u32> = None;
         let sel = self.sel;
-        egui::Window::new("Tombstone calculator").open(&mut open).resizable(false).default_width(470.0).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Tombstone calculator")).open(&mut open).resizable(false).default_width(470.0).show(ctx, |ui| {
             let t = &mut self.x.tomb;
-            ui.label("Works out a birth date from the death date and the age carved on a gravestone.");
+            ui.label(crate::i18n::tr("Works out a birth date from the death date and the age carved on a gravestone."));
             ui.add_space(4.0);
             ui.horizontal(|ui| {
                 let name = t.who.and_then(|i| self.db.people.get(&i)).map(display_name).unwrap_or_else(|| "Nobody chosen (the answer can't be saved)".to_string());
-                ui.label(RichText::new("Person:").strong());
+                ui.label(RichText::new(crate::i18n::tr("Person:")).strong());
                 ui.label(name);
                 if let Some(s) = sel {
-                    if t.who != Some(s) && ui.small_button("Use the person I'm looking at").clicked() {
+                    if t.who != Some(s) && ui.small_button(crate::i18n::tr("Use the person I'm looking at")).clicked() {
                         load = Some(s);
                     }
                 }
@@ -460,56 +460,56 @@ impl App {
             ui.separator();
             egui::Grid::new("tomb_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
                 ui.label(if t.from_burial { "Burial date" } else { "Death date" });
-                ui.add(egui::TextEdit::singleline(&mut t.death).hint_text("e.g. 14 Mar 1872").desired_width(200.0));
+                ui.add(egui::TextEdit::singleline(&mut t.death).hint_text(crate::i18n::tr("e.g. 14 Mar 1872")).desired_width(200.0));
                 ui.end_row();
-                ui.label("The stone says");
+                ui.label(crate::i18n::tr("The stone says"));
                 ui.horizontal(|ui| {
                     ui.radio_value(&mut t.nth, false, "aged...");
-                    ui.radio_value(&mut t.nth, true, "in his or her ...th year");
+                    ui.radio_value(&mut t.nth, true, crate::i18n::tr("in his or her ...th year"));
                 });
                 ui.end_row();
                 if t.nth {
-                    ui.label("Year of life");
+                    ui.label(crate::i18n::tr("Year of life"));
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut t.years).hint_text("e.g. 73").desired_width(64.0));
+                        ui.add(egui::TextEdit::singleline(&mut t.years).hint_text(crate::i18n::tr("e.g. 73")).desired_width(64.0));
                         if let Ok(n) = t.years.trim().parse::<u32>() {
                             if n > 0 {
-                                ui.label(RichText::new(format!("\"in the {} year\" means aged {}", ordinal(n), n - 1)).weak());
+                                ui.label(RichText::new(crate::i18n::trf("\"in the {} year\" means aged {}", &["\"in the ", " year\" means aged ", ""], &[(ordinal(n)).to_string(), (n - 1).to_string()])).weak());
                             }
                         }
                     });
                 } else {
-                    ui.label("Age");
+                    ui.label(crate::i18n::tr("Age"));
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut t.years).hint_text("e.g. 72").desired_width(64.0));
+                        ui.add(egui::TextEdit::singleline(&mut t.years).hint_text(crate::i18n::tr("e.g. 72")).desired_width(64.0));
                         ui.label("years");
-                        ui.add(egui::TextEdit::singleline(&mut t.months).hint_text("e.g. 3").desired_width(56.0));
+                        ui.add(egui::TextEdit::singleline(&mut t.months).hint_text(crate::i18n::tr("e.g. 3")).desired_width(56.0));
                         ui.label("months");
-                        ui.add(egui::TextEdit::singleline(&mut t.days).hint_text("e.g. 14").desired_width(56.0));
+                        ui.add(egui::TextEdit::singleline(&mut t.days).hint_text(crate::i18n::tr("e.g. 14")).desired_width(56.0));
                         ui.label("days");
                     });
                 }
                 ui.end_row();
             });
             if !t.nth {
-                ui.label(RichText::new("Leave months and days empty if the stone gives years only.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Leave months and days empty if the stone gives years only.")).small().weak());
             }
             ui.separator();
             let age = t.age();
             let ans = age.as_ref().and_then(|a| birth(&t.death, a));
             match (&age, &ans) {
                 (None, _) if !t.years.trim().is_empty() || !t.months.trim().is_empty() || !t.days.trim().is_empty() => {
-                    ui.colored_label(egui::Color32::from_rgb(220, 120, 40), "Type the age as whole numbers.");
+                    ui.colored_label(egui::Color32::from_rgb(220, 120, 40), crate::i18n::tr("Type the age as whole numbers."));
                 }
                 (None, _) => {
-                    ui.label(RichText::new("Type the age from the stone to see the birth date.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Type the age from the stone to see the birth date.")).italics().weak());
                 }
                 (Some(_), None) => {
-                    ui.colored_label(egui::Color32::from_rgb(220, 120, 40), "Type a death date with at least a year (for example 14 Mar 1872).");
+                    ui.colored_label(egui::Color32::from_rgb(220, 120, 40), crate::i18n::tr("Type a death date with at least a year (for example 14 Mar 1872)."));
                 }
                 (Some(a), Some(b)) => {
-                    ui.label(RichText::new(format!("Born {}", b.words())).size(18.0).strong());
-                    ui.label(RichText::new(format!("Saved in the tree as: {}", b.ged())).weak());
+                    ui.label(RichText::new(crate::i18n::trf("Born {}", &["Born ", ""], &[(b.words()).to_string()])).size(18.0).strong());
+                    ui.label(RichText::new(crate::i18n::trf("Saved in the tree as: {}", &["Saved in the tree as: ", ""], &[(b.ged()).to_string()])).weak());
                     if !b.exact() {
                         ui.label(RichText::new(if a.days.is_none() && a.months.is_none() {
                             "An age in whole years means the person had passed that birthday but not the next one, so the birth falls in a one-year window."
@@ -524,12 +524,12 @@ impl App {
                         if let Some(p) = self.db.people.get(&id) {
                             ui.add_space(6.0);
                             ui.horizontal(|ui| {
-                                ui.label("Source");
+                                ui.label(crate::i18n::tr("Source"));
                                 ui.add(egui::TextEdit::singleline(&mut t.source).desired_width(330.0));
                             });
                             let has = !p.bd.trim().is_empty();
                             if has {
-                                ui.checkbox(&mut t.replace, format!("Replace the birth date already there ({})", p.bd.trim()));
+                                ui.checkbox(&mut t.replace, crate::i18n::trf("Replace the birth date already there ({})", &["Replace the birth date already there (", ")"], &[(p.bd.trim()).to_string()]));
                             }
                             let label = format!("Save as {}'s birth date", display_name(p));
                             if ui.add_enabled(!has || t.replace, egui::Button::new(label)).clicked() {

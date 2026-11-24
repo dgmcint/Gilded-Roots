@@ -295,9 +295,9 @@ pub(crate) fn map_colours(dark: bool) -> (Color32, Color32, Color32, Color32) {
 /// A small "Map style" picker; true when the style changed.
 pub(crate) fn style_picker(ui: &mut egui::Ui, style: &mut u8) -> bool {
     let mut changed = false;
-    egui::ComboBox::from_id_salt(("map_style", ui.id())).selected_text(MAP_STYLES.get(*style as usize).copied().unwrap_or(MAP_STYLES[0])).width(120.0).show_ui(ui, |ui| {
+    egui::ComboBox::from_id_salt(("map_style", ui.id())).selected_text(crate::i18n::trv(MAP_STYLES.get(*style as usize).copied().unwrap_or(MAP_STYLES[0]))).width(120.0).show_ui(ui, |ui| {
         for (i, n) in MAP_STYLES.iter().enumerate() {
-            if ui.selectable_label(*style as usize == i, *n).clicked() {
+            if ui.selectable_label(*style as usize == i, crate::i18n::trv(*n)).clicked() {
                 *style = i as u8;
                 changed = true;
             }
@@ -520,19 +520,19 @@ impl App {
         let pins = &shown.pins;
         // controls
         ui.horizontal_wrapped(|ui| {
-            ui.label("Show");
+            ui.label(crate::i18n::tr("Show"));
             for (k, l) in [(0u8, "This person"), (1, "Ancestors"), (2, "Descendants"), (3, "Everyone")] {
-                if ui.selectable_label(self.x.map_who == k, l).clicked() {
+                if ui.selectable_label(self.x.map_who == k, crate::i18n::trv(l)).clicked() {
                     self.x.map_who = k;
                     self.x.map_fit = true;
                     self.x.map_pick = None;
                 }
             }
             ui.separator();
-            ui.label("Surname");
+            ui.label(crate::i18n::tr("Surname"));
             let names: Vec<String> = shown.names.to_vec();
             egui::ComboBox::from_id_salt("map_sn").selected_text(if self.x.map_surname.is_empty() { "All".to_string() } else { self.x.map_surname.clone() }).width(130.0).show_ui(ui, |ui| {
-                if ui.selectable_label(self.x.map_surname.is_empty(), "All").clicked() {
+                if ui.selectable_label(self.x.map_surname.is_empty(), crate::i18n::tr("All")).clicked() {
                     self.x.map_surname.clear();
                     self.x.map_fit = true;
                 }
@@ -548,32 +548,32 @@ impl App {
                 let col = Color32::from_rgb(c[0], c[1], c[2]);
                 let (r, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
                 ui.painter().circle_filled(r.center(), 5.0, col);
-                ui.checkbox(&mut self.x.map_types[i], *l);
+                ui.checkbox(&mut self.x.map_types[i], crate::i18n::trv(*l));
             }
         });
         ui.horizontal_wrapped(|ui| {
-            ui.label("Up to the year");
+            ui.label(crate::i18n::tr("Up to the year"));
             let r = ui.add(egui::Slider::new(&mut self.x.map_year, y0..=y1).clamping(egui::SliderClamping::Always));
             if r.changed() {
                 self.x.map_play = false;
             }
-            if ui.button(if self.x.map_play { "Pause" } else { "Play" }).on_hover_text("Watch the family move through the years").clicked() {
+            if ui.button(if self.x.map_play { "Pause" } else { "Play" }).on_hover_text(crate::i18n::tr("Watch the family move through the years")).clicked() {
                 if !self.x.map_play && self.x.map_year >= y1 {
                     self.x.map_year = y0;
                 }
                 self.x.map_play = !self.x.map_play;
             }
-            ui.checkbox(&mut self.x.map_undated, "Include places with no date");
+            ui.checkbox(&mut self.x.map_undated, crate::i18n::tr("Include places with no date"));
             ui.separator();
-            if ui.button("Fit to pins").clicked() {
+            if ui.button(crate::i18n::tr("Fit to pins")).clicked() {
                 self.x.map_fit = true;
             }
-            if ui.button("World").clicked() {
+            if ui.button(crate::i18n::tr("World")).clicked() {
                 self.x.map_center = [0.0, 20.0];
                 self.x.map_zoom = 2.5;
             }
             ui.separator();
-            ui.label("Map style");
+            ui.label(crate::i18n::tr("Map style"));
             if style_picker(ui, &mut self.settings.map_style) {
                 save_settings(&self.settings);
             }
@@ -600,7 +600,7 @@ impl App {
                     if let Some(first) = here.first() {
                         ui.label(RichText::new(pins[first.0].place.as_str()).size(16.0).strong());
                         if first.2 == Prec::State || first.2 == Prec::Country {
-                            ui.label(RichText::new("Shown in the middle of the state or country: the town was not found.").small().weak());
+                            ui.label(RichText::new(crate::i18n::tr("Shown in the middle of the state or country: the town was not found.")).small().weak());
                         }
                         let mut rows: Vec<&Pin> = here.iter().map(|x| &pins[x.0]).collect();
                         rows.sort_by_key(|p| p.year.unwrap_or(i32::MAX));
@@ -616,17 +616,17 @@ impl App {
                             });
                         }
                         ui.add_space(4.0);
-                        if ui.small_button("Move this place on the map...").clicked() {
+                        if ui.small_button(crate::i18n::tr("Move this place on the map...")).clicked() {
                             self.x.map_setting = Some(pins[first.0].place.clone());
                         }
                         ui.separator();
                     }
                 }
-                ui.label(RichText::new(format!("{} pin(s) on the map", placed.len())).strong());
+                ui.label(RichText::new(crate::i18n::trf("{} pin(s) on the map", &["", " pin(s) on the map"], &[(placed.len()).to_string()])).strong());
                 if !missing.is_empty() {
                     ui.add_space(6.0);
-                    ui.label(RichText::new(format!("Not found ({})", missing.len())).strong());
-                    ui.label(RichText::new("Pick one, then click where it is on the map.").small().weak());
+                    ui.label(RichText::new(crate::i18n::trf("Not found ({})", &["Not found (", ")"], &[(missing.len()).to_string()])).strong());
+                    ui.label(RichText::new(crate::i18n::tr("Pick one, then click where it is on the map.")).small().weak());
                     for (pl, n) in missing {
                         let on = self.x.map_setting.as_deref() == Some(pl.as_str());
                         if ui.selectable_label(on, format!("{} ({})", pl, n)).clicked() {
@@ -635,7 +635,7 @@ impl App {
                     }
                 }
                 ui.add_space(8.0);
-                ui.label(RichText::new("Map data: Natural Earth. Town names: GeoNames (CC BY 4.0).").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Map data: Natural Earth. Town names: GeoNames (CC BY 4.0).")).small().weak());
             });
         });
         egui::CentralPanel::default().show_inside(ui, |ui| {
@@ -773,7 +773,7 @@ impl App {
                         self.x.next_label = Some(format!("Placed \"{}\" on the map", setting.trim()));
                         self.dirty = true;
                         self.x.map_setting = None;
-                        self.status = format!("\"{}\" is now on the map. Edit > Undo takes it back.", setting.trim());
+                        self.status = crate::i18n::trf("\"{}\" is now on the map. Edit > Undo takes it back.", &["\"", "\" is now on the map. Edit > Undo takes it back."], &[(setting.trim()).to_string()]);
                     }
                 }
             } else if let Some(k2) = clicked_group {
