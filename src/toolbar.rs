@@ -291,6 +291,7 @@ pub(crate) fn tool_row(ui: &mut egui::Ui, which: &str, tools: &[Tool], settings:
             let tw = galley.as_ref().map_or(0.0, |g| g.size().x + 6.0);
             let size = vec2(isz + pad * 2.0 + tw, isz + pad * 2.0);
             let (rect, resp) = ui.allocate_exact_size(size, if t.enabled { Sense::click() } else { Sense::hover() });
+            crate::tour::mark(t.id, rect);
             let vis = ui.visuals();
             let fill = if t.on {
                 vis.selection.bg_fill

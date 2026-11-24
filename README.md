@@ -116,7 +116,8 @@ conflict with saves.
 
 ## Documentation
 
-- [User guide](docs/USER_GUIDE.md): the menus and tools, step by step
+- [User guide](docs/USER_GUIDE.md): getting started, then every menu and tool, step by step (also built in: press F1)
+- In the program, **Help > Guided tour** walks you through the basics on a practice family
 - [Changelog](CHANGELOG.md): what has been built
 - [Contributing](CONTRIBUTING.md): building, testing and project layout
 

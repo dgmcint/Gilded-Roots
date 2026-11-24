@@ -118,6 +118,11 @@ def collect():
             value = literal_value(text)
             if not re.match(r"[A-Z0-9(<+.\"]", value) or re.search(r"[&=@]", value) or "{" in value and "}" in value and not re.search(r"[a-z]{3,} [a-z]{2,}", value):
                 continue  # list entries shown on screen start with a capital letter; skip data and code
+            # a field of a list of lessons or steps (the guided tour): title: "...", text: "..."
+            prev2 = src[ct[k-2][1]:ct[k-2][2]] if k > 1 else ""
+            if fn == "tour.rs" and prev == ":" and prev2 in ("title", "about", "text"):
+                found.setdefault(value, f"{fn}:{line_at(a)}")
+                continue
             if prev == "=>" or (stack and not stack[-1][1] and stack[-1][0] in "([") :
                 found.setdefault(literal_value(text), f"{fn}:{line_at(a)}")
     return found

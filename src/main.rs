@@ -62,13 +62,13 @@ mod tools;
 mod notes;
 mod templates;
 mod i18n;
+mod tour;
 #[cfg(test)]
 mod bigtree;
 pub(crate) use model::*;
 pub(crate) use genealogy::*;
 pub(crate) use settings::*;
 pub(crate) use storage::*;
-pub(crate) use help::*;
 pub(crate) use media::*;
 pub(crate) use reports::*;
 pub(crate) use app::*;

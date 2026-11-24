@@ -354,7 +354,15 @@ impl App {
                 ui.label(RichText::new(crate::i18n::tr("Welcome to Gilded Roots")).size(30.0).strong());
                 ui.label(RichText::new(crate::i18n::tr("Your family history, kept on your own computer.")).size(16.0));
                 ui.label(RichText::new(crate::i18n::tr("No account. No subscription. No advertising. Nothing is uploaded anywhere.")).weak());
-                ui.add_space(18.0);
+                ui.add_space(14.0);
+                let tour = egui::Button::new(RichText::new(crate::i18n::tr("New to Gilded Roots? Take the guided tour")).size(16.0).strong())
+                    .stroke(Stroke::new(2.0_f32, Color32::from_rgb(232, 178, 40)))
+                    .rounding(8.0)
+                    .min_size(vec2(0.0, 34.0));
+                if ui.add(tour).on_hover_text(crate::i18n::tr("Short step-by-step lessons on the sample family. The program shows you what to press, and nothing is saved.")).clicked() {
+                    self.x.tour_list = true;
+                }
+                ui.add_space(14.0);
                 ui.label(RichText::new(crate::i18n::tr("How would you like to get started?")).size(18.0));
                 ui.add_space(10.0);
             });

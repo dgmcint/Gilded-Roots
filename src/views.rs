@@ -712,6 +712,9 @@ impl App {
                         Some(id) => {
                             let p = &self.db.people[&id];
                             let r2 = ui.interact(rect, egui::Id::new(("ped", g, i)), Sense::click());
+                            if g == 1 && i == 0 {
+                                crate::tour::mark("ped_father", rect.intersect(ui.clip_rect()));
+                            }
                             let is_sel = g == 0;
                             let is_hl = self.hl == Some(id) && !is_sel;
                             let fill = if is_sel {
