@@ -14,30 +14,37 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Mutex, OnceLock};
 
-/// The languages offered, as (code, name in that language, English name).
-pub(crate) const LANGUAGES: &[(&str, &str, &str)] = &[
-    ("en", "English", "English"),
-    ("cs", "Čeština", "Czech"),
-    ("cy", "Cymraeg", "Welsh"),
-    ("da", "Dansk", "Danish"),
-    ("de", "Deutsch", "German"),
-    ("es", "Español", "Spanish"),
-    ("fr", "Français", "French"),
-    ("it", "Italiano", "Italian"),
-    ("hu", "Magyar", "Hungarian"),
-    ("nl", "Nederlands", "Dutch"),
-    ("nb", "Norsk", "Norwegian"),
-    ("pl", "Polski", "Polish"),
-    ("pt", "Português", "Portuguese"),
-    ("fi", "Suomi", "Finnish"),
-    ("sv", "Svenska", "Swedish"),
-    ("tl", "Tagalog", "Tagalog"),
-    ("ru", "Русский", "Russian"),
-    ("uk", "Українська", "Ukrainian"),
-    ("ja", "日本語", "Japanese"),
-    ("zh", "中文（简体）", "Chinese (Simplified)"),
-    ("ko", "한국어", "Korean"),
+/// Every language the program knows, as (code, name in that language, English name, finished).
+/// Only finished ones are offered in View > Language; the rest are kept for a later version
+/// (their translation files are in lang/ and can be filled in at any time).
+pub(crate) const LANGUAGES: &[(&str, &str, &str, bool)] = &[
+    ("en", "English", "English", true),
+    ("cs", "Čeština", "Czech", false),
+    ("cy", "Cymraeg", "Welsh", false),
+    ("da", "Dansk", "Danish", false),
+    ("de", "Deutsch", "German", true),
+    ("es", "Español", "Spanish", true),
+    ("fr", "Français", "French", true),
+    ("it", "Italiano", "Italian", true),
+    ("hu", "Magyar", "Hungarian", false),
+    ("nl", "Nederlands", "Dutch", true),
+    ("nb", "Norsk", "Norwegian", true),
+    ("pl", "Polski", "Polish", false),
+    ("pt", "Português", "Portuguese (Brazil)", true),
+    ("fi", "Suomi", "Finnish", false),
+    ("sv", "Svenska", "Swedish", true),
+    ("tl", "Tagalog", "Tagalog", false),
+    ("ru", "Русский", "Russian", false),
+    ("uk", "Українська", "Ukrainian", false),
+    ("ja", "日本語", "Japanese", false),
+    ("zh", "中文（简体）", "Chinese (Simplified)", false),
+    ("ko", "한국어", "Korean", false),
 ];
+
+/// The languages shown in View > Language.
+pub(crate) fn offered() -> impl Iterator<Item = &'static (&'static str, &'static str, &'static str, bool)> {
+    LANGUAGES.iter().filter(|l| l.3)
+}
 
 /// The translation files, built into the program.
 fn file_for(code: &str) -> Option<&'static str> {

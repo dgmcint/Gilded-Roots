@@ -213,12 +213,14 @@ impl App {
                     ui.menu_button(crate::i18n::tr("Language"), |ui| {
                         // Each language is shown in its own words, so it can be found by someone
                         // who does not read the one the program is in now.
-                        // The Japanese, Chinese and Korean names need those fonts to show.
-                        crate::i18n::add_asian_fonts(ctx);
+                        // Japanese, Chinese and Korean names in this list need those fonts to show.
+                        if crate::i18n::offered().any(|l| matches!(l.0, "ja" | "zh" | "ko")) {
+                            crate::i18n::add_asian_fonts(ctx);
+                        }
                         let cur = if self.settings.language.is_empty() { "en" } else { self.settings.language.as_str() };
                         let mut pick = None;
                         egui::ScrollArea::vertical().max_height(480.0).show(ui, |ui| {
-                            for &(code, own, english) in crate::i18n::LANGUAGES {
+                            for &(code, own, english, _) in crate::i18n::offered() {
                                 let text = if own == english { own.to_string() } else { format!("{own}  ({english})") };
                                 if ui.selectable_label(cur == code, text).clicked() {
                                     pick = Some(code);

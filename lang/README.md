@@ -20,6 +20,7 @@ If the parts of a translation do not match the English, the program shows the En
 
 Census forms stay in English on purpose: they copy the real US, Canada and UK forms.
 
-The language is chosen in View > Language. Japanese, Chinese and Korean use the fonts that come
+The language is chosen in View > Language. Only languages marked as finished in
+src/i18n.rs (LANGUAGES) are offered there; set a language's last value to true once it is done. Japanese, Chinese and Korean use the fonts that come
 with the computer (Hiragino/Heiti/Apple SD Gothic on a Mac, Yu Gothic/YaHei/Malgun Gothic on
 Windows, Noto Sans CJK on Linux).

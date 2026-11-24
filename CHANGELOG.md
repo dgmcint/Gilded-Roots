@@ -2,16 +2,15 @@
 
 Major work so far, in the order it was done.
 
-## Coming next: languages (work in progress)
+## Coming next: languages
 
-- **Languages:** View > Language chooses the program's language from 21 (English, Czech, Welsh,
-  Danish, German, Spanish, French, Italian, Hungarian, Dutch, Norwegian, Polish, Portuguese,
-  Finnish, Swedish, Tagalog, Russian, Ukrainian, Japanese, Chinese and Korean), each listed in its
-  own words. It changes at once, and is remembered. The groundwork is done: menus, buttons, tabs,
-  toolbars, windows, tooltips and messages can all be translated, and anything not translated yet
-  stays in English. The translations themselves are being added.
-- Japanese, Chinese and Korean letters now show, in names as well as in the program, using the
-  fonts that come with the computer.
+- **Languages:** View > Language puts the whole program into English, German, Spanish, French,
+  Italian, Dutch, Norwegian, Brazilian Portuguese or Swedish, each listed in its own words. It
+  changes at once and is remembered. Menus, buttons, tabs, toolbars, windows, tooltips and messages
+  are all translated. (Census forms stay in English, as they copy the real forms.) More languages
+  are prepared and will follow in a later version.
+- Japanese, Chinese and Korean letters in names now show, using the fonts that come with the
+  computer.
 
 ## 1.0.5 (13 November 2026)
 
