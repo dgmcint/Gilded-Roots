@@ -219,7 +219,7 @@ pub(crate) fn add_asian_fonts(ctx: &eframe::egui::Context) {
         return;
     }
     let _ = ASIAN_DONE.set(());
-    use eframe::egui::{FontData, FontDefinitions, FontFamily};
+    use eframe::egui::FontData;
     // (path, index in a font collection). The first one found for each language is used.
     let groups: &[&[(&str, u32)]] = &[
         // Japanese
@@ -252,7 +252,7 @@ pub(crate) fn add_asian_fonts(ctx: &eframe::egui::Context) {
             ("/usr/share/fonts/truetype/nanum/NanumGothic.ttf", 0),
         ],
     ];
-    let mut defs = FontDefinitions::default();
+    let mut found: Vec<(String, FontData)> = Vec::new();
     let mut added = Vec::new();
     let mut seen: Vec<(&str, u32)> = Vec::new();
     for (gi, group) in groups.iter().enumerate() {
@@ -264,7 +264,7 @@ pub(crate) fn add_asian_fonts(ctx: &eframe::egui::Context) {
                 let name = format!("system-asian-{gi}");
                 let mut fd = FontData::from_owned(bytes);
                 fd.index = index;
-                defs.font_data.insert(name.clone(), fd);
+                found.push((name.clone(), fd));
                 added.push(name);
                 seen.push((path, index));
                 break;
@@ -280,12 +280,10 @@ pub(crate) fn add_asian_fonts(ctx: &eframe::egui::Context) {
     } else if language() == "ko" {
         added.rotate_right(1);
     }
-    for fam in [FontFamily::Proportional, FontFamily::Monospace] {
-        if let Some(list) = defs.families.get_mut(&fam) {
-            list.extend(added.iter().cloned());
-        }
-    }
-    ctx.set_fonts(defs);
+    // in that order, after the main fonts
+    let ordered: Vec<(String, FontData)> = added.iter().filter_map(|n| found.iter().find(|f| &f.0 == n).cloned()).collect();
+    crate::look::add_fallback_fonts(ordered);
+    crate::look::install_fonts(ctx);
 }
 
 /// True every few seconds until the Asian fonts have been added (to look for such names then).

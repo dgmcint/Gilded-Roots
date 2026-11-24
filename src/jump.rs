@@ -23,10 +23,32 @@ impl App {
             if i.consume_key(M::COMMAND | M::CTRL, Key::F) {
                 v.push(11);
             }
+            // Settings (Cmd+, on a Mac, Ctrl+, elsewhere), Print, and Quit (Ctrl+Q on Linux;
+            // a Mac's Cmd+Q is handled by its own menu)
+            if i.consume_key(M::COMMAND, Key::Comma) {
+                v.push(100);
+            }
+            if i.consume_key(M::COMMAND, Key::P) {
+                v.push(101);
+            }
+            if !cfg!(target_os = "windows") && i.consume_key(M::COMMAND, Key::Q) {
+                v.push(102);
+            }
             v
         });
         for n in pressed {
             match n {
+                100 => self.x.settings_open = !self.x.settings_open,
+                101 => {
+                    *act = Some(match self.view {
+                        View::Pedigree => Action::PrintPedigree,
+                        View::Family => Action::PrintFamily,
+                        View::Descendants => Action::PrintDescendants,
+                        View::Charts => Action::PrintChart,
+                        _ => Action::ReportBook,
+                    })
+                }
+                102 => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
                 1 => self.help_open = !self.help_open,
                 2 if self.sel.is_some() && self.editing.is_none() => *act = Some(Action::EditStart),
                 3 => self.find_open = true,

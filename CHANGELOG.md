@@ -2,6 +2,18 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: at home on a Mac and on Linux
+
+- **Settings window:** Edit > Settings... (Cmd+, on a Mac, Ctrl+, elsewhere) gathers the choices that were spread
+  over the menus: appearance, font, language, names and dates, charts, toolbars, printing and privacy, the tree,
+  backups and the microphone.
+- **The computer's own font:** San Francisco on a Mac, Segoe UI on Windows, the desktop's font on Linux, with the
+  program's own font still there for symbols. Settings can switch back to the built-in font.
+- **Shortcuts in the menus,** on the right and written the computer's way (⌘Z on a Mac, Ctrl+Z elsewhere; Strg in
+  German). New: Cmd/Ctrl+P prints what the tab shows; Quit Gilded Roots with Cmd+Q (Mac) or Ctrl+Q (Linux).
+- **Tidier spacing:** roomier buttons, menus and windows.
+- **Linux:** the window now matches its desktop entry, so the dock shows the Gilded Roots icon.
+
 ## Coming next: help and the guided tour
 
 - **Tutorials and a guided tour** (Help > Tutorials, and on the welcome screen): seven short lessons on the sample

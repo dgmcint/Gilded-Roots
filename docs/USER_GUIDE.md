@@ -725,6 +725,20 @@ Hover over a button to see its name and shortcut. Right-click a toolbar to show 
 use large buttons, choose which buttons it shows, or hide it. **View** has **Show main toolbar** and **Show tab
 toolbars** (each on its own), and the same word and size choices. Your choices are remembered.
 
+## Settings
+**Edit → Settings...** (**Cmd+,** on a Mac, **Ctrl+,** on Windows and Linux) gathers the choices in one window, with
+the pages down the left:
+- **Appearance:** colour scheme, accent colour, dark background, text size, and the **font**: the computer's own
+  (San Francisco on a Mac, Segoe UI on Windows, your desktop's font on Linux) or the one built into Gilded Roots.
+- **Language**, **Names and dates**, **Charts** (generations, what chart boxes show, profile photo size),
+  **Toolbars**, **Printing and privacy** (keep living people private, US Letter or A4 paper), and **Tree, backups
+  and microphone**.
+The same choices are still in the View and Reports menus. Everything is saved as you change it.
+
+Menus show each command's shortcut on the right, written the way your computer writes them (⌘Z on a Mac, Ctrl+Z
+on Windows and Linux). **Quit Gilded Roots** is **Cmd+Q** on a Mac and **Ctrl+Q** on Linux; on Windows it is
+**Exit** (Alt+F4).
+
 ## View options and text
 - **View → Text size:** Small to Largest; makes every word and button bigger or smaller.
 - **View → Names:** "John Henry Smith", "SMITH, John Henry" or "Smith, John Henry".
@@ -749,7 +763,8 @@ More languages are coming.
 - **F5** fit the chart to the window · **F6** next tab · **F7** data checker · **F8** research to-do list
 - **F9** places · **F11** full screen · **F12** history of changes
 - **Ctrl/Cmd+1 to 9** Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map, DNA
-- **Ctrl/Cmd+K** quick jump · **Ctrl/Cmd+Z** undo · **Ctrl/Cmd+Y** redo · **Ctrl/Cmd+D** repeat the last date or place
+- **Ctrl/Cmd+K** quick jump · **Ctrl/Cmd+Z** undo · **Ctrl/Cmd+Y** redo (Mac: **Shift+Cmd+Z**) · **Ctrl/Cmd+D** repeat the last date or place
+- **Ctrl/Cmd+,** settings · **Ctrl/Cmd+P** print what the tab shows · **Ctrl/Cmd+Q** quit (Mac and Linux)
 - **Arrow keys** move around the chart · **Home** goes to the home person · **Ctrl/Cmd + / -** zoom · **H** hand tool
 - On a Mac the top-row keys control brightness and volume. Hold **fn** to use them as F keys, or use
   **Cmd+?** for help and **Ctrl+Cmd+F** for full screen.

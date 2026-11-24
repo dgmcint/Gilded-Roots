@@ -1544,6 +1544,7 @@ dependencies = [
 name = "gilded-roots"
 version = "1.0.6"
 dependencies = [
+ "ab_glyph",
  "cpal",
  "eframe",
  "egui_extras",

@@ -106,6 +106,9 @@ pub(crate) struct QuickEdit {
 /// Screen state for the newer tools (kept together so App's long constructor stays readable).
 #[derive(Default)]
 pub(crate) struct Extra {
+    /// The Settings window (Cmd+, / Ctrl+,) and the page it shows.
+    pub(crate) settings_open: bool,
+    pub(crate) settings_page: usize,
     /// The People tab's toolbar asked for the rows to be saved as a spreadsheet.
     pub(crate) csv_req: bool,
     /// A file read for importing, waiting in the Import options window, and the choices there.

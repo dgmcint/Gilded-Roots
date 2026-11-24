@@ -68,32 +68,32 @@ impl App {
                     }
                     {
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-                        if ui.button(if fs { crate::i18n::tr("Leave full screen        F11") } else { crate::i18n::tr("Full screen        F11 (Mac: Ctrl+Cmd+F)") }).clicked() {
+                        if ui.add(menu_item(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }, if MAC { "Ctrl+Cmd+F" } else { "F11" })).clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fs));
                             ui.close_menu();
                         }
                     }
                     ui.separator();
-                    if ui.add_enabled(self.sel.is_some(), egui::Button::new(crate::i18n::tr("Print pedigree chart..."))).clicked() {
+                    if ui.add_enabled(self.sel.is_some(), menu_item(crate::i18n::tr("Print pedigree chart..."), if self.view == View::Pedigree { "Cmd+P" } else { "" })).clicked() {
                         act = Some(Action::PrintPedigree);
                         ui.close_menu();
                     }
-                    if ui.add_enabled(self.sel.is_some(), egui::Button::new(crate::i18n::tr("Print family group sheet..."))).clicked() {
+                    if ui.add_enabled(self.sel.is_some(), menu_item(crate::i18n::tr("Print family group sheet..."), if self.view == View::Family { "Cmd+P" } else { "" })).clicked() {
                         act = Some(Action::PrintFamily);
                         ui.close_menu();
                     }
                     ui.separator();
-                    if ui.button(crate::i18n::tr("Exit")).clicked() {
+                    if ui.add(egui::Button::new(quit_label()).shortcut_text(quit_keys())).clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
                 crate::tour::mark("menu:File", mr.response.rect);
                 ui.menu_button(crate::i18n::tr("Edit"), |ui| {
-                    if ui.add_enabled(!self.undo.is_empty(), egui::Button::new(crate::i18n::tr("Undo"))).clicked() {
+                    if ui.add_enabled(!self.undo.is_empty(), menu_item(crate::i18n::tr("Undo"), "Cmd+Z")).clicked() {
                         self.undo_action();
                         ui.close_menu();
                     }
-                    if ui.add_enabled(!self.redo.is_empty(), egui::Button::new(crate::i18n::tr("Redo"))).clicked() {
+                    if ui.add_enabled(!self.redo.is_empty(), menu_item(crate::i18n::tr("Redo"), if MAC { "Cmd+Shift+Z" } else { "Cmd+Y" })).clicked() {
                         self.redo_action();
                         ui.close_menu();
                     }
@@ -109,6 +109,11 @@ impl App {
                     ui.separator();
                     if ui.button(crate::i18n::tr("Edit individual")).clicked() {
                         self.view = View::Person;
+                        ui.close_menu();
+                    }
+                    ui.separator();
+                    if ui.add(menu_item(crate::i18n::tr("Settings..."), "Cmd+,")).clicked() {
+                        self.x.settings_open = true;
                         ui.close_menu();
                     }
                 });
@@ -140,11 +145,11 @@ impl App {
                     }
                 });
                 ui.menu_button(crate::i18n::tr("View"), |ui| {
-                    if ui.button(crate::i18n::tr("Go to home person")).clicked() {
+                    if ui.add(menu_item(crate::i18n::tr("Go to home person"), "Home")).clicked() {
                         act = Some(Action::GoHome);
                         ui.close_menu();
                     }
-                    if ui.button(crate::i18n::tr("Fit chart to window")).clicked() {
+                    if ui.add(menu_item(crate::i18n::tr("Fit chart to window"), "F5")).clicked() {
                         act = Some(Action::Fit);
                         ui.close_menu();
                     }
@@ -269,7 +274,7 @@ impl App {
                     });
                     {
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-                        if ui.button(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }).clicked() {
+                        if ui.add(menu_item(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }, if MAC { "Ctrl+Cmd+F" } else { "F11" })).clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fs));
                             ui.close_menu();
                         }
@@ -289,7 +294,7 @@ impl App {
                     }
                 });
                 ui.menu_button(crate::i18n::tr("Search"), |ui| {
-                    if ui.button(crate::i18n::tr("Find individual...")).clicked() {
+                    if ui.add(menu_item(crate::i18n::tr("Find individual..."), "F3")).clicked() {
                         self.find_open = true;
                         self.x.find_mode = 0;
                         ui.close_menu();
@@ -483,7 +488,7 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
-                    if ui.button(crate::i18n::tr("Data checker...")).clicked() {
+                    if ui.add(menu_item(crate::i18n::tr("Data checker..."), "F7")).clicked() {
                         self.check_open = true;
                         ui.close_menu();
                     }
@@ -568,13 +573,16 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
-                    if ui.button(crate::i18n::tr("User guide        F1 (Mac: Cmd+?)")).clicked() {
+                    if ui.add(menu_item(crate::i18n::tr("User guide"), if MAC { "Cmd+?" } else { "F1" })).clicked() {
                         self.help_open = true;
                         ui.close_menu();
                     }
                     ui.menu_button(crate::i18n::tr("Keyboard shortcuts"), |ui| {
                         for (k, d) in [
                             ("F1  (Mac: Cmd+?)", "User guide"),
+                            ("Ctrl/Cmd+,", "Settings"),
+                            ("Ctrl/Cmd+P", "Print what the tab shows"),
+                            ("Ctrl/Cmd+Q", "Quit (Mac and Linux)"),
                             ("F2", "Edit the selected person"),
                             ("F3", "Find a person"),
                             ("F4  or  Ctrl/Cmd+K", "Quick jump"),
@@ -810,6 +818,7 @@ impl App {
         self.story_window(ctx);
         self.media_folders_window(ctx);
         self.import_window(ctx);
+        self.settings_window(ctx, &mut act);
         if self.x.tidy_pending && self.media_job.is_none() {
             self.tidy_media();
         }

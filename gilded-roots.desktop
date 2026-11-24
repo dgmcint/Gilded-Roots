@@ -6,3 +6,4 @@ Exec=HOME/.local/bin/gilded-roots
 Icon=gilded-roots
 Terminal=false
 Categories=Office;Education;
+StartupWMClass=gilded-roots

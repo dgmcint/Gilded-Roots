@@ -43,6 +43,8 @@ mod memories;
 mod mediafolders;
 mod importopts;
 mod toolbar;
+mod look;
+pub(crate) use look::*;
 pub(crate) use importopts::*;
 pub(crate) use mediafolders::*;
 pub(crate) use memories::*;
@@ -102,6 +104,8 @@ fn main() -> eframe::Result<()> {
     }
     let size = st.win.map(|w| [w[0].max(800.0), w[1].max(560.0)]).unwrap_or([1400.0, 880.0]);
     let mut vb = egui::ViewportBuilder::default().with_inner_size(size).with_min_inner_size([800.0, 560.0]).with_title(if st.current_tree.is_empty() { "Gilded Roots".to_string() } else { format!("Gilded Roots - {}", st.current_tree) });
+    // on Linux, the name the desktop matches with gilded-roots.desktop, so the dock shows our icon
+    vb = vb.with_app_id("gilded-roots");
     if st.win_max {
         vb = vb.with_maximized(true);
     }
@@ -115,6 +119,8 @@ fn main() -> eframe::Result<()> {
         Box::new(|cc| {
             let app = App::new();
             egui_extras::install_image_loaders(&cc.egui_ctx);
+            set_use_system_font(app.settings.system_font);
+            install_fonts(&cc.egui_ctx);
             if matches!(i18n::language().as_str(), "ja" | "zh" | "ko") || app.db.people.values().any(|p| i18n::has_asian(&p.name)) {
                 i18n::add_asian_fonts(&cc.egui_ctx);
             }
