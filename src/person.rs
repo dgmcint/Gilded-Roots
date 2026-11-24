@@ -1065,7 +1065,9 @@ impl App {
             egui::Frame::group(ui.style()).show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(crate::i18n::tr("Editing. Changes are only kept when you press Save.")).strong());
-                    if ui.button(crate::i18n::tr("Save")).clicked() {
+                    let r = ui.button(crate::i18n::tr("Save"));
+                    crate::tour::mark("page_save", r.rect);
+                    if r.clicked() {
                         *act = Some(Action::EditSave);
                     }
                     if ui.button(crate::i18n::tr("Cancel")).on_hover_text(crate::i18n::tr("Put this person back exactly as they were before you pressed Edit")).clicked() {
@@ -1075,7 +1077,9 @@ impl App {
             });
         } else {
             ui.horizontal(|ui| {
-                if ui.button(crate::i18n::tr("Edit")).on_hover_text(crate::i18n::tr("Unlock this page to make changes")).clicked() {
+                let r = ui.button(crate::i18n::tr("Edit")).on_hover_text(crate::i18n::tr("Unlock this page to make changes"));
+                crate::tour::mark("page_edit", r.rect);
+                if r.clicked() {
                     *act = Some(Action::EditStart);
                 }
                 ui.label(RichText::new(crate::i18n::tr("Locked. Press Edit to change anything.")).weak());

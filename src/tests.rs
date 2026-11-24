@@ -31,6 +31,7 @@ mod tests {
     /// renamed person, move to Shared when a second person gets them, and the tree is unchanged.
     #[test]
     fn media_folders_sort_and_follow_changes() {
+        let _home = crate::home_lock();
         let home = tdir("home-folders");
         std::env::set_var("HOME", &home);
         std::env::set_var("APPDATA", &home);
@@ -81,6 +82,7 @@ mod tests {
     /// Whole path: a tree with photos is written as a GEDCOM file, then read back as if it came from another program.
     #[test]
     fn export_then_import_with_photos_end_to_end() {
+        let _home = crate::home_lock();
         let home = tdir("home");
         std::env::set_var("HOME", &home);
         std::env::set_var("APPDATA", &home);

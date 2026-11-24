@@ -557,7 +557,9 @@ impl App {
             if r.changed() {
                 self.x.map_play = false;
             }
-            if ui.button(if self.x.map_play { crate::i18n::tr("Pause") } else { crate::i18n::tr("Play") }).on_hover_text(crate::i18n::tr("Watch the family move through the years")).clicked() {
+            let r = ui.button(if self.x.map_play { crate::i18n::tr("Pause") } else { crate::i18n::tr("Play") }).on_hover_text(crate::i18n::tr("Watch the family move through the years"));
+            crate::tour::mark("map_play", r.rect);
+            if r.clicked() {
                 if !self.x.map_play && self.x.map_year >= y1 {
                     self.x.map_year = y0;
                 }

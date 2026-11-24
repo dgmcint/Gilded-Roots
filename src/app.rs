@@ -289,6 +289,11 @@ pub(crate) struct Extra {
     pub(crate) dna: dna::DnaUi,
     /// Y-DNA and mtDNA in the DNA tab.
     pub(crate) line: dnaline::LineUi,
+    /// Help > Tutorials: the lesson running, and whether the list of lessons is open.
+    pub(crate) tour: Option<tour::Tour>,
+    pub(crate) tour_list: bool,
+    /// User guide: a chapter to scroll to.
+    pub(crate) help_goto: Option<usize>,
 }
 
 /// One step of undo history: the whole tree as it was (packed small), what the next change was,

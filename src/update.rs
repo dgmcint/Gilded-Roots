@@ -40,7 +40,7 @@ impl App {
         let (has_f, has_m) = self.sel.map(|s| self.db.parents(s)).map(|(f, m)| (f.is_some(), m.is_some())).unwrap_or((false, false));
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                ui.menu_button(crate::i18n::tr("File"), |ui| {
+                let mr = ui.menu_button(crate::i18n::tr("File"), |ui| {
                     if ui.button(crate::i18n::trf("Family trees... (open: {})", &["Family trees... (open: ", ")"], &[(tree_title(&self.settings.current_tree)).to_string()])).on_hover_text(crate::i18n::tr("Switch between separate trees, or start a new one")).clicked() {
                         self.x.trees_open = true;
                         ui.close_menu();
@@ -87,6 +87,7 @@ impl App {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
+                crate::tour::mark("menu:File", mr.response.rect);
                 ui.menu_button(crate::i18n::tr("Edit"), |ui| {
                     if ui.add_enabled(!self.undo.is_empty(), egui::Button::new(crate::i18n::tr("Undo"))).clicked() {
                         self.undo_action();
@@ -316,7 +317,7 @@ impl App {
                         ui.close_menu();
                     }
                 });
-                ui.menu_button(crate::i18n::tr("Reports"), |ui| {
+                let mr = ui.menu_button(crate::i18n::tr("Reports"), |ui| {
                     if ui.checkbox(&mut self.settings.hide_living, crate::i18n::tr("Keep living people private")).on_hover_text(crate::i18n::tr("Printed charts, sheets and reports show living people as \"Living\" with no dates or places")).changed() {
                         save_settings(&self.settings);
                     }
@@ -395,6 +396,7 @@ impl App {
                         }
                     }
                 });
+                crate::tour::mark("menu:Reports", mr.response.rect);
                 ui.menu_button(crate::i18n::tr("Tools"), |ui| {
                     if ui.button(crate::i18n::tr("Sources and repositories...")).clicked() {
                         self.src_open = true;
@@ -532,6 +534,31 @@ impl App {
                         self.show_about = true;
                         ui.close_menu();
                     }
+                    ui.menu_button(crate::i18n::tr("Tutorials"), |ui| {
+                        if ui.button(crate::i18n::tr("Guided tour (step-by-step lessons)")).clicked() {
+                            self.x.tour_list = true;
+                            ui.close_menu();
+                        }
+                        ui.separator();
+                        let mut start = None;
+                        for (i, l) in crate::tour::LESSONS.iter().enumerate() {
+                            let done = self.settings.tour_done.iter().any(|d| d == l.id);
+                            let label = crate::i18n::trf("{}. {}", &["", ". ", ""], &[(i + 1).to_string(), crate::i18n::trv(l.title).to_string()]);
+                            if ui.button(if done { format!("{}  \u{2714}", label) } else { label }).on_hover_text(crate::i18n::trv(l.about)).clicked() {
+                                start = Some(i);
+                                ui.close_menu();
+                            }
+                        }
+                        ui.separator();
+                        if ui.button(crate::i18n::tr("Your first family tree, step by step (User guide)")).clicked() {
+                            self.help_open = true;
+                            self.x.help_goto = crate::help::chapter_for("#your-first-family-tree-step-by-step");
+                            ui.close_menu();
+                        }
+                        if let Some(i) = start {
+                            self.tour_start(i);
+                        }
+                    });
                     if ui.add_enabled(self.x.practice.is_none(), egui::Button::new(crate::i18n::tr("Explore the sample family (practice)"))).clicked() {
                         self.start_practice();
                         ui.close_menu();
@@ -584,8 +611,13 @@ impl App {
             egui::TopBottomPanel::top("practice").frame(egui::Frame::default().fill(Color32::from_rgb(196, 152, 40)).inner_margin(egui::Margin::symmetric(10.0, 6.0))).show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(crate::i18n::tr("Practice mode: you are exploring the made-up sample family. Nothing here is saved, and your own tree is safe.")).color(Color32::BLACK).strong());
-                    if ui.button(crate::i18n::tr("Back to my tree")).clicked() {
+                    let r = ui.button(crate::i18n::tr("Back to my tree"));
+                    crate::tour::mark("practice_back", r.rect);
+                    if r.clicked() {
                         leave = true;
+                    }
+                    if self.x.tour.is_none() && ui.button(crate::i18n::tr("Guided tour")).clicked() {
+                        self.x.tour_list = true;
                     }
                 });
             });
@@ -607,7 +639,9 @@ impl App {
                     if self.view == v {
                         t = t.strong();
                     }
-                    if ui.selectable_label(self.view == v, t).clicked() {
+                    let r = ui.selectable_label(self.view == v, t);
+                    crate::tour::mark(match v { View::Family => "tab:Family", View::Pedigree => "tab:Pedigree", View::Descendants => "tab:Descendants", View::Person => "tab:Individual", View::Memories => "tab:Memories", View::Charts => "tab:Charts", View::Table => "tab:People", View::Map => "tab:Map", _ => "tab:DNA" }, r.rect);
+                    if r.clicked() {
                         self.view = v;
                     }
                 }
@@ -745,23 +779,7 @@ impl App {
         }
 
         self.global_keys(ctx, &mut act);
-        if self.help_open {
-            let mut open = true;
-            let mut find = self.help_find.clone();
-            egui::Window::new(crate::i18n::tr("User guide")).open(&mut open).default_size([640.0, 600.0]).show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label(crate::i18n::tr("Search"));
-                    ui.add(egui::TextEdit::singleline(&mut find).hint_text(crate::i18n::tr("e.g. merge, sources, home person")).desired_width(260.0));
-                    if !find.is_empty() && ui.small_button(crate::i18n::tr("Clear")).clicked() {
-                        find.clear();
-                    }
-                });
-                ui.separator();
-                egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| help_text(ui, &find));
-            });
-            self.help_find = find;
-            self.help_open = open;
-        }
+        self.help_window(ctx);
 
         self.jump_window(ctx, &mut act);
         if let Some((p, t)) = self.x.pdf_req.take() {
@@ -1993,7 +2011,9 @@ impl App {
                     ui.label(RichText::new(crate::i18n::tr("Only the name is required. Everything else can be added later.")).small().weak());
                     ui.add_space(4.0);
                     ui.horizontal(|ui| {
-                        if ui.button(crate::i18n::tr("Add")).clicked() && !d.name.trim().is_empty() {
+                        let r = ui.button(crate::i18n::tr("Add"));
+                        crate::tour::mark("dlg_add", r.rect);
+                        if r.clicked() && !d.name.trim().is_empty() {
                             done = Some(true);
                         }
                         if ui.button(crate::i18n::tr("Cancel")).clicked() {
@@ -2068,6 +2088,9 @@ impl App {
             }
         }
 
+        if let Some(a) = &act {
+            self.tour_saw(a);
+        }
         if let Some(a) = act {
             match a {
                 Action::Select(i) => {
@@ -2408,5 +2431,6 @@ impl App {
         }
         ctx.request_repaint_after(std::time::Duration::from_secs(if self.save_error.is_some() { 3 } else { 10 }));
         self.note_text_focus(ctx);
+        self.tour_frame(ctx);
     }
 }

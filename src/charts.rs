@@ -54,7 +54,11 @@ impl App {
         self.nav_bar(ui, act);
         ui.horizontal(|ui| {
             for (k, l) in [(ChartKind::Fan, "Fan chart"), (ChartKind::Hourglass, "Hourglass"), (ChartKind::Lifespans, "Lifespans")] {
-                if ui.selectable_label(self.x.chart == k, RichText::new(crate::i18n::trv(l)).size(15.0)).clicked() {
+                let r = ui.selectable_label(self.x.chart == k, RichText::new(crate::i18n::trv(l)).size(15.0));
+                if k == ChartKind::Lifespans {
+                    crate::tour::mark("chart:Lifespans", r.rect);
+                }
+                if r.clicked() {
                     self.x.chart = k;
                 }
             }

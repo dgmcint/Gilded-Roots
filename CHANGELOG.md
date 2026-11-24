@@ -2,6 +2,24 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: help and the guided tour
+
+- **Tutorials and a guided tour** (Help > Tutorials, and on the welcome screen): seven short lessons on the sample
+  family: finding your way around, adding relatives, changing facts, photos and documents, charts and
+  printing, the map, and starting your own tree. A card says what to do, a gold outline shows which
+  button to press, and each step moves on by itself once it is done. Finished lessons are ticked.
+  Help > Tutorials lists every lesson, so any one can be started straight from the menu, and opens
+  the guide's step-by-step chapter for a first tree. Nothing is saved, and the tour is translated
+  into all nine languages.
+- **A new User guide:** rewritten and put in order, in eight parts (Getting started, Everyday work,
+  Photos, stories and documents, Charts, printing and reports, Research tools, Sharing and keeping
+  safe, Making it yours, About). New chapters: installing, the screen at a glance, **Your first family tree,
+  step by step**, keeping your tree safe, and language. Pictures of the program, "See also" links
+  between chapters, and numbered steps.
+- The guide window lists the parts and chapters down the side; click one to go straight to it.
+  Search still keeps only the chapters that mention a word. Bold words and lists now show properly.
+- "Tag faces" in the photo window is now translated.
+
 ## 1.0.6 (23 November 2026)
 
 - **Languages:** View > Language puts the whole program into English, German, Spanish, French,

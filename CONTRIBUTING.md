@@ -33,7 +33,8 @@ Each file should report `LOST 0`.
 | `src/windows.rs` | Pop-up windows (renumber, versions, history, to-do, welcome, trees, places) |
 | `src/jump.rs` | Keyboard shortcuts and quick jump |
 | `src/update.rs` | The frame loop that draws the program |
-| `src/help.rs` | The built-in User Guide |
+| `src/help.rs` | The built-in User Guide (docs/USER_GUIDE.md, with its pictures in docs/images/guide) |
+| `src/tour.rs` | The guided tour: its lessons, and the card that walks through them |
 | `src/tests.rs` | Tests for the files above |
 | `src/gedcom.rs` | GEDCOM reader/writer, lossless raw blocks, merge engine, data migrations |
 | `src/review.rs` | Merge review screens and import-merge confirmation |
