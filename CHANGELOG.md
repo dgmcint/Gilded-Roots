@@ -2,6 +2,16 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: languages
+
+- **Languages:** View > Language puts the whole program into English, German, Spanish, French,
+  Italian, Dutch, Norwegian, Brazilian Portuguese or Swedish, each listed in its own words. It
+  changes at once and is remembered. Menus, buttons, tabs, toolbars, windows, tooltips and messages
+  are all translated. (Census forms stay in English, as they copy the real forms.) More languages
+  are prepared and will follow in a later version.
+- Japanese, Chinese and Korean letters in names now show, using the fonts that come with the
+  computer.
+
 ## 1.0.5 (13 November 2026)
 
 - **Toolbars:** a main toolbar under the menus (Back, Forward, Home, Add person, Edit, Find, Quick jump, Undo, Redo,

@@ -276,10 +276,10 @@ impl App {
         let (moved, problems) = apply_media_plan(&plan);
         self.x.unlinked = None;
         if moved > 0 {
-            self.status = format!("Moved {} file(s) to their person folders in the media folder.", moved);
+            self.status = crate::i18n::trf("Moved {} file(s) to their person folders in the media folder.", &["Moved ", " file(s) to their person folders in the media folder."], &[(moved).to_string()]);
         }
         if let Some(p) = problems.first() {
-            self.status = format!("Could not move {} file(s) to their folder: {}", problems.len(), p);
+            self.status = crate::i18n::trf("Could not move {} file(s) to their folder: {}", &["Could not move ", " file(s) to their folder: ", ""], &[(problems.len()).to_string(), (p).to_string()]);
         }
     }
 
@@ -297,39 +297,39 @@ impl App {
         }
         let plan = self.x.folders_plan.clone().unwrap_or_default();
         let on = self.db.media_folders;
-        egui::Window::new("Sort media into person folders").id(egui::Id::new("media_folders")).open(&mut open).collapsible(false).default_width(560.0).show(ctx, |ui| {
-            ui.label("Puts each photo, document and recording in a folder named after the person it belongs to, inside the media folder, so you can find a person's files on your computer.");
+        egui::Window::new(crate::i18n::tr("Sort media into person folders")).id(egui::Id::new("media_folders")).open(&mut open).collapsible(false).default_width(560.0).show(ctx, |ui| {
+            ui.label(crate::i18n::tr("Puts each photo, document and recording in a folder named after the person it belongs to, inside the media folder, so you can find a person's files on your computer."));
             ui.add_space(4.0);
-            ui.label(RichText::new("- One person's files go in a folder like \"Harwood, Thomas James (9)\" (the ID number keeps two people with the same name apart).\n- A file on several people, or on a couple, goes in \"Shared\".\n- A file only a source uses goes in \"Sources\".\n- After this, it stays sorted: new files go to their folder, a person's folder follows their name, and a file added to a second person moves to Shared.").small());
-            ui.label(RichText::new("Nothing is deleted and your tree is not changed: files are only moved, and the backup copy of the media folder is sorted the same way. Undo does not need to move anything back.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("- One person's files go in a folder like \"Harwood, Thomas James (9)\" (the ID number keeps two people with the same name apart).\n- A file on several people, or on a couple, goes in \"Shared\".\n- A file only a source uses goes in \"Sources\".\n- After this, it stays sorted: new files go to their folder, a person's folder follows their name, and a file added to a second person moves to Shared.")).small());
+            ui.label(RichText::new(crate::i18n::tr("Nothing is deleted and your tree is not changed: files are only moved, and the backup copy of the media folder is sorted the same way. Undo does not need to move anything back.")).small().weak());
             ui.separator();
             if plan.is_empty() {
-                ui.label(if on { "Everything is already in its folder." } else { "No files need moving (there may be no files yet)." });
+                ui.label(if on { crate::i18n::tr("Everything is already in its folder.") } else { crate::i18n::tr("No files need moving (there may be no files yet).") });
             } else {
                 let folders: HashSet<&str> = plan.iter().map(|m| m.to.as_str()).collect();
-                ui.label(RichText::new(format!("{} file(s) will move into {} folder(s):", plan.len(), folders.len())).strong());
+                ui.label(RichText::new(crate::i18n::trf("{} file(s) will move into {} folder(s):", &["", " file(s) will move into ", " folder(s):"], &[(plan.len()).to_string(), (folders.len()).to_string()])).strong());
                 egui::ScrollArea::vertical().max_height(220.0).show(ui, |ui| {
                     for m in plan.iter().take(200) {
                         ui.label(RichText::new(format!("{}  ->  {}", m.file, m.to)).small().monospace());
                     }
                     if plan.len() > 200 {
-                        ui.label(RichText::new(format!("... and {} more", plan.len() - 200)).small().weak());
+                        ui.label(RichText::new(crate::i18n::trf("... and {} more", &["... and ", " more"], &[(plan.len() - 200).to_string()])).small().weak());
                     }
                 });
             }
             if self.media_job.is_some() {
-                ui.label(RichText::new("A backup is copying the media folder. Wait a moment for it to finish.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("A backup is copying the media folder. Wait a moment for it to finish.")).small().weak());
             }
             ui.add_space(6.0);
             ui.horizontal(|ui| {
                 let label = if on { "Sort now" } else { "Sort the files and keep them sorted" };
-                if ui.add_enabled(self.media_job.is_none() && (!plan.is_empty() || !on), egui::Button::new(RichText::new(label).strong())).clicked() {
+                if ui.add_enabled(self.media_job.is_none() && (!plan.is_empty() || !on), egui::Button::new(RichText::new(crate::i18n::trv(label)).strong())).clicked() {
                     go = true;
                 }
-                if on && ui.button("Stop keeping them sorted").on_hover_text("Files stay where they are now; new files go in the top of the media folder").clicked() {
+                if on && ui.button(crate::i18n::tr("Stop keeping them sorted")).on_hover_text(crate::i18n::tr("Files stay where they are now; new files go in the top of the media folder")).clicked() {
                     stop = true;
                 }
-                if ui.button("Open media folder").clicked() {
+                if ui.button(crate::i18n::tr("Open media folder")).clicked() {
                     open_path(&media_dir());
                 }
             });
@@ -349,7 +349,7 @@ impl App {
         if stop {
             self.db.media_folders = false;
             self.dirty = true;
-            self.status = "Media files will no longer be sorted into person folders. They stay where they are.".to_string();
+            self.status = crate::i18n::tr("Media files will no longer be sorted into person folders. They stay where they are.").to_string();
             open = false;
         }
         if !open {

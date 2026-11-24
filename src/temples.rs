@@ -246,12 +246,12 @@ pub(crate) fn temple_picker(ui: &mut eframe::egui::Ui, id: impl std::hash::Hash,
     let shown = if code.trim().is_empty() { "Choose a temple".to_string() } else { temple_label(code) };
     let mut picked = false;
     egui::ComboBox::from_id_salt(id).selected_text(shown).width(230.0).height(320.0).show_ui(ui, |ui| {
-        let r = ui.add(egui::TextEdit::singleline(search).hint_text("Type a place or code").desired_width(200.0));
+        let r = ui.add(egui::TextEdit::singleline(search).hint_text(crate::i18n::tr("Type a place or code")).desired_width(200.0));
         if !r.has_focus() && !r.lost_focus() {
             r.request_focus();
         }
         let q = search.trim().to_lowercase();
-        if ui.selectable_label(code.trim().is_empty(), "(none)").clicked() {
+        if ui.selectable_label(code.trim().is_empty(), crate::i18n::tr("(none)")).clicked() {
             code.clear();
             picked = true;
         }
@@ -275,11 +275,11 @@ pub(crate) fn status_picker(ui: &mut eframe::egui::Ui, id: impl std::hash::Hash,
     use eframe::egui;
     let shown = if stat.trim().is_empty() { "Status".to_string() } else { status_label(stat) };
     egui::ComboBox::from_id_salt(id).selected_text(shown).width(170.0).show_ui(ui, |ui| {
-        if ui.selectable_label(stat.trim().is_empty(), "(none)").clicked() {
+        if ui.selectable_label(stat.trim().is_empty(), crate::i18n::tr("(none)")).clicked() {
             stat.clear();
         }
         for (k, l) in ORD_STATUS {
-            if ui.selectable_label(stat.trim().eq_ignore_ascii_case(k), *l).clicked() {
+            if ui.selectable_label(stat.trim().eq_ignore_ascii_case(k), crate::i18n::trv(*l)).clicked() {
                 *stat = k.to_string();
             }
         }

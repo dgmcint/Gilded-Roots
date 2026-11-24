@@ -27,42 +27,42 @@ impl App {
         let home = self.db.home.filter(|h| self.db.people.contains_key(h)).map(|h| self.db.label(h));
         let n = self.db.people.len();
         let nf = self.db.fams.len();
-        egui::Window::new("Renumber people").open(&mut open).collapsible(false).resizable(false).default_width(560.0).show(ctx, |ui| {
-            ui.label("Give everyone new ID numbers 1, 2, 3... with no gaps. Families get new numbers 1, 2, 3... too.");
-            ui.label(RichText::new("Nothing else changes: names, dates, links, sources and photos all stay as they are.").small().weak());
+        egui::Window::new(crate::i18n::tr("Renumber people")).open(&mut open).collapsible(false).resizable(false).default_width(560.0).show(ctx, |ui| {
+            ui.label(crate::i18n::tr("Give everyone new ID numbers 1, 2, 3... with no gaps. Families get new numbers 1, 2, 3... too."));
+            ui.label(RichText::new(crate::i18n::tr("Nothing else changes: names, dates, links, sources and photos all stay as they are.")).small().weak());
             ui.add_space(6.0);
-            ui.label(RichText::new("Order").strong());
-            ui.radio_value(&mut self.x.renum_how, 0, "Home person first, then their family (parents and grandparents, then partners and children)");
-            ui.radio_value(&mut self.x.renum_how, 1, "Keep the present order, just close the gaps");
-            ui.radio_value(&mut self.x.renum_how, 2, "Alphabetical by surname, then given names");
+            ui.label(RichText::new(crate::i18n::tr("Order")).strong());
+            ui.radio_value(&mut self.x.renum_how, 0, crate::i18n::tr("Home person first, then their family (parents and grandparents, then partners and children)"));
+            ui.radio_value(&mut self.x.renum_how, 1, crate::i18n::tr("Keep the present order, just close the gaps"));
+            ui.radio_value(&mut self.x.renum_how, 2, crate::i18n::tr("Alphabetical by surname, then given names"));
             if self.x.renum_how == 0 {
                 match &home {
-                    Some(h) => ui.label(RichText::new(format!("{} (the home person) becomes number 1.", h)).small()),
-                    None => ui.label(RichText::new("No home person is set, so the first person in the tree becomes number 1. (Tools > Home person... chooses one.)").small()),
+                    Some(h) => ui.label(RichText::new(crate::i18n::trf("{} (the home person) becomes number 1.", &["", " (the home person) becomes number 1."], &[(h).to_string()])).small()),
+                    None => ui.label(RichText::new(crate::i18n::tr("No home person is set, so the first person in the tree becomes number 1. (Tools > Home person... chooses one.)")).small()),
                 };
             }
             ui.add_space(6.0);
             if let Some((_, first, moved)) = &self.x.renum_preview {
-                ui.label(RichText::new("First few, after renumbering").strong());
+                ui.label(RichText::new(crate::i18n::tr("First few, after renumbering")).strong());
                 egui::Grid::new("renum_preview").striped(true).num_columns(3).show(ui, |ui| {
                     for (old, new, name) in first {
                         ui.label(format!("#{}", new));
                         ui.label(name.as_str());
-                        ui.label(RichText::new(format!("was #{}", old)).small().weak());
+                        ui.label(RichText::new(crate::i18n::trf("was #{}", &["was #", ""], &[(old).to_string()])).small().weak());
                         ui.end_row();
                     }
                 });
                 ui.add_space(4.0);
-                ui.label(format!("{} of {} people get a different number; {} families are renumbered.", moved, n, nf));
+                ui.label(crate::i18n::trf("{} of {} people get a different number; {} families are renumbered.", &["", " of ", " people get a different number; ", " families are renumbered."], &[(moved).to_string(), (n).to_string(), (nf).to_string()]));
             }
             ui.add_space(4.0);
-            ui.label(RichText::new("Each person keeps their old number as an \"Old ID\" (shown on their Individual page and kept in exported GEDCOM files), so older printouts and notes can still be matched. Undo (Ctrl+Z) puts the old numbers back.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Each person keeps their old number as an \"Old ID\" (shown on their Individual page and kept in exported GEDCOM files), so older printouts and notes can still be matched. Undo (Ctrl+Z) puts the old numbers back.")).small().weak());
             ui.add_space(8.0);
             ui.horizontal(|ui| {
-                if ui.button(RichText::new("Renumber").strong()).clicked() {
+                if ui.button(RichText::new(crate::i18n::tr("Renumber")).strong()).clicked() {
                     go = true;
                 }
-                if ui.button("Cancel").clicked() {
+                if ui.button(crate::i18n::tr("Cancel")).clicked() {
                     cancel = true;
                 }
             });
@@ -83,7 +83,7 @@ impl App {
             self.dups.clear();
             self.x.gal_sel.clear();
             self.dirty = true;
-            self.status = format!("Renumbered {} people and {} families. Undo (Ctrl+Z) puts the old numbers back.", n, nf);
+            self.status = crate::i18n::trf("Renumbered {} people and {} families. Undo (Ctrl+Z) puts the old numbers back.", &["Renumbered ", " people and ", " families. Undo (Ctrl+Z) puts the old numbers back."], &[(n).to_string(), (nf).to_string()]);
             self.x.renum_open = false;
         }
         if cancel || !open {
@@ -101,12 +101,12 @@ impl App {
         let mut load: Option<String> = None;
         let mut restore_all: Option<String> = None;
         let mut bring_back: Option<u32> = None;
-        egui::Window::new("Saved versions").open(&mut open).default_size([760.0, 540.0]).show(ctx, |ui| {
-            ui.label(RichText::new("A copy of your tree is kept each day you use the program (the last 14 days). Pick a day to see what was different then.").small().weak());
+        egui::Window::new(crate::i18n::tr("Saved versions")).open(&mut open).default_size([760.0, 540.0]).show(ctx, |ui| {
+            ui.label(RichText::new(crate::i18n::tr("A copy of your tree is kept each day you use the program (the last 14 days). Pick a day to see what was different then.")).small().weak());
             ui.separator();
             egui::SidePanel::left("ver_list").resizable(false).exact_width(200.0).show_inside(ui, |ui| {
                 if names.is_empty() {
-                    ui.label(RichText::new("No saved versions yet.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("No saved versions yet.")).italics().weak());
                 }
                 for n in &names {
                     let day = n.trim_start_matches("tree-").trim_end_matches(".json").to_string();
@@ -118,40 +118,40 @@ impl App {
             });
             egui::CentralPanel::default().show_inside(ui, |ui| {
                 let Some((name, old, diff)) = &self.x.ver else {
-                    ui.label(RichText::new("Pick a day on the left.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Pick a day on the left.")).italics().weak());
                     return;
                 };
                 ui.label(RichText::new(name.trim_start_matches("tree-").trim_end_matches(".json")).size(20.0).strong());
-                ui.label(format!("{} people then, {} now.", old.people.len(), self.db.people.len()));
+                ui.label(crate::i18n::trf("{} people then, {} now.", &["", " people then, ", " now."], &[(old.people.len()).to_string(), (self.db.people.len()).to_string()]));
                 ui.horizontal(|ui| {
-                    if ui.button("Restore the whole tree to this day...").on_hover_text("Your tree as it is now is kept as a backup first").clicked() {
+                    if ui.button(crate::i18n::tr("Restore the whole tree to this day...")).on_hover_text(crate::i18n::tr("Your tree as it is now is kept as a backup first")).clicked() {
                         restore_all = Some(name.clone());
                     }
                 });
                 ui.separator();
                 egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                     let (gone, changed, added) = diff;
-                    ui.label(RichText::new(format!("Removed since then ({})", gone.len())).strong());
+                    ui.label(RichText::new(crate::i18n::trf("Removed since then ({})", &["Removed since then (", ")"], &[(gone.len()).to_string()])).strong());
                     for id in gone.iter().take(300) {
                         ui.horizontal(|ui| {
                             ui.label(old.label(*id));
-                            if ui.small_button("Bring back").on_hover_text("Puts this person back as they were that day (their family links need adding again)").clicked() {
+                            if ui.small_button(crate::i18n::tr("Bring back")).on_hover_text(crate::i18n::tr("Puts this person back as they were that day (their family links need adding again)")).clicked() {
                                 bring_back = Some(*id);
                             }
                         });
                     }
                     ui.add_space(6.0);
-                    ui.label(RichText::new(format!("Changed since then ({})", changed.len())).strong());
+                    ui.label(RichText::new(crate::i18n::trf("Changed since then ({})", &["Changed since then (", ")"], &[(changed.len()).to_string()])).strong());
                     for id in changed.iter().take(300) {
                         ui.horizontal(|ui| {
                             ui.label(old.label(*id));
-                            if ui.small_button("Put back as they were").on_hover_text("Replaces this person's facts, notes, sources and photos with that day's copy").clicked() {
+                            if ui.small_button(crate::i18n::tr("Put back as they were")).on_hover_text(crate::i18n::tr("Replaces this person's facts, notes, sources and photos with that day's copy")).clicked() {
                                 bring_back = Some(*id);
                             }
                         });
                     }
                     ui.add_space(6.0);
-                    ui.label(RichText::new(format!("Added since then ({})", added.len())).strong());
+                    ui.label(RichText::new(crate::i18n::trf("Added since then ({})", &["Added since then (", ")"], &[(added.len()).to_string()])).strong());
                     for id in added.iter().take(300) {
                         if self.db.people.contains_key(id) {
                             ui.label(self.db.label(*id));
@@ -178,7 +178,7 @@ impl App {
                     let added: Vec<u32> = self.db.people.keys().filter(|k| !old.people.contains_key(k)).copied().collect();
                     self.x.ver = Some((n, old, (gone, changed, added)));
                 }
-                Err(e) => self.status = format!("That saved version could not be read: {}", e),
+                Err(e) => self.status = crate::i18n::trf("That saved version could not be read: {}", &["That saved version could not be read: ", ""], &[(e).to_string()]),
             }
         }
         if let Some(id) = bring_back {
@@ -193,7 +193,7 @@ impl App {
                     diff.1.retain(|x| *x != id);
                     self.x.next_label = Some(format!("Brought back {} from a saved version", name));
                     self.dirty = true;
-                    self.status = format!("{} is back as they were that day. Edit > Undo takes it away again.", name);
+                    self.status = crate::i18n::trf("{} is back as they were that day. Edit > Undo takes it away again.", &["", " is back as they were that day. Edit > Undo takes it away again."], &[(name).to_string()]);
                 }
             }
         }
@@ -216,12 +216,12 @@ impl App {
         let mut open = true;
         let mut go_undo = 0usize;
         let mut go_redo = 0usize;
-        egui::Window::new("History of changes").open(&mut open).default_size([460.0, 520.0]).show(ctx, |ui| {
-            ui.label(RichText::new("Newest first. Click a change to go back to just before it. Nothing is lost: you can redo forward again.").small().weak());
+        egui::Window::new(crate::i18n::tr("History of changes")).open(&mut open).default_size([460.0, 520.0]).show(ctx, |ui| {
+            ui.label(RichText::new(crate::i18n::tr("Newest first. Click a change to go back to just before it. Nothing is lost: you can redo forward again.")).small().weak());
             ui.separator();
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 if !self.redo.is_empty() {
-                    ui.label(RichText::new("Undone (click to redo up to here)").small().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Undone (click to redo up to here)")).small().weak());
                     for (k, s) in self.redo.iter().enumerate() {
                         ui.horizontal(|ui| {
                             if ui.selectable_label(false, RichText::new(s.label.as_str()).italics().weak()).clicked() {
@@ -232,14 +232,14 @@ impl App {
                     }
                     ui.separator();
                 }
-                ui.label(RichText::new("Now").strong());
+                ui.label(RichText::new(crate::i18n::tr("Now")).strong());
                 if self.undo.is_empty() {
-                    ui.label(RichText::new("No changes yet in this session.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("No changes yet in this session.")).italics().weak());
                 }
                 let n = self.undo.len();
                 for (k, s) in self.undo.iter().enumerate().rev() {
                     ui.horizontal(|ui| {
-                        if ui.selectable_label(false, RichText::new(s.label.as_str()).size(14.0)).on_hover_text("Go back to just before this change").clicked() {
+                        if ui.selectable_label(false, RichText::new(s.label.as_str()).size(14.0)).on_hover_text(crate::i18n::tr("Go back to just before this change")).clicked() {
                             go_undo = n - k;
                         }
                         ui.label(RichText::new(when_ago(s.at)).small().weak());
@@ -247,7 +247,7 @@ impl App {
                 }
             });
             ui.separator();
-            ui.label(RichText::new("History covers this session (the last 60 changes). Older versions are in the daily backups: Tools > Restore previous tree.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("History covers this session (the last 60 changes). Older versions are in the daily backups: Tools > Restore previous tree.")).small().weak());
         });
         for _ in 0..go_undo {
             self.undo_action();
@@ -279,11 +279,11 @@ impl App {
         }
         let amber = Color32::from_rgb(222, 166, 60);
         egui::Frame::group(ui.style()).stroke(Stroke::new(1.0_f32, amber)).show(ui, |ui| {
-            egui::CollapsingHeader::new(RichText::new(format!("{} thing(s) to check", self.x.flags.len())).color(amber)).id_salt("flags").default_open(false).show(ui, |ui| {
+            egui::CollapsingHeader::new(RichText::new(crate::i18n::trf("{} thing(s) to check", &["", " thing(s) to check"], &[(self.x.flags.len()).to_string()])).color(amber)).id_salt("flags").default_open(false).show(ui, |ui| {
                 for t in &self.x.flags {
                     ui.label(format!("\u{2022} {}", t));
                 }
-                ui.label(RichText::new("Tools > Data checker lists these for the whole tree.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Tools > Data checker lists these for the whole tree.")).small().weak());
             });
         });
     }
@@ -295,11 +295,11 @@ impl App {
         let mut changed = false;
         if let Some(p) = self.db.people.get_mut(&id) {
             if p.todos.is_empty() {
-                ui.label(RichText::new("Nothing to do yet. Add what you still want to find, like \"1880 census\" or \"marriage record\".").italics().weak());
+                ui.label(RichText::new(crate::i18n::tr("Nothing to do yet. Add what you still want to find, like \"1880 census\" or \"marriage record\".")).italics().weak());
             }
             for (i, t) in p.todos.iter_mut().enumerate() {
                 ui.horizontal(|ui| {
-                    if ui.checkbox(&mut t.done, "").on_hover_text("Done").changed() {
+                    if ui.checkbox(&mut t.done, "").on_hover_text(crate::i18n::tr("Done")).changed() {
                         changed = true;
                     }
                     let mut txt = RichText::new(t.text.as_str()).size(15.0);
@@ -308,7 +308,7 @@ impl App {
                     }
                     ui.add(egui::Label::new(txt).wrap());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.small_button("x").on_hover_text("Remove this task").clicked() {
+                        if ui.small_button("x").on_hover_text(crate::i18n::tr("Remove this task")).clicked() {
                             remove = Some(i);
                         }
                         if !t.added.is_empty() {
@@ -324,11 +324,11 @@ impl App {
         }
         let mut add = false;
         ui.horizontal(|ui| {
-            let r = ui.add(egui::TextEdit::singleline(&mut self.x.todo_new).hint_text("New task").desired_width(220.0));
+            let r = ui.add(egui::TextEdit::singleline(&mut self.x.todo_new).hint_text(crate::i18n::tr("New task")).desired_width(220.0));
             if r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 add = true;
             }
-            if ui.button("Add task").clicked() {
+            if ui.button(crate::i18n::tr("Add task")).clicked() {
                 add = true;
             }
         });
@@ -351,11 +351,11 @@ impl App {
             ui.vertical_centered(|ui| {
                 ui.add_space(24.0);
                 ui.add(egui::Image::new(egui::include_image!("../icons/icon-256.png")).max_width(96.0));
-                ui.label(RichText::new("Welcome to Gilded Roots").size(30.0).strong());
-                ui.label(RichText::new("Your family history, kept on your own computer.").size(16.0));
-                ui.label(RichText::new("No account. No subscription. No advertising. Nothing is uploaded anywhere.").weak());
+                ui.label(RichText::new(crate::i18n::tr("Welcome to Gilded Roots")).size(30.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("Your family history, kept on your own computer.")).size(16.0));
+                ui.label(RichText::new(crate::i18n::tr("No account. No subscription. No advertising. Nothing is uploaded anywhere.")).weak());
                 ui.add_space(18.0);
-                ui.label(RichText::new("How would you like to get started?").size(18.0));
+                ui.label(RichText::new(crate::i18n::tr("How would you like to get started?")).size(18.0));
                 ui.add_space(10.0);
             });
             let card = |ui: &mut egui::Ui, title: &str, body: &str| -> bool {
@@ -366,7 +366,7 @@ impl App {
                     ui.label(body);
                     clicked = r.clicked();
                     ui.add_space(2.0);
-                    if ui.button("Choose").clicked() {
+                    if ui.button(crate::i18n::tr("Choose")).clicked() {
                         clicked = true;
                     }
                 });
@@ -374,43 +374,43 @@ impl App {
             };
             ui.vertical_centered(|ui| {
                 ui.set_max_width(640.0);
-                if card(ui, "Import an existing family tree", "Bring in your research from Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy, PAF or any program that saves GEDCOM (.ged) files. PAF 5 .paf files can be opened directly. You get a full report of what came across.") {
+                if card(ui, crate::i18n::tr("Import an existing family tree"), crate::i18n::tr("Bring in your research from Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy, PAF or any program that saves GEDCOM (.ged) files. PAF 5 .paf files can be opened directly. You get a full report of what came across.")) {
                     self.imp_open = true;
                 }
                 ui.horizontal(|ui| {
-                    if ui.link(if self.x.paf_help { "Hide the PAF help" } else { "Coming from PAF? Show me how" }).clicked() {
+                    if ui.link(if self.x.paf_help { crate::i18n::tr("Hide the PAF help") } else { crate::i18n::tr("Coming from PAF? Show me how") }).clicked() {
                         self.x.paf_help = !self.x.paf_help;
                     }
                 });
                 if self.x.paf_help {
                     egui::Frame::group(ui.style()).show(ui, |ui| {
                         ui.set_width(ui.available_width().min(620.0));
-                        ui.label(RichText::new("The quick way").strong());
-                        ui.label("Choose Import an existing family tree and pick your PAF 5 file (the one ending in .paf). Gilded Roots reads names, sex, births, deaths, marriages and all the family links straight from it, without PAF.");
-                        ui.label(RichText::new("Have christenings, burials, LDS ordinances, notes, sources or photos in PAF? Use the full way below for now, so those come across too. The import report tells you if anything was left behind.").small().weak());
+                        ui.label(RichText::new(crate::i18n::tr("The quick way")).strong());
+                        ui.label(crate::i18n::tr("Choose Import an existing family tree and pick your PAF 5 file (the one ending in .paf). Gilded Roots reads names, sex, births, deaths, marriages and all the family links straight from it, without PAF."));
+                        ui.label(RichText::new(crate::i18n::tr("Have christenings, burials, LDS ordinances, notes, sources or photos in PAF? Use the full way below for now, so those come across too. The import report tells you if anything was left behind.")).small().weak());
                         ui.add_space(6.0);
-                        ui.label(RichText::new("The full way: export a GEDCOM from PAF").strong());
-                        ui.label("1. Open your family file in PAF.");
-                        ui.label("2. Choose File > Export. Pick GEDCOM 5.5, character set ANSEL or UTF-8, and tick 'Include notes', 'Include sources' and 'Include multimedia links'.");
-                        ui.label("3. Save the .ged file somewhere easy, such as your Documents folder. If your PAF photos live in a folder, keep that folder next to the .ged file.");
-                        ui.label("4. Here, choose Import an existing family tree and pick the .ged file. Gilded Roots copies in the photos it can find and shows a report.");
-                        ui.label(RichText::new("Your PAF file is not changed. You can import again at any time.").small().weak());
+                        ui.label(RichText::new(crate::i18n::tr("The full way: export a GEDCOM from PAF")).strong());
+                        ui.label(crate::i18n::tr("1. Open your family file in PAF."));
+                        ui.label(crate::i18n::tr("2. Choose File > Export. Pick GEDCOM 5.5, character set ANSEL or UTF-8, and tick 'Include notes', 'Include sources' and 'Include multimedia links'."));
+                        ui.label(crate::i18n::tr("3. Save the .ged file somewhere easy, such as your Documents folder. If your PAF photos live in a folder, keep that folder next to the .ged file."));
+                        ui.label(crate::i18n::tr("4. Here, choose Import an existing family tree and pick the .ged file. Gilded Roots copies in the photos it can find and shows a report."));
+                        ui.label(RichText::new(crate::i18n::tr("Your PAF file is not changed. You can import again at any time.")).small().weak());
                     });
                 }
                 ui.add_space(8.0);
-                if card(ui, "Create a new family tree", "Start from scratch. Add yourself first, then parents, grandparents and so on.") {
+                if card(ui, crate::i18n::tr("Create a new family tree"), crate::i18n::tr("Start from scratch. Add yourself first, then parents, grandparents and so on.")) {
                     *act = Some(Action::Add(Kind::Person));
                 }
                 ui.add_space(8.0);
-                if card(ui, "Open a Family Tree Archive", "Continue from an archive file made with File > Save Family Tree Archive, for example from another computer. It brings back the tree, photos, documents and stories.") {
+                if card(ui, crate::i18n::tr("Open a Family Tree Archive"), crate::i18n::tr("Continue from an archive file made with File > Save Family Tree Archive, for example from another computer. It brings back the tree, photos, documents and stories.")) {
                     self.open_archive_pick();
                 }
                 ui.add_space(8.0);
-                if card(ui, "Explore the sample family first", "A made-up family over five generations, with photos, sources, marriage records, documents, stories and a map. Try anything: nothing you do there is saved, and your own tree is never touched.") {
+                if card(ui, crate::i18n::tr("Explore the sample family first"), crate::i18n::tr("A made-up family over five generations, with photos, sources, marriage records, documents, stories and a map. Try anything: nothing you do there is saved, and your own tree is never touched.")) {
                     self.start_practice();
                 }
                 ui.add_space(16.0);
-                ui.label(RichText::new("Press F1 at any time for the user guide.").weak());
+                ui.label(RichText::new(crate::i18n::tr("Press F1 at any time for the user guide.")).weak());
             });
         });
     }
@@ -435,7 +435,7 @@ impl App {
         self.tree_replaced();
         self.remember_state();
         self.x.geo_cache.clear();
-        self.status = "You are exploring the sample family. Nothing here is saved. Use 'Back to my tree' at the top when you are done.".into();
+        self.status = crate::i18n::tr("You are exploring the sample family. Nothing here is saved. Use 'Back to my tree' at the top when you are done.").into();
     }
 
     pub(crate) fn end_practice(&mut self) {
@@ -453,7 +453,7 @@ impl App {
             self.tree_replaced();
             self.remember_state();
             self.x.geo_cache.clear();
-            self.status = "Back to your own tree.".into();
+            self.status = crate::i18n::tr("Back to your own tree.").into();
         }
     }
 }
@@ -466,7 +466,7 @@ impl App {
                 match r {
                     Ok(s) => self.status = s,
                     Err(e) => {
-                        self.status = format!("The archive could not be made: {}", e);
+                        self.status = crate::i18n::trf("The archive could not be made: {}", &["The archive could not be made: ", ""], &[(e).to_string()]);
                         self.notice = Some(self.status.clone());
                     }
                 }
@@ -479,20 +479,20 @@ impl App {
             let mut go = false;
             let mut cancel = false;
             let has_tree = !self.db.people.is_empty() && self.x.practice.is_none();
-            egui::Window::new("Open Family Tree Archive").collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            egui::Window::new(crate::i18n::tr("Open Family Tree Archive")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.set_max_width(440.0);
                 ui.label(RichText::new(path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default()).strong());
-                ui.label(format!("Made {}. {} people, {} families, {} photos and documents.", if info.made.is_empty() { "on an unknown date".to_string() } else { print_date(&info.made) }, info.people, info.families, info.media));
+                ui.label(crate::i18n::trf("Made {}. {} people, {} families, {} photos and documents.", &["Made ", ". ", " people, ", " families, ", " photos and documents."], &[(if info.made.is_empty() { "on an unknown date".to_string() } else { print_date(&info.made) }).to_string(), (info.people).to_string(), (info.families).to_string(), (info.media).to_string()]));
                 ui.add_space(6.0);
                 if has_tree {
-                    ui.colored_label(Color32::from_rgb(222, 166, 60), format!("This replaces the tree you have open ({} people). Your current tree is kept as a backup first (Tools > Restore previous tree brings it back).", self.db.people.len()));
+                    ui.colored_label(Color32::from_rgb(222, 166, 60), crate::i18n::trf("This replaces the tree you have open ({} people). Your current tree is kept as a backup first (Tools > Restore previous tree brings it back).", &["This replaces the tree you have open (", " people). Your current tree is kept as a backup first (Tools > Restore previous tree brings it back)."], &[(self.db.people.len()).to_string()]));
                 }
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
-                    if ui.button(RichText::new("Restore this archive").strong()).clicked() {
+                    if ui.button(RichText::new(crate::i18n::tr("Restore this archive")).strong()).clicked() {
                         go = true;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
                         cancel = true;
                     }
                 });
@@ -522,7 +522,7 @@ impl App {
                             self.dirty = true;
                             self.undo.clear();
                             self.redo.clear();
-                            self.status = format!("Restored the archive: {} people and {} photos and documents.", self.db.people.len(), n);
+                            self.status = crate::i18n::trf("Restored the archive: {} people and {} photos and documents.", &["Restored the archive: ", " people and ", " photos and documents."], &[(self.db.people.len()).to_string(), (n).to_string()]);
                         }
                         Err(e) => {
                             self.status = e.clone();
@@ -537,51 +537,51 @@ impl App {
         if self.x.backup_open {
             let mut open = true;
             let mut changed = false;
-            egui::Window::new("Backup settings").open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::i18n::tr("Backup settings")).open(&mut open).resizable(false).show(ctx, |ui| {
                 ui.set_max_width(480.0);
-                ui.label(RichText::new("Automatic backups").strong());
+                ui.label(RichText::new(crate::i18n::tr("Automatic backups")).strong());
                 ui.horizontal(|ui| {
                     for (v, l) in [(1u8, "Every hour"), (0, "Every day"), (2, "Every week")] {
-                        if ui.selectable_label(self.settings.backup_every == v, l).clicked() {
+                        if ui.selectable_label(self.settings.backup_every == v, crate::i18n::trv(l)).clicked() {
                             self.settings.backup_every = v;
                             changed = true;
                         }
                     }
                 });
                 ui.horizontal(|ui| {
-                    ui.label("Keep the last");
+                    ui.label(crate::i18n::tr("Keep the last"));
                     if ui.add(egui::DragValue::new(&mut self.settings.backup_keep).range(3..=365)).changed() {
                         changed = true;
                     }
                     ui.label("backups");
                 });
-                ui.label(RichText::new(format!("Backups are checked after they are written, and kept in {}", data_dir().join("backups").display())).small().weak());
+                ui.label(RichText::new(crate::i18n::trf("Backups are checked after they are written, and kept in {}", &["Backups are checked after they are written, and kept in ", ""], &[(data_dir().join("backups").display()).to_string()])).small().weak());
                 ui.add_space(8.0);
-                ui.label(RichText::new("Second copy somewhere else (recommended)").strong());
-                ui.label("Choose a USB stick, external drive or another folder. Each backup also saves a complete Family Tree Archive there, with every photo and document.");
+                ui.label(RichText::new(crate::i18n::tr("Second copy somewhere else (recommended)")).strong());
+                ui.label(crate::i18n::tr("Choose a USB stick, external drive or another folder. Each backup also saves a complete Family Tree Archive there, with every photo and document."));
                 ui.horizontal(|ui| {
                     ui.label(if self.settings.backup_extra.is_empty() { "Not set".to_string() } else { self.settings.backup_extra.clone() });
-                    if ui.button("Choose folder...").clicked() {
-                        if let Some(d) = rfd::FileDialog::new().set_title("Choose where to keep a second copy").pick_folder() {
+                    if ui.button(crate::i18n::tr("Choose folder...")).clicked() {
+                        if let Some(d) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose where to keep a second copy")).pick_folder() {
                             self.settings.backup_extra = d.display().to_string();
                             changed = true;
                         }
                     }
-                    if !self.settings.backup_extra.is_empty() && ui.button("Stop").clicked() {
+                    if !self.settings.backup_extra.is_empty() && ui.button(crate::i18n::tr("Stop")).clicked() {
                         self.settings.backup_extra.clear();
                         changed = true;
                     }
                 });
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    if ui.button("Back up now").clicked() {
+                    if ui.button(crate::i18n::tr("Back up now")).clicked() {
                         self.x.backup_check = -1.0e9;
                         self.backup_now(true);
                     }
-                    if ui.button("Check backups...").clicked() {
+                    if ui.button(crate::i18n::tr("Check backups...")).clicked() {
                         self.run_verify();
                     }
-                    if ui.button("Saved versions...").clicked() {
+                    if ui.button(crate::i18n::tr("Saved versions...")).clicked() {
                         self.x.ver_open = true;
                     }
                 });
@@ -604,9 +604,9 @@ impl App {
         let mut go: Option<String> = None;
         let cur = self.settings.current_tree.clone();
         let trees = other_trees();
-        egui::Window::new("Family trees").open(&mut open).resizable(false).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Family trees")).open(&mut open).resizable(false).show(ctx, |ui| {
             ui.set_max_width(460.0);
-            ui.label("Keep separate research projects apart: your own family, your spouse's, a client's, a one-name study. Each tree has its own people, photos and backups.");
+            ui.label(crate::i18n::tr("Keep separate research projects apart: your own family, your spouse's, a client's, a one-name study. Each tree has its own people, photos and backups."));
             ui.add_space(6.0);
             for name in std::iter::once(String::new()).chain(trees.iter().cloned()) {
                 ui.horizontal(|ui| {
@@ -614,26 +614,26 @@ impl App {
                     let label = tree_title(&name);
                     ui.label(if here { RichText::new(format!("\u{2022} {}", label)).strong() } else { RichText::new(label) });
                     if here {
-                        ui.label(RichText::new("(open)").small().weak());
-                    } else if ui.button("Open").clicked() {
+                        ui.label(RichText::new(crate::i18n::tr("(open)")).small().weak());
+                    } else if ui.button(crate::i18n::tr("Open")).clicked() {
                         go = Some(name.clone());
                     }
-                    if !name.is_empty() && ui.small_button("Rename...").clicked() {
+                    if !name.is_empty() && ui.small_button(crate::i18n::tr("Rename...")).clicked() {
                         self.x.tree_rename = Some((name.clone(), name.clone()));
                     }
                 });
             }
             if let Some((old, new)) = self.x.tree_rename.as_mut() {
                 ui.horizontal(|ui| {
-                    ui.label(format!("New name for {}:", old));
+                    ui.label(crate::i18n::trf("New name for {}:", &["New name for ", ":"], &[(old).to_string()]));
                     ui.add(egui::TextEdit::singleline(new).desired_width(160.0));
                 });
                 let (old, new) = (old.clone(), sanitize_tree_name(new));
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(!new.is_empty() && new != old, egui::Button::new("Rename")).clicked() {
+                    if ui.add_enabled(!new.is_empty() && new != old, egui::Button::new(crate::i18n::tr("Rename"))).clicked() {
                         let root = base_dir().join("More trees");
                         if root.join(&new).exists() {
-                            self.status = "A tree with that name already exists.".into();
+                            self.status = crate::i18n::tr("A tree with that name already exists.").into();
                         } else if std::fs::rename(root.join(&old), root.join(&new)).is_ok() {
                             if cur == old {
                                 if let Ok(mut g) = CURRENT_TREE.lock() {
@@ -642,32 +642,32 @@ impl App {
                                 self.settings.current_tree = new.clone();
                                 save_settings(&self.settings);
                             }
-                            self.status = format!("Renamed to {}.", new);
+                            self.status = crate::i18n::trf("Renamed to {}.", &["Renamed to ", "."], &[(new).to_string()]);
                         } else {
-                            self.status = "That tree could not be renamed (is a file in it open in another program?).".into();
+                            self.status = crate::i18n::tr("That tree could not be renamed (is a file in it open in another program?).").into();
                         }
                         self.x.tree_rename = None;
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
                         self.x.tree_rename = None;
                     }
                 });
             }
             ui.separator();
             ui.horizontal(|ui| {
-                ui.add(egui::TextEdit::singleline(&mut self.x.tree_new).hint_text("Name for a new tree").desired_width(200.0));
+                ui.add(egui::TextEdit::singleline(&mut self.x.tree_new).hint_text(crate::i18n::tr("Name for a new tree")).desired_width(200.0));
                 let name = sanitize_tree_name(&self.x.tree_new);
-                if ui.add_enabled(!name.is_empty(), egui::Button::new("Create and open")).clicked() {
+                if ui.add_enabled(!name.is_empty(), egui::Button::new(crate::i18n::tr("Create and open"))).clicked() {
                     let dir = base_dir().join("More trees").join(&name);
                     if dir.exists() {
-                        self.status = "A tree with that name already exists.".into();
+                        self.status = crate::i18n::tr("A tree with that name already exists.").into();
                     } else if std::fs::create_dir_all(&dir).is_ok() {
                         go = Some(name.clone());
                         self.x.tree_new.clear();
                     }
                 }
             });
-            ui.label(RichText::new(format!("Extra trees are kept in {}", base_dir().join("More trees").display())).small().weak());
+            ui.label(RichText::new(crate::i18n::trf("Extra trees are kept in {}", &["Extra trees are kept in ", ""], &[(base_dir().join("More trees").display()).to_string()])).small().weak());
         });
         if let Some(n) = go {
             self.switch_tree(&n);
@@ -691,13 +691,13 @@ impl App {
         let mut sd = show_done;
         let mut ids: Vec<u32> = self.db.people.iter().filter(|(_, p)| !p.todos.is_empty()).map(|(i, _)| *i).collect();
         ids.sort_by(|a, b| self.db.people[a].name.cmp(&self.db.people[b].name));
-        egui::Window::new("Research to-do list").open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Research to-do list")).open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("{} open task(s)", total_open)).strong());
-                ui.add(egui::TextEdit::singleline(&mut find).hint_text("Filter by task or name").desired_width(200.0));
-                ui.checkbox(&mut sd, "Show finished");
+                ui.label(RichText::new(crate::i18n::trf("{} open task(s)", &["", " open task(s)"], &[(total_open).to_string()])).strong());
+                ui.add(egui::TextEdit::singleline(&mut find).hint_text(crate::i18n::tr("Filter by task or name")).desired_width(200.0));
+                ui.checkbox(&mut sd, crate::i18n::tr("Show finished"));
             });
-            ui.label(RichText::new("Add tasks from a person's Individual page (Research to-do panel).").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Add tasks from a person's Individual page (Research to-do panel).")).small().weak());
             ui.separator();
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 let mut any = false;
@@ -733,7 +733,7 @@ impl App {
                     }
                 }
                 if !any {
-                    ui.label(RichText::new("No tasks match.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("No tasks match.")).italics().weak());
                 }
             });
         });
@@ -767,20 +767,20 @@ impl App {
         let mut rename = self.x.places_rename.clone();
         let mut do_rename: Option<(String, String)> = None;
         let mut go: Option<u32> = None;
-        egui::Window::new("Places").open(&mut open).default_size([860.0, 560.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Places")).open(&mut open).default_size([860.0, 560.0]).show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("{} different places", uses.len())).strong());
-                ui.add(egui::TextEdit::singleline(&mut find).hint_text("Search places").desired_width(220.0));
-                ui.checkbox(&mut by_count, "Most used first");
+                ui.label(RichText::new(crate::i18n::trf("{} different places", &["", " different places"], &[(uses.len()).to_string()])).strong());
+                ui.add(egui::TextEdit::singleline(&mut find).hint_text(crate::i18n::tr("Search places")).desired_width(220.0));
+                ui.checkbox(&mut by_count, crate::i18n::tr("Most used first"));
                 if !dupes.is_empty() {
-                    ui.label(RichText::new(format!("{} place(s) spelled more than one way", dupes.len())).color(Color32::from_rgb(220, 160, 60)));
+                    ui.label(RichText::new(crate::i18n::trf("{} place(s) spelled more than one way", &["", " place(s) spelled more than one way"], &[(dupes.len()).to_string()])).color(Color32::from_rgb(220, 160, 60)));
                 }
             });
             ui.separator();
             egui::SidePanel::left("places_list").resizable(true).default_width(360.0).show_inside(ui, |ui| {
                 egui::ScrollArea::vertical().id_salt("pl_scroll").auto_shrink([false, false]).show(ui, |ui| {
                     if !dupes.is_empty() && find.trim().is_empty() {
-                        egui::CollapsingHeader::new(RichText::new("Spelled more than one way").strong()).default_open(true).show(ui, |ui| {
+                        egui::CollapsingHeader::new(RichText::new(crate::i18n::tr("Spelled more than one way")).strong()).default_open(true).show(ui, |ui| {
                             for g in &dupes {
                                 ui.horizontal_wrapped(|ui| {
                                     for v in g {
@@ -811,17 +811,17 @@ impl App {
             });
             egui::CentralPanel::default().show_inside(ui, |ui| {
                 let Some(pl) = sel.clone() else {
-                    ui.label(RichText::new("Pick a place on the left to see who was there.").italics().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Pick a place on the left to see who was there.")).italics().weak());
                     return;
                 };
                 ui.label(RichText::new(pl.as_str()).size(20.0).strong());
                 let list = uses.get(&pl).cloned().unwrap_or_default();
-                ui.label(format!("Used {} time(s)", list.len()));
+                ui.label(crate::i18n::trf("Used {} time(s)", &["Used ", " time(s)"], &[(list.len()).to_string()]));
                 ui.add_space(4.0);
                 ui.horizontal(|ui| {
-                    ui.label("Change this spelling to");
+                    ui.label(crate::i18n::tr("Change this spelling to"));
                     ui.add(egui::TextEdit::singleline(&mut rename).desired_width(260.0));
-                    if ui.add_enabled(!rename.trim().is_empty() && rename.trim() != pl, egui::Button::new("Change everywhere")).on_hover_text("Every fact that uses this exact spelling is changed. Edit > Undo puts it back.").clicked() {
+                    if ui.add_enabled(!rename.trim().is_empty() && rename.trim() != pl, egui::Button::new(crate::i18n::tr("Change everywhere"))).on_hover_text(crate::i18n::tr("Every fact that uses this exact spelling is changed. Edit > Undo puts it back.")).clicked() {
                         do_rename = Some((pl.clone(), rename.clone()));
                     }
                 });
@@ -846,7 +846,7 @@ impl App {
             let n = self.db.rename_place(&from, &to);
             self.x.next_label = Some(format!("Changed place \"{}\" to \"{}\"", from, to.trim()));
             self.dirty = true;
-            self.status = format!("Changed {} fact(s) from \"{}\" to \"{}\". Edit > Undo puts them back.", n, from, to.trim());
+            self.status = crate::i18n::trf("Changed {} fact(s) from \"{}\" to \"{}\". Edit > Undo puts them back.", &["Changed ", " fact(s) from \"", "\" to \"", "\". Edit > Undo puts them back."], &[(n).to_string(), (from).to_string(), (to.trim()).to_string()]);
             sel = Some(to.trim().to_string());
             rename = to.trim().to_string();
         }

@@ -46,7 +46,7 @@ pub(crate) fn help_text(ui: &mut egui::Ui, find: &str) {
             } else if let Some(b) = t.strip_prefix("- ") {
                 flush(ui, &mut para);
                 ui.horizontal_wrapped(|ui| {
-                    ui.label("  \u{2022}");
+                    ui.label(crate::i18n::tr("  \u{2022}"));
                     ui.add(egui::Label::new(RichText::new(b.replace("**", "").replace('`', "")).size(14.0)).wrap());
                 });
             } else {
@@ -59,6 +59,6 @@ pub(crate) fn help_text(ui: &mut egui::Ui, find: &str) {
         flush(ui, &mut para);
     }
     if shown == 0 {
-        ui.label(RichText::new("Nothing in the guide matches that.").italics().weak());
+        ui.label(RichText::new(crate::i18n::tr("Nothing in the guide matches that.")).italics().weak());
     }
 }

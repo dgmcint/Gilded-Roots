@@ -182,70 +182,70 @@ impl App {
         let st = self.x.stats.as_ref().unwrap().1.clone();
         let mut open = true;
         let mut map_surname: Option<String> = None;
-        egui::Window::new("Family statistics").open(&mut open).default_size([620.0, 640.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Family statistics")).open(&mut open).default_size([620.0, 640.0]).show(ctx, |ui| {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-                ui.label(RichText::new(format!("{} people in {} families. {} living. {} with a birth date, {} with at least one source.", st.people, st.families, st.living, st.with_birth, st.with_sources)).strong());
+                ui.label(RichText::new(crate::i18n::trf("{} people in {} families. {} living. {} with a birth date, {} with at least one source.", &["", " people in ", " families. ", " living. ", " with a birth date, ", " with at least one source."], &[(st.people).to_string(), (st.families).to_string(), (st.living).to_string(), (st.with_birth).to_string(), (st.with_sources).to_string()])).strong());
                 ui.add_space(8.0);
-                ui.label(RichText::new("How long people lived").size(16.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("How long people lived")).size(16.0).strong());
                 if st.life_men.1 + st.life_women.1 > 0 {
-                    ui.label(format!("Men lived {:.0} years on average ({} with both dates); women {:.0} years ({}).", st.life_men.0, st.life_men.1, st.life_women.0, st.life_women.1));
+                    ui.label(crate::i18n::trf("Men lived {:.0} years on average ({} with both dates); women {:.0} years ({}).", &["Men lived ", " years on average (", " with both dates); women ", " years (", ")."], &[format!("{:.0}", st.life_men.0), (st.life_men.1).to_string(), format!("{:.0}", st.life_women.0), (st.life_women.1).to_string()]));
                 }
                 let mx = st.life_by_century.iter().map(|x| x.1).fold(0.0, f32::max);
                 for (c, avg, n) in &st.life_by_century {
-                    bar(ui, &format!("Born in the {}s", c), *avg, mx, &format!("{:.0} years ({} people)", avg, n));
+                    bar(ui, &crate::i18n::trf("Born in the {}s", &["Born in the ", "s"], &[(c).to_string()]), *avg, mx, &crate::i18n::trf("{:.0} years ({} people)", &["", " years (", " people)"], &[format!("{:.0}", avg), (n).to_string()]));
                 }
                 if let Some((id, age)) = st.oldest {
                     ui.horizontal(|ui| {
-                        ui.label("Longest life:");
+                        ui.label(crate::i18n::tr("Longest life:"));
                         if ui.link(self.db.label(id)).clicked() {
                             *act = Some(Action::Open(id));
                         }
-                        ui.label(format!("{} years", age));
+                        ui.label(crate::i18n::trf("{} years", &["", " years"], &[(age).to_string()]));
                     });
                 }
                 ui.add_space(8.0);
-                ui.label(RichText::new("Family size").size(16.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("Family size")).size(16.0).strong());
                 let mx = st.kids_by_decade.iter().map(|x| x.1).fold(0.0, f32::max);
                 for (d, avg, n) in &st.kids_by_decade {
-                    bar(ui, &format!("Families from the {}s", d), *avg, mx, &format!("{:.1} children ({} families)", avg, n));
+                    bar(ui, &crate::i18n::trf("Families from the {}s", &["Families from the ", "s"], &[(d).to_string()]), *avg, mx, &crate::i18n::trf("{:.1} children ({} families)", &["", " children (", " families)"], &[format!("{:.1}", avg), (n).to_string()]));
                 }
                 if let Some((fid, n)) = st.biggest {
                     let f = &self.db.fams[&fid];
                     let names: Vec<String> = [f.h, f.w].into_iter().flatten().filter_map(|x| self.db.people.get(&x)).map(|p| p.name.clone()).collect();
-                    ui.label(format!("Largest family: {} with {} children.", names.join(" and "), n));
+                    ui.label(crate::i18n::trf("Largest family: {} with {} children.", &["Largest family: ", " with ", " children."], &[(names.join(" and ")).to_string(), (n).to_string()]));
                 }
                 ui.add_space(8.0);
-                ui.label(RichText::new("Marriage").size(16.0).strong());
-                ui.label(format!("Average age at marriage: men {:.0} ({}), women {:.0} ({}).", st.marry_men.0, st.marry_men.1, st.marry_women.0, st.marry_women.1));
+                ui.label(RichText::new(crate::i18n::tr("Marriage")).size(16.0).strong());
+                ui.label(crate::i18n::trf("Average age at marriage: men {:.0} ({}), women {:.0} ({}).", &["Average age at marriage: men ", " (", "), women ", " (", ")."], &[format!("{:.0}", st.marry_men.0), (st.marry_men.1).to_string(), format!("{:.0}", st.marry_women.0), (st.marry_women.1).to_string()]));
                 ui.add_space(8.0);
-                ui.label(RichText::new("Where people were born, and moving").size(16.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("Where people were born, and moving")).size(16.0).strong());
                 if st.moved.1 > 0 {
-                    ui.label(format!("{} of {} people ({:.0}%) were born in a different state or country from their parents.", st.moved.0, st.moved.1, 100.0 * st.moved.0 as f32 / st.moved.1 as f32));
+                    ui.label(crate::i18n::trf("{} of {} people ({:.0}%) were born in a different state or country from their parents.", &["", " of ", " people (", "%) were born in a different state or country from their parents."], &[(st.moved.0).to_string(), (st.moved.1).to_string(), format!("{:.0}", 100.0 * st.moved.0 as f32 / st.moved.1 as f32)]));
                 }
                 let mx = st.birth_regions.first().map(|x| x.1 as f32).unwrap_or(1.0);
                 for (r, n) in &st.birth_regions {
                     bar(ui, r, *n as f32, mx, &n.to_string());
                 }
                 ui.add_space(8.0);
-                ui.label(RichText::new("Surnames and where they are found").size(16.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("Surnames and where they are found")).size(16.0).strong());
                 egui::Grid::new("sur").num_columns(3).striped(true).spacing([12.0, 4.0]).show(ui, |ui| {
                     for (name, n, places) in &st.surnames {
                         ui.label(RichText::new(format!("{} ({})", name, n)).strong());
                         ui.label(RichText::new(places.iter().map(|(p, k)| format!("{} {}", p, k)).collect::<Vec<_>>().join(", ")).small());
-                        if ui.small_button("Show on map").clicked() {
+                        if ui.small_button(crate::i18n::tr("Show on map")).clicked() {
                             map_surname = Some(name.clone());
                         }
                         ui.end_row();
                     }
                 });
                 ui.add_space(8.0);
-                ui.label(RichText::new("Most common first names").size(16.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("Most common first names")).size(16.0).strong());
                 ui.columns(2, |c| {
-                    c[0].label(RichText::new("Men").strong());
+                    c[0].label(RichText::new(crate::i18n::tr("Men")).strong());
                     for (g, n) in &st.given_m {
                         c[0].label(format!("{} ({})", g, n));
                     }
-                    c[1].label(RichText::new("Women").strong());
+                    c[1].label(RichText::new(crate::i18n::tr("Women")).strong());
                     for (g, n) in &st.given_f {
                         c[1].label(format!("{} ({})", g, n));
                     }

@@ -160,9 +160,9 @@ impl App {
         let rows = self.table_rows_kept();
         let mut export = std::mem::take(&mut self.x.csv_req);
         ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new(format!("{} of {} people", rows.len(), self.db.people.len())).strong());
-            ui.add(egui::TextEdit::singleline(&mut self.x.table_find).hint_text("Filter: name, year, place or #ID").desired_width(240.0));
-            ui.label("Show");
+            ui.label(RichText::new(crate::i18n::trf("{} of {} people", &["", " of ", " people"], &[(rows.len()).to_string(), (self.db.people.len()).to_string()])).strong());
+            ui.add(egui::TextEdit::singleline(&mut self.x.table_find).hint_text(crate::i18n::tr("Filter: name, year, place or #ID")).desired_width(240.0));
+            ui.label(crate::i18n::tr("Show"));
             let group_label = self.db.groups.get(self.x.table_group).map(|g| format!("Group: {}", g.name)).unwrap_or_else(|| "Group".into());
             egui::ComboBox::from_id_salt("table_only")
                 .selected_text(if self.x.table_only == Only::Group { group_label } else { match self.x.table_only {
@@ -177,20 +177,20 @@ impl App {
                 }.to_string() })
                 .show_ui(ui, |ui| {
                     for (v, l) in [(Only::All, "Everyone"), (Only::NoBirth, "No birth date"), (Only::NoSources, "No sources"), (Only::OpenTasks, "Open research tasks"), (Only::Living, "Living"), (Only::Bookmarked, "Bookmarked"), (Only::Doubtful, "Uncertain or disputed facts")] {
-                        ui.selectable_value(&mut self.x.table_only, v, l);
+                        ui.selectable_value(&mut self.x.table_only, v, crate::i18n::trv(l));
                     }
                     for (i, g) in self.db.groups.iter().enumerate() {
-                        if ui.selectable_label(self.x.table_only == Only::Group && self.x.table_group == i, format!("Group: {}", g.name)).clicked() {
+                        if ui.selectable_label(self.x.table_only == Only::Group && self.x.table_group == i, crate::i18n::trf("Group: {}", &["Group: ", ""], &[(g.name).to_string()])).clicked() {
                             self.x.table_only = Only::Group;
                             self.x.table_group = i;
                         }
                     }
                 });
-            if ui.button("Save as spreadsheet (CSV)...").on_hover_text("Opens in Excel, Numbers or Google Sheets").clicked() {
+            if ui.button(crate::i18n::tr("Save as spreadsheet (CSV)...")).on_hover_text(crate::i18n::tr("Opens in Excel, Numbers or Google Sheets")).clicked() {
                 export = true;
             }
         });
-        ui.label(RichText::new("Click a column title to sort. Click a row to select, double-click to open the person.").small().weak());
+        ui.label(RichText::new(crate::i18n::tr("Click a column title to sort. Click a row to select, double-click to open the person.")).small().weak());
         ui.separator();
         let mut sort_click: Option<Col> = None;
         let cols = [
@@ -231,7 +231,7 @@ impl App {
                     ui.label(r.name.as_str());
                 });
                 row.col(|ui| {
-                    ui.label(r.sex);
+                    ui.label(crate::i18n::trv(r.sex));
                 });
                 row.col(|ui| {
                     ui.label(r.born.as_str());
@@ -276,7 +276,7 @@ impl App {
             for r in rows.iter() {
                 csv.push_str(&format!("{},{},{},{},{},{},{},{},{},{}\n", r.id, q(&r.name), r.sex, q(&r.born), q(&r.born_in), q(&r.died), q(&r.died_in), r.sources, r.photos, r.tasks));
             }
-            if let Some(p) = rfd::FileDialog::new().set_file_name("people.csv").add_filter("Spreadsheet (CSV)", &["csv"]).save_file() {
+            if let Some(p) = rfd::FileDialog::new().set_file_name("people.csv").add_filter(crate::i18n::tr("Spreadsheet (CSV)"), &["csv"]).save_file() {
                 self.status = match atomic_write(&p, csv.as_bytes()) {
                     Ok(_) => format!("Saved {} rows to {}", rows.len(), p.display()),
                     Err(e) => format!("Could not save: {}", e),

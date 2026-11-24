@@ -232,7 +232,7 @@ impl App {
     /// File > Import: choose a file, read it, and open the options window.
     pub(crate) fn start_import(&mut self) {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
-        let Some(path) = rfd::FileDialog::new().set_title("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)").set_directory(start_dir()).pick_file() else { return };
+        let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)")).set_directory(start_dir()).pick_file() else { return };
         remember_dir(&path);
         self.open_import(&path);
     }
@@ -267,7 +267,7 @@ impl App {
         let c = &mut self.x.import_choices;
         let json = pend.src.json.is_some();
         let empty_here = self.db.people.is_empty() || self.db.sample;
-        egui::Window::new("Import options").id(egui::Id::new("import_opts")).open(&mut open).collapsible(false).default_width(600.0).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Import options")).id(egui::Id::new("import_opts")).open(&mut open).collapsible(false).default_width(600.0).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
             let r = &pend.rep;
             let n = &pend.counts;
             ui.label(RichText::new(&r.file).strong().size(16.0));
@@ -287,49 +287,49 @@ impl App {
                 cell(ui, n.notes, "notes");
                 cell(ui, r.events, "events");
                 ui.end_row();
-                cell(ui, n.files_found + n.files_missing, "photos and documents");
-                cell(ui, n.links, "links to photos on websites");
+                cell(ui, n.files_found + n.files_missing, crate::i18n::tr("photos and documents"));
+                cell(ui, n.links, crate::i18n::tr("links to photos on websites"));
                 ui.end_row();
-                cell(ui, n.lds, "LDS ordinances");
-                cell(ui, n.living, "living people");
+                cell(ui, n.lds, crate::i18n::tr("LDS ordinances"));
+                cell(ui, n.living, crate::i18n::tr("living people"));
                 ui.end_row();
                 if n.tasks > 0 || n.contacts > 0 || r.kept_total() > 0 {
-                    cell(ui, n.tasks, "research tasks");
-                    cell(ui, r.kept_total(), "other details");
+                    cell(ui, n.tasks, crate::i18n::tr("research tasks"));
+                    cell(ui, r.kept_total(), crate::i18n::tr("other details"));
                     ui.end_row();
                 }
             });
             if n.files_found + n.files_missing > 0 {
-                ui.label(RichText::new(format!("{} of the photo and document files were found next to the file; {} were not.", n.files_found, n.files_missing)).small().weak());
+                ui.label(RichText::new(crate::i18n::trf("{} of the photo and document files were found next to the file; {} were not.", &["", " of the photo and document files were found next to the file; ", " were not."], &[(n.files_found).to_string(), (n.files_missing).to_string()])).small().weak());
             }
             ui.separator();
 
-            ui.label(RichText::new("Where").strong());
+            ui.label(RichText::new(crate::i18n::tr("Where")).strong());
             ui.add_enabled_ui(!empty_here, |ui| {
-                ui.radio_value(&mut c.place, 0, "Add to my tree (you check and confirm every possible match)");
+                ui.radio_value(&mut c.place, 0, crate::i18n::tr("Add to my tree (you check and confirm every possible match)"));
             });
-            ui.radio_value(&mut c.place, 1, if empty_here { "Make it my tree" } else { "Replace my tree with it (a backup is made first)" });
+            ui.radio_value(&mut c.place, 1, if empty_here { crate::i18n::tr("Make it my tree") } else { crate::i18n::tr("Replace my tree with it (a backup is made first)") });
             ui.horizontal(|ui| {
-                ui.radio_value(&mut c.place, 2, "A new tree of its own, named");
+                ui.radio_value(&mut c.place, 2, crate::i18n::tr("A new tree of its own, named"));
                 ui.add_enabled(c.place == 2, egui::TextEdit::singleline(&mut pend.tree_name).desired_width(200.0));
             });
             if c.place == 2 {
-                ui.label(RichText::new("Kept under File > Trees. Your open tree is saved and left as it is.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Kept under File > Trees. Your open tree is saved and left as it is.")).small().weak());
             }
             ui.add_space(4.0);
 
-            ui.label(RichText::new("People").strong());
+            ui.label(RichText::new(crate::i18n::tr("People")).strong());
             ui.horizontal_wrapped(|ui| {
                 for (k, l) in [(0u8, "Everyone"), (1, "Ancestors of..."), (2, "Descendants of..."), (3, "Ancestors and descendants of...")] {
-                    ui.radio_value(&mut c.who, k, l);
+                    ui.radio_value(&mut c.who, k, crate::i18n::trv(l));
                 }
             });
             if c.who != 0 {
                 let who = pend.root.and_then(|r| pend.preview.people.get(&r)).map(|p| format!("{} {}", p.name, life(p))).unwrap_or_else(|| "nobody chosen".to_string());
                 ui.horizontal(|ui| {
-                    ui.label("Person:");
+                    ui.label(crate::i18n::tr("Person:"));
                     ui.label(RichText::new(who).strong());
-                    ui.add(egui::TextEdit::singleline(&mut pend.root_q).hint_text("Type a name to choose someone else").desired_width(220.0));
+                    ui.add(egui::TextEdit::singleline(&mut pend.root_q).hint_text(crate::i18n::tr("Type a name to choose someone else")).desired_width(220.0));
                 });
                 let q = pend.root_q.trim().to_lowercase();
                 if !q.is_empty() {
@@ -343,30 +343,30 @@ impl App {
                     }
                 }
             }
-            ui.checkbox(&mut c.no_living, format!("Leave out living people ({})", n.living));
+            ui.checkbox(&mut c.no_living, crate::i18n::trf("Leave out living people ({})", &["Leave out living people (", ")"], &[(n.living).to_string()]));
             ui.add_space(4.0);
 
-            ui.label(RichText::new("What to include").strong());
+            ui.label(RichText::new(crate::i18n::tr("What to include")).strong());
             if json {
-                ui.label(RichText::new("This is a tree saved by Gilded Roots: everything in it comes in.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("This is a tree saved by Gilded Roots: everything in it comes in.")).small().weak());
             }
             ui.add_enabled_ui(!json, |ui| {
                 egui::Grid::new("imp_what").num_columns(2).spacing([24.0, 2.0]).show(ui, |ui| {
-                    ui.checkbox(&mut c.notes, "Notes");
-                    ui.checkbox(&mut c.sources, "Sources and citations");
+                    ui.checkbox(&mut c.notes, crate::i18n::tr("Notes"));
+                    ui.checkbox(&mut c.sources, crate::i18n::tr("Sources and citations"));
                     ui.end_row();
-                    ui.checkbox(&mut c.files, "Photos and documents found with the file");
-                    ui.checkbox(&mut c.links, "Links to photos on websites (Ancestry, MyHeritage)");
+                    ui.checkbox(&mut c.files, crate::i18n::tr("Photos and documents found with the file"));
+                    ui.checkbox(&mut c.links, crate::i18n::tr("Links to photos on websites (Ancestry, MyHeritage)"));
                     ui.end_row();
-                    ui.checkbox(&mut c.lds, "LDS ordinances");
-                    ui.checkbox(&mut c.contact, "Addresses and contact details");
+                    ui.checkbox(&mut c.lds, crate::i18n::tr("LDS ordinances"));
+                    ui.checkbox(&mut c.contact, crate::i18n::tr("Addresses and contact details"));
                     ui.end_row();
-                    ui.checkbox(&mut c.tasks, "Research tasks");
-                    ui.checkbox(&mut c.other, "Other details from the program that made it").on_hover_text("Details Gilded Roots has no place for. Kept, so they go back out when you export a GEDCOM file.");
+                    ui.checkbox(&mut c.tasks, crate::i18n::tr("Research tasks"));
+                    ui.checkbox(&mut c.other, crate::i18n::tr("Other details from the program that made it")).on_hover_text(crate::i18n::tr("Details Gilded Roots has no place for. Kept, so they go back out when you export a GEDCOM file."));
                     ui.end_row();
                 });
             });
-            ui.checkbox(&mut c.tidy_places, "Open the Places window afterwards, to tidy place names (such as \"USA\" and \"United States\")");
+            ui.checkbox(&mut c.tidy_places, crate::i18n::tr("Open the Places window afterwards, to tidy place names (such as \"USA\" and \"United States\")"));
             ui.separator();
 
             // what will happen, in a sentence
@@ -388,13 +388,13 @@ impl App {
             if !pend.error.is_empty() {
                 ui.label(RichText::new(&pend.error).color(ui.visuals().error_fg_color));
             }
-            ui.label(RichText::new("The file itself is not changed. A report of what came in follows.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("The file itself is not changed. A report of what came in follows.")).small().weak());
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                if ui.add_enabled(people > 0, egui::Button::new(RichText::new("Import").strong())).clicked() {
+                if ui.add_enabled(people > 0, egui::Button::new(RichText::new(crate::i18n::tr("Import")).strong())).clicked() {
                     go = true;
                 }
-                if ui.button("Cancel").clicked() {
+                if ui.button(crate::i18n::tr("Cancel")).clicked() {
                     cancel = true;
                 }
             });
@@ -440,7 +440,7 @@ impl App {
         if c.place == 2 {
             let dir = base_dir().join("More trees").join(&name);
             if let Err(e) = std::fs::create_dir_all(&dir) {
-                self.status = format!("Could not make the new tree: {}", io_msg(&e));
+                self.status = crate::i18n::trf("Could not make the new tree: {}", &["Could not make the new tree: ", ""], &[(io_msg(&e)).to_string()]);
                 return;
             }
             // switching saves the open tree first; then photos are copied into the new tree's own folder

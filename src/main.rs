@@ -61,6 +61,7 @@ mod books;
 mod tools;
 mod notes;
 mod templates;
+mod i18n;
 #[cfg(test)]
 mod bigtree;
 pub(crate) use model::*;
@@ -83,6 +84,7 @@ fn main() -> eframe::Result<()> {
     // Open at the size it was last closed at; the first time, a good size that is then fitted
     // to the screen on the first frame (most of the screen, centred, not full screen).
     let st = load_settings();
+    i18n::set_language(&st.language);
     if !st.current_tree.is_empty() && base_dir().join("More trees").join(&st.current_tree).is_dir() {
         if let Ok(mut g) = CURRENT_TREE.lock() {
             *g = Some(st.current_tree.clone());
@@ -103,6 +105,9 @@ fn main() -> eframe::Result<()> {
         Box::new(|cc| {
             let app = App::new();
             egui_extras::install_image_loaders(&cc.egui_ctx);
+            if matches!(i18n::language().as_str(), "ja" | "zh" | "ko") || app.db.people.values().any(|p| i18n::has_asian(&p.name)) {
+                i18n::add_asian_fonts(&cc.egui_ctx);
+            }
             apply_theme(&cc.egui_ctx, &app.settings);
             Ok(Box::new(app))
         }),

@@ -77,22 +77,22 @@ impl App {
                         }
                         ui.label(RichText::new(sub).size(16.0));
                         if !p.nick.trim().is_empty() {
-                            ui.label(RichText::new(format!("Known as \"{}\"", p.nick.trim())).size(15.0).italics());
+                            ui.label(RichText::new(crate::i18n::trf("Known as \"{}\"", &["Known as \"", "\""], &[(p.nick.trim()).to_string()])).size(15.0).italics());
                         }
                         ui.add_space(4.0);
                         ui.horizontal(|ui| {
-                            ui.label(RichText::new(format!("Person ID #{}", id)).small().weak());
+                            ui.label(RichText::new(crate::i18n::trf("Person ID #{}", &["Person ID #", ""], &[(id).to_string()])).small().weak());
                             if let Some(old) = old_id(&self.db.people[&id]) {
-                                ui.label(RichText::new(format!("(Old ID #{})", old)).small().weak()).on_hover_text("This person's number before the tree was renumbered (Tools > Renumber people)");
+                                ui.label(RichText::new(crate::i18n::trf("(Old ID #{})", &["(Old ID #", ")"], &[(old).to_string()])).small().weak()).on_hover_text(crate::i18n::tr("This person's number before the tree was renumbered (Tools > Renumber people)"));
                             }
                             if self.db.home == Some(id) {
-                                ui.label(RichText::new("Home person").small().weak());
+                                ui.label(RichText::new(crate::i18n::tr("Home person")).small().weak());
                             }
                         });
                     });
                 });
                 ui.add_space(10.0);
-                ui.label(RichText::new("Vital facts").size(17.0).strong());
+                ui.label(RichText::new(crate::i18n::tr("Vital facts")).size(17.0).strong());
                 ui.separator();
                 let cf = |t: &str| p.fx.get(t).map(|e| e.conf.clone()).unwrap_or_default();
                 let rows: Vec<(&str, String, String)> = vec![
@@ -104,7 +104,7 @@ impl App {
                 ];
                 let shown: Vec<_> = rows.into_iter().filter(|r| !r.1.is_empty()).collect();
                 if shown.is_empty() {
-                    none(ui, "No dates or places yet. Press Edit to add them.");
+                    none(ui, crate::i18n::tr("No dates or places yet. Press Edit to add them."));
                 } else {
                     egui::Grid::new("read_facts").num_columns(3).spacing([24.0, 8.0]).show(ui, |ui| {
                         for (k, v, c) in &shown {
@@ -120,14 +120,14 @@ impl App {
                 let tl = self.db.timeline(id);
                 ui.add_space(12.0);
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("Timeline").size(17.0).strong());
-                    if ui.checkbox(&mut self.settings.show_history, "with historical events").changed() {
+                    ui.label(RichText::new(crate::i18n::tr("Timeline")).size(17.0).strong());
+                    if ui.checkbox(&mut self.settings.show_history, crate::i18n::tr("with historical events")).changed() {
                         save_settings(&self.settings);
                     }
                 });
                 ui.separator();
                 if tl.is_empty() {
-                    none(ui, "Add dates to see a timeline.");
+                    none(ui, crate::i18n::tr("Add dates to see a timeline."));
                 } else {
                     // the person's own events, with historical events slotted in by year
                     let mut rows: Vec<(i32, bool, String, String)> = tl.iter().enumerate().map(|(i, (d, t))| (parse_date(d).0.unwrap_or(i32::MIN + i as i32), false, d.clone(), t.clone())).collect();
@@ -165,12 +165,12 @@ impl App {
                 let pf = self.db.parent_families(id);
                 lab(ui, if pf.len() > 1 { "Parents (more than one set)" } else { "Parents" });
                 if pf.is_empty() {
-                    none(ui, "None recorded");
+                    none(ui, crate::i18n::tr("None recorded"));
                 }
                 for (n, fid) in pf.iter().enumerate() {
                     let f = self.db.fams[fid].clone();
                     if pf.len() > 1 {
-                        ui.label(RichText::new(format!("Set {}", n + 1)).small().weak());
+                        ui.label(RichText::new(crate::i18n::trf("Set {}", &["Set ", ""], &[(n + 1).to_string()])).small().weak());
                     }
                     for (who, father) in [(f.h, true), (f.w, false)] {
                         if let Some(w) = who.filter(|w| self.db.people.contains_key(w)) {
@@ -182,9 +182,9 @@ impl App {
                 }
                 ui.add_space(6.0);
                 let fams = self.db.fams_of(id);
-                lab(ui, "Spouses and children");
+                lab(ui, crate::i18n::tr("Spouses and children"));
                 if fams.is_empty() {
-                    none(ui, "None recorded");
+                    none(ui, crate::i18n::tr("None recorded"));
                 }
                 for fid in &fams {
                     let f = self.db.fams[fid].clone();
@@ -193,7 +193,7 @@ impl App {
                     match other.filter(|o| self.db.people.contains_key(o)) {
                         Some(o) => link(ui, act, o, &if m.is_empty() { String::new() } else { format!("married {}", m) }),
                         None => {
-                            ui.label(RichText::new("Unknown partner").italics());
+                            ui.label(RichText::new(crate::i18n::tr("Unknown partner")).italics());
                         }
                     }
                     for k in &f.kids {
@@ -208,14 +208,14 @@ impl App {
                 let sibs = self.db.siblings(id);
                 if !sibs.is_empty() {
                     ui.add_space(6.0);
-                    lab(ui, "Brothers and sisters");
+                    lab(ui, crate::i18n::tr("Brothers and sisters"));
                     for s2 in sibs {
                         link(ui, act, s2, "");
                     }
                 }
                 if !p.assoc.is_empty() {
                     ui.add_space(6.0);
-                    lab(ui, "Other ties");
+                    lab(ui, crate::i18n::tr("Other ties"));
                     for a in &p.assoc {
                         if self.db.people.contains_key(&a.other) {
                             link(ui, act, a.other, &format!("({})", a.role));
@@ -226,14 +226,14 @@ impl App {
             "contact" => {
                 let c = &p.contact;
                 if c.is_empty() {
-                    none(ui, "No contact details. Press Edit to add an address, phone or email.");
+                    none(ui, crate::i18n::tr("No contact details. Press Edit to add an address, phone or email."));
                 } else {
                     egui::Grid::new("read_contact").num_columns(2).spacing([18.0, 4.0]).show(ui, |ui| {
                         for (label, v) in [("Address", &c.addr), ("Phone", &c.phone), ("Email", &c.email), ("Web page", &c.url)] {
                             if v.trim().is_empty() {
                                 continue;
                             }
-                            ui.label(RichText::new(label).weak());
+                            ui.label(RichText::new(crate::i18n::trv(label)).weak());
                             if label == "Email" {
                                 ui.hyperlink_to(v.trim(), format!("mailto:{}", v.trim()));
                             } else if label == "Web page" && (v.starts_with("http://") || v.starts_with("https://")) {
@@ -245,14 +245,14 @@ impl App {
                         }
                     });
                     if !p.living {
-                        ui.label(RichText::new("This person is not marked as living.").small().weak());
+                        ui.label(RichText::new(crate::i18n::tr("This person is not marked as living.")).small().weak());
                     }
                 }
             }
             "lds" => {
                 let rows = self.lds_rows(id);
                 if rows.iter().all(|r| r.event.is_none()) {
-                    none(ui, "No ordinances recorded. Press Edit to add them.");
+                    none(ui, crate::i18n::tr("No ordinances recorded. Press Edit to add them."));
                 }
                 egui::Grid::new("read_lds").num_columns(2).striped(true).spacing([18.0, 6.0]).show(ui, |ui| {
                     for r in &rows {
@@ -277,11 +277,11 @@ impl App {
             }
             "events" => {
                 if p.events.is_empty() {
-                    none(ui, "No other events.");
+                    none(ui, crate::i18n::tr("No other events."));
                 } else {
                     egui::Grid::new("read_ev").num_columns(2).striped(true).spacing([18.0, 6.0]).show(ui, |ui| {
                         for e in &p.events {
-                            ui.label(RichText::new(if e.kind.is_empty() { "Other" } else { e.kind.as_str() }).size(14.0).strong());
+                            ui.label(RichText::new(if e.kind.is_empty() { crate::i18n::tr("Other") } else { e.kind.as_str() }).size(14.0).strong());
                             ui.vertical(|ui| {
                                 let mut line = both(&e.date, &e.place);
                                 if !e.val.trim().is_empty() {
@@ -292,7 +292,7 @@ impl App {
                                     ui.add(egui::Label::new(RichText::new(e.note.trim()).small().weak()).wrap());
                                 }
                                 if !e.cites.is_empty() {
-                                    ui.label(RichText::new(format!("{} source(s)", e.cites.len())).small().weak());
+                                    ui.label(RichText::new(crate::i18n::trf("{} source(s)", &["", " source(s)"], &[(e.cites.len()).to_string()])).small().weak());
                                 }
                                 conf_badge(ui, &e.conf);
                             });
@@ -303,7 +303,7 @@ impl App {
             }
             "sources" => {
                 if p.sources.is_empty() {
-                    none(ui, "No sources yet.");
+                    none(ui, crate::i18n::tr("No sources yet."));
                 }
                 for c in &p.sources {
                     ui.vertical(|ui| {
@@ -342,12 +342,12 @@ impl App {
                     }
                 }
                 if !any {
-                    none(ui, "No notes.");
+                    none(ui, crate::i18n::tr("No notes."));
                 }
             }
             "names" => {
                 if p.alt_names.is_empty() {
-                    none(ui, "No other names.");
+                    none(ui, crate::i18n::tr("No other names."));
                 }
                 egui::Grid::new("read_names").num_columns(2).spacing([18.0, 6.0]).show(ui, |ui| {
                     for a in &p.alt_names {
@@ -359,7 +359,7 @@ impl App {
             }
             "media" => self.person_memories(ui, act, id, false, &mut pdf_req),
             "more" => {
-                none(ui, "Press Edit to merge or delete this person.");
+                none(ui, crate::i18n::tr("Press Edit to merge or delete this person."));
             }
             "todo" => self.todo_panel(ui, id),
             "journal" => self.journal_panel(ui, id),
@@ -388,61 +388,61 @@ impl App {
             {
                 let p = self.db.people.get_mut(&id).unwrap();
                 egui::Grid::new("pg").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-                    ui.label("Given name(s)");
+                    ui.label(crate::i18n::tr("Given name(s)"));
                     let r1 = ui.add(egui::TextEdit::singleline(&mut p.given).desired_width(320.0));
                     ui.end_row();
-                    ui.label("Surname");
+                    ui.label(crate::i18n::tr("Surname"));
                     let r2 = ui.add(egui::TextEdit::singleline(&mut p.surname).desired_width(320.0));
                     ui.end_row();
                     if r1.changed() || r2.changed() {
                         p.name = compose_name(&p.given, &p.surname);
                     }
-                    ui.label("Maiden name");
-                    ui.add(egui::TextEdit::singleline(&mut p.maiden).hint_text("if different from surname").desired_width(320.0));
+                    ui.label(crate::i18n::tr("Maiden name"));
+                    ui.add(egui::TextEdit::singleline(&mut p.maiden).hint_text(crate::i18n::tr("if different from surname")).desired_width(320.0));
                     ui.end_row();
-                    ui.label("Title / suffix / nickname");
+                    ui.label(crate::i18n::tr("Title / suffix / nickname"));
                     ui.horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut p.prefix).hint_text("Dr., Rev.").desired_width(90.0));
-                        ui.add(egui::TextEdit::singleline(&mut p.suffix).hint_text("Jr., III").desired_width(90.0));
+                        ui.add(egui::TextEdit::singleline(&mut p.prefix).hint_text(crate::i18n::tr("Dr., Rev.")).desired_width(90.0));
+                        ui.add(egui::TextEdit::singleline(&mut p.suffix).hint_text(crate::i18n::tr("Jr., III")).desired_width(90.0));
                         ui.add(egui::TextEdit::singleline(&mut p.nick).hint_text("nickname").desired_width(120.0));
                     });
                     ui.end_row();
-                    ui.label("Sex");
+                    ui.label(crate::i18n::tr("Sex"));
                     let st = match p.sex.as_str() {
                         "M" => "Male",
                         "F" => "Female",
                         _ => "Unknown",
                     };
-                    egui::ComboBox::from_id_salt("sex").selected_text(st).show_ui(ui, |ui| {
-                        ui.selectable_value(&mut p.sex, "M".to_string(), "Male");
-                        ui.selectable_value(&mut p.sex, "F".to_string(), "Female");
-                        ui.selectable_value(&mut p.sex, String::new(), "Unknown");
+                    egui::ComboBox::from_id_salt("sex").selected_text(crate::i18n::trv(st)).show_ui(ui, |ui| {
+                        ui.selectable_value(&mut p.sex, "M".to_string(), crate::i18n::tr("Male"));
+                        ui.selectable_value(&mut p.sex, "F".to_string(), crate::i18n::tr("Female"));
+                        ui.selectable_value(&mut p.sex, String::new(), crate::i18n::tr("Unknown"));
                     });
                     ui.end_row();
-                    ui.label("Person ID");
+                    ui.label(crate::i18n::tr("Person ID"));
                     ui.label(RichText::new(format!("#{}", id)).weak());
                     ui.end_row();
                     if home == Some(id) {
-                        ui.label("Home person");
-                        ui.label("This is the home person (change it in Tools > Home person...)");
+                        ui.label(crate::i18n::tr("Home person"));
+                        ui.label(crate::i18n::tr("This is the home person (change it in Tools > Home person...)"));
                         ui.end_row();
                     }
-                    ui.label("Living");
-                    ui.checkbox(&mut p.living, "Living (kept private when printing or exporting)");
+                    ui.label(crate::i18n::tr("Living"));
+                    ui.checkbox(&mut p.living, crate::i18n::tr("Living (kept private when printing or exporting)"));
                     ui.end_row();
-                    ui.label("Born");
+                    ui.label(crate::i18n::tr("Born"));
                     ui.horizontal(|ui| {
-                        ditto(ui, &mut p.bd, |t| t.hint_text("e.g. 12 Mar 1921, about 1850").desired_width(320.0), &mut self.x.ditto_date);
+                        ditto(ui, &mut p.bd, |t| t.hint_text(crate::i18n::tr("e.g. 12 Mar 1921, about 1850")).desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("BIRT").map(|e| e.conf.clone()).unwrap_or_default();
                         if conf_combo(ui, ("cf", "BIRT"), &mut c) {
                             p.fx.entry("BIRT".to_string()).or_default().conf = c;
                         }
                     });
                     ui.end_row();
-                    ui.label("Birthplace");
+                    ui.label(crate::i18n::tr("Birthplace"));
                     ditto(ui, &mut p.bp, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
-                    ui.label("Christened");
+                    ui.label(crate::i18n::tr("Christened"));
                     ui.horizontal(|ui| {
                         ditto(ui, &mut p.chd, |t| t.desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("CHR").map(|e| e.conf.clone()).unwrap_or_default();
@@ -451,10 +451,10 @@ impl App {
                         }
                     });
                     ui.end_row();
-                    ui.label("Christening place");
+                    ui.label(crate::i18n::tr("Christening place"));
                     ditto(ui, &mut p.chp, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
-                    ui.label("Died");
+                    ui.label(crate::i18n::tr("Died"));
                     ui.horizontal(|ui| {
                         ditto(ui, &mut p.dd, |t| t.desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("DEAT").map(|e| e.conf.clone()).unwrap_or_default();
@@ -463,10 +463,10 @@ impl App {
                         }
                     });
                     ui.end_row();
-                    ui.label("Place of death");
+                    ui.label(crate::i18n::tr("Place of death"));
                     ditto(ui, &mut p.dp, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
-                    ui.label("Buried");
+                    ui.label(crate::i18n::tr("Buried"));
                     ui.horizontal(|ui| {
                         ditto(ui, &mut p.bud, |t| t.desired_width(320.0), &mut self.x.ditto_date);
                         let mut c = p.fx.get("BURI").map(|e| e.conf.clone()).unwrap_or_default();
@@ -475,12 +475,12 @@ impl App {
                         }
                     });
                     ui.end_row();
-                    ui.label("Burial place");
+                    ui.label(crate::i18n::tr("Burial place"));
                     ditto(ui, &mut p.bup, |t| t.desired_width(320.0), &mut self.x.ditto_place);
                     ui.end_row();
                     if !p.dd.trim().is_empty() || !p.bud.trim().is_empty() {
                         ui.label("");
-                        if ui.small_button("Calculate birth from gravestone age...").on_hover_text("Tombstone calculator: work out the birth date from the age at death").clicked() {
+                        if ui.small_button(crate::i18n::tr("Calculate birth from gravestone age...")).on_hover_text(crate::i18n::tr("Tombstone calculator: work out the birth date from the age at death")).clicked() {
                             tomb_req = true;
                         }
                         ui.end_row();
@@ -505,7 +505,7 @@ impl App {
                 (fid, sp.map(|s| (s, self.db.label(s))), f.kids.iter().map(|k| (*k, format!("{}{}", self.db.label(*k), self.db.child_note(fid, *k)))).collect())
             })
             .collect();
-            ui.heading("Parents");
+            ui.heading(crate::i18n::tr("Parents"));
             let pfams: Vec<(u32, Option<(u32, String)>, Option<(u32, String)>, String, String)> = self
                 .db
                 .parent_families(id)
@@ -519,7 +519,7 @@ impl App {
             if pfams.is_empty() {
                 for (role, link, kind) in [("Father", &fl, Kind::Father), ("Mother", &ml, Kind::Mother)] {
                     ui.horizontal(|ui| {
-                        ui.label(role);
+                        ui.label(crate::i18n::trv(role));
                         match link {
                             Some((i, l)) => {
                                 if ui.link(l.as_str()).clicked() {
@@ -527,10 +527,10 @@ impl App {
                                 }
                             }
                             None => {
-                                if ui.button(format!("Add {}", role.to_lowercase())).clicked() {
+                                if ui.button(crate::i18n::trf("Add {}", &["Add ", ""], &[(role.to_lowercase()).to_string()])).clicked() {
                                     *act = Some(Action::Add(kind));
                                 }
-                                if ui.button("Link existing person").clicked() {
+                                if ui.button(crate::i18n::tr("Link existing person")).clicked() {
                                     self.link = Some(LinkReq { child: id, fid: None, father: kind == Kind::Father, q: String::new() });
                                 }
                             }
@@ -550,7 +550,7 @@ impl App {
                     ui.label(RichText::new(title).strong());
                     for (role, slot, cur, father) in [("Father", h, frel, true), ("Mother", w, mrel, false)] {
                         ui.horizontal(|ui| {
-                            ui.label(role);
+                            ui.label(crate::i18n::trv(role));
                             match slot {
                                 Some((i, l)) => {
                                     if ui.link(l.as_str()).clicked() {
@@ -564,10 +564,10 @@ impl App {
                                     }
                                 }
                                 None => {
-                                    if ui.button(format!("Add {}", role.to_lowercase())).clicked() {
+                                    if ui.button(crate::i18n::trf("Add {}", &["Add ", ""], &[(role.to_lowercase()).to_string()])).clicked() {
                                         *act = Some(Action::Add(Kind::ParentIn(*fid, father)));
                                     }
-                                    if ui.button("Link existing person").clicked() {
+                                    if ui.button(crate::i18n::tr("Link existing person")).clicked() {
                                         self.link = Some(LinkReq { child: id, fid: Some(*fid), father, q: String::new() });
                                     }
                                 }
@@ -575,12 +575,12 @@ impl App {
                         });
                     }
                     ui.horizontal(|ui| {
-                        if many && shown_fam != Some(*fid) && ui.button("Show these parents on the chart").clicked() {
+                        if many && shown_fam != Some(*fid) && ui.button(crate::i18n::tr("Show these parents on the chart")).clicked() {
                             if let Some(p) = self.db.people.get_mut(&id) {
                                 p.pref_parents = Some(*fid);
                             }
                         }
-                        if many && ui.button("Remove from this family").on_hover_text("The people stay; only this person's link to this set of parents is removed.").clicked() {
+                        if many && ui.button(crate::i18n::tr("Remove from this family")).on_hover_text(crate::i18n::tr("The people stay; only this person's link to this set of parents is removed.")).clicked() {
                             self.db.remove_from_family(id, *fid);
                         }
                     });
@@ -588,25 +588,25 @@ impl App {
             }
             if !pfams.is_empty() {
                 ui.horizontal_wrapped(|ui| {
-                    ui.label("Another set of parents (adoptive, step, foster, guardian...):");
-                    if ui.button("Add father").clicked() {
+                    ui.label(crate::i18n::tr("Another set of parents (adoptive, step, foster, guardian...):"));
+                    if ui.button(crate::i18n::tr("Add father")).clicked() {
                         *act = Some(Action::Add(Kind::NewParent(true)));
                     }
-                    if ui.button("Add mother").clicked() {
+                    if ui.button(crate::i18n::tr("Add mother")).clicked() {
                         *act = Some(Action::Add(Kind::NewParent(false)));
                     }
-                    if ui.button("Link existing person").clicked() {
+                    if ui.button(crate::i18n::tr("Link existing person")).clicked() {
                         self.link = Some(LinkReq { child: id, fid: None, father: true, q: String::new() });
                     }
                 });
-                ui.label(RichText::new("Choose how each parent is related (biological, adopted, step, foster, guardian) in the drop-downs above. Biological and legal parents are kept as separate sets.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Choose how each parent is related (biological, adopted, step, foster, guardian) in the drop-downs above. Biological and legal parents are kept as separate sets.")).small().weak());
             }
             ui.add_space(10.0);
-            ui.heading("Family groups");
+            ui.heading(crate::i18n::tr("Family groups"));
             for (fid, sp, kids) in &fams {
                 ui.group(|ui| {
                     ui.horizontal(|ui| {
-                        ui.label("Spouse");
+                        ui.label(crate::i18n::tr("Spouse"));
                         match sp {
                             Some((s, l)) => {
                                 if ui.link(l.as_str()).clicked() {
@@ -614,26 +614,26 @@ impl App {
                                 }
                             }
                             None => {
-                                ui.weak("not recorded");
+                                ui.weak(crate::i18n::tr("not recorded"));
                             }
                         }
                     });
                     if let Some(f) = self.db.fams.get_mut(fid) {
                         egui::Grid::new(("mg", *fid)).num_columns(2).show(ui, |ui| {
-                            ui.label("Married");
+                            ui.label(crate::i18n::tr("Married"));
                             ditto(ui, &mut f.md, |t| t, &mut self.x.ditto_date);
                             ui.end_row();
-                            ui.label("Place");
+                            ui.label(crate::i18n::tr("Place"));
                             ditto(ui, &mut f.mp, |t| t, &mut self.x.ditto_place);
                             ui.end_row();
-                            ui.label("Partnership");
+                            ui.label(crate::i18n::tr("Partnership"));
                             let shown = if f.kind.is_empty() { "Not stated" } else { f.kind.as_str() };
                             egui::ComboBox::from_id_salt(("pkind", *fid)).selected_text(shown).show_ui(ui, |ui| {
-                                if ui.selectable_label(f.kind.is_empty(), "Not stated").clicked() {
+                                if ui.selectable_label(f.kind.is_empty(), crate::i18n::tr("Not stated")).clicked() {
                                     f.kind.clear();
                                 }
                                 for k in PARTNER_KINDS {
-                                    if ui.selectable_label(f.kind == *k, *k).clicked() {
+                                    if ui.selectable_label(f.kind == *k, crate::i18n::trv(*k)).clicked() {
                                         f.kind = k.to_string();
                                     }
                                 }
@@ -641,7 +641,7 @@ impl App {
                             ui.end_row();
                         });
                     }
-                    ui.label("Children");
+                    ui.label(crate::i18n::tr("Children"));
                     for (k, l) in kids {
                         ui.horizontal(|ui| {
                             if ui.link(l.as_str()).clicked() {
@@ -652,7 +652,7 @@ impl App {
                                 let shown = if cur.is_empty() { "birth child".to_string() } else { format!("{} child", cur) };
                                 egui::ComboBox::from_id_salt(("pedi", *fid, *k)).selected_text(shown).width(110.0).show_ui(ui, |ui| {
                                     for (v, lbl) in [("", "birth child"), ("adopted", "adopted child"), ("foster", "foster child"), ("sealing", "sealed child")] {
-                                        if ui.selectable_label(cur == v, lbl).clicked() {
+                                        if ui.selectable_label(cur == v, crate::i18n::trv(lbl)).clicked() {
                                             if v.is_empty() {
                                                 f.pedi.remove(k);
                                             } else {
@@ -666,7 +666,7 @@ impl App {
                                         continue;
                                     }
                                     let cur = f.rel_to(*k, father);
-                                    ui.label(RichText::new(who).small().weak());
+                                    ui.label(RichText::new(crate::i18n::trv(who)).small().weak());
                                     if let Some(nv) = rel_combo(ui, ("crel", *fid, *k, father), &cur) {
                                         let m = if father { &mut f.frel } else { &mut f.mrel };
                                         if nv.is_empty() { m.remove(k); } else { m.insert(*k, nv); }
@@ -675,33 +675,33 @@ impl App {
                             }
                         });
                     }
-                    if ui.button("Add child").clicked() {
+                    if ui.button(crate::i18n::tr("Add child")).clicked() {
                         *act = Some(Action::Add(Kind::Child(Some(*fid))));
                     }
                     if let Some(f) = self.db.fams.get_mut(fid) {
-                        egui::CollapsingHeader::new("Marriage details, family events and notes").id_salt(("fmore", *fid)).show(ui, |ui| {
+                        egui::CollapsingHeader::new(crate::i18n::tr("Marriage details, family events and notes")).id_salt(("fmore", *fid)).show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                ui.label("Kind of marriage");
-                                ui.add(egui::TextEdit::singleline(&mut f.mx.typ).hint_text("civil, religious...").desired_width(160.0));
+                                ui.label(crate::i18n::tr("Kind of marriage"));
+                                ui.add(egui::TextEdit::singleline(&mut f.mx.typ).hint_text(crate::i18n::tr("civil, religious...")).desired_width(160.0));
                             });
-                            ui.label("Note about the marriage");
+                            ui.label(crate::i18n::tr("Note about the marriage"));
                             ui.add(egui::TextEdit::multiline(&mut f.mx.note).desired_rows(2).desired_width(f32::INFINITY));
-                            ui.label("Sources for the marriage");
+                            ui.label(crate::i18n::tr("Sources for the marriage"));
                             cites_section(ui, ("msrc", *fid), &mut f.mx.cites, &mut self.db.sources, &mut self.db.next, &mut self.src_pick);
-                            ui.label("Sources for this family as a whole");
+                            ui.label(crate::i18n::tr("Sources for this family as a whole"));
                             cites_section(ui, ("fsrc", *fid), &mut f.cites, &mut self.db.sources, &mut self.db.next, &mut self.src_pick);
                             let mut remove: Option<usize> = None;
                             for (i, e) in f.events.iter_mut().enumerate() {
                                 ui.horizontal(|ui| {
-                                    egui::ComboBox::from_id_salt(("fev", *fid, i)).selected_text(if e.kind.is_empty() { "Other" } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
+                                    egui::ComboBox::from_id_salt(("fev", *fid, i)).selected_text(if e.kind.is_empty() { crate::i18n::tr("Other") } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
                                         for k in FAM_KINDS.iter() {
-                                            ui.selectable_value(&mut e.kind, k.to_string(), *k);
+                                            ui.selectable_value(&mut e.kind, k.to_string(), crate::i18n::trv(*k));
                                         }
                                     });
                                     ditto(ui, &mut e.date, |t| t.hint_text("date").desired_width(100.0), &mut self.x.ditto_date);
                                     ditto(ui, &mut e.place, |t| t.hint_text("place").desired_width(130.0), &mut self.x.ditto_place);
                                     ui.add(egui::TextEdit::singleline(&mut e.note).hint_text("note").desired_width(130.0));
-                                    if ui.button("Remove").clicked() {
+                                    if ui.button(crate::i18n::tr("Remove")).clicked() {
                                         remove = Some(i);
                                     }
                                 });
@@ -710,14 +710,14 @@ impl App {
                             if let Some(i) = remove {
                                 f.events.remove(i);
                             }
-                            if ui.button("Add family event").clicked() {
+                            if ui.button(crate::i18n::tr("Add family event")).clicked() {
                                 f.events.push(Event { kind: "Divorce".to_string(), ..Default::default() });
                             }
-                            ui.label("Notes about this family");
+                            ui.label(crate::i18n::tr("Notes about this family"));
                             ui.add(egui::TextEdit::multiline(&mut f.notes).desired_rows(3).desired_width(f32::INFINITY));
                             for nid in f.note_refs.clone() {
                                 if let Some(n) = self.db.notes.get_mut(&nid) {
-                                    ui.label(RichText::new("Shared note").small().weak());
+                                    ui.label(RichText::new(crate::i18n::tr("Shared note")).small().weak());
                                     ui.add(egui::TextEdit::multiline(&mut n.text).desired_rows(2).desired_width(f32::INFINITY));
                                 }
                             }
@@ -726,15 +726,15 @@ impl App {
                 });
             }
             ui.horizontal(|ui| {
-                if ui.button("Add spouse").clicked() {
+                if ui.button(crate::i18n::tr("Add spouse")).clicked() {
                     *act = Some(Action::Add(Kind::Spouse));
                 }
-                if fams.is_empty() && ui.button("Add child").clicked() {
+                if fams.is_empty() && ui.button(crate::i18n::tr("Add child")).clicked() {
                     *act = Some(Action::Add(Kind::Child(None)));
                 }
             });
             ui.add_space(10.0);
-            ui.heading("Step and half family");
+            ui.heading(crate::i18n::tr("Step and half family"));
             {
                 let kin = self.db.kin_extras(id);
                 let lines: [(&str, &Vec<u32>); 4] = [("Step-parents", &kin.step_parents), ("Half-siblings", &kin.half_siblings), ("Step-siblings", &kin.step_siblings), ("Step-children", &kin.step_children)];
@@ -745,7 +745,7 @@ impl App {
                     }
                     any = true;
                     ui.horizontal_wrapped(|ui| {
-                        ui.label(RichText::new(lbl).strong());
+                        ui.label(RichText::new(crate::i18n::trv(lbl)).strong());
                         for i in ids {
                             if let Some(p) = self.db.people.get(i) {
                                 if ui.link(display_name(p)).clicked() {
@@ -756,18 +756,18 @@ impl App {
                     });
                 }
                 if !any {
-                    ui.weak("None found. These are worked out from the families above, so nothing needs to be entered.");
+                    ui.weak(crate::i18n::tr("None found. These are worked out from the families above, so nothing needs to be entered."));
                 }
             }
             ui.add_space(10.0);
-            ui.heading("Other relationships");
-            ui.label(RichText::new("Guardians, godparents, foster carers and anyone else connected to this person who is not a parent or spouse.").small().weak());
+            ui.heading(crate::i18n::tr("Other relationships"));
+            ui.label(RichText::new(crate::i18n::tr("Guardians, godparents, foster carers and anyone else connected to this person who is not a parent or spouse.")).small().weak());
             {
                 let kin_of = self.db.kin_extras(id).assoc_of;
                 for (o, role) in &kin_of {
                     if let Some(p) = self.db.people.get(o) {
                         ui.horizontal(|ui| {
-                            ui.label("Is the");
+                            ui.label(crate::i18n::tr("Is the"));
                             ui.label(RichText::new(role.as_str()).strong());
                             ui.label("of");
                             if ui.link(display_name(p)).clicked() {
@@ -781,19 +781,19 @@ impl App {
                 if let Some(p) = self.db.people.get_mut(&id) {
                     for (i, a) in p.assoc.iter_mut().enumerate() {
                         ui.horizontal(|ui| {
-                            ui.label("Has");
+                            ui.label(crate::i18n::tr("Has"));
                             if ui.link(names.get(&a.other).cloned().unwrap_or_else(|| "(missing)".into())).clicked() {
                                 *act = Some(Action::Select(a.other));
                             }
                             ui.label("as");
                             egui::ComboBox::from_id_salt(("arole", i)).selected_text(a.role.clone()).width(120.0).show_ui(ui, |ui| {
                                 for r in ASSOC_ROLES {
-                                    ui.selectable_value(&mut a.role, r.to_string(), *r);
+                                    ui.selectable_value(&mut a.role, r.to_string(), crate::i18n::trv(*r));
                                 }
                             });
                             ui.add(egui::TextEdit::singleline(&mut a.role).desired_width(100.0));
                             ui.add(egui::TextEdit::singleline(&mut a.note).hint_text("note").desired_width(160.0));
-                            if ui.button("Remove").clicked() {
+                            if ui.button(crate::i18n::tr("Remove")).clicked() {
                                 remove = Some(i);
                             }
                         });
@@ -803,13 +803,13 @@ impl App {
                     }
                 }
                 ui.horizontal(|ui| {
-                    ui.label("Add:");
+                    ui.label(crate::i18n::tr("Add:"));
                     egui::ComboBox::from_id_salt("newarole").selected_text(self.assoc_role.clone()).width(120.0).show_ui(ui, |ui| {
                         for r in ASSOC_ROLES {
-                            ui.selectable_value(&mut self.assoc_role, r.to_string(), *r);
+                            ui.selectable_value(&mut self.assoc_role, r.to_string(), crate::i18n::trv(*r));
                         }
                     });
-                    ui.add(egui::TextEdit::singleline(&mut self.assoc_q).hint_text("search for the person").desired_width(180.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.assoc_q).hint_text(crate::i18n::tr("search for the person")).desired_width(180.0));
                 });
                 if !self.assoc_q.trim().is_empty() {
                     let cands: Vec<(u32, String)> = self.db.sorted(&self.assoc_q).into_iter().filter(|i| *i != id).take(6).map(|i| (i, self.db.label(i))).collect();
@@ -835,12 +835,12 @@ impl App {
                         let shown = if a.kind.is_empty() { "other name".to_string() } else { a.kind.clone() };
                         egui::ComboBox::from_id_salt(("alt", i)).selected_text(shown).width(100.0).show_ui(ui, |ui| {
                             for k in kinds {
-                                ui.selectable_value(&mut a.kind, k.to_string(), if k.is_empty() { "other name" } else { k });
+                                ui.selectable_value(&mut a.kind, k.to_string(), if k.is_empty() { crate::i18n::tr("other name") } else { k });
                             }
                         });
-                        ui.add(egui::TextEdit::singleline(&mut a.given).hint_text("given names").desired_width(150.0));
+                        ui.add(egui::TextEdit::singleline(&mut a.given).hint_text(crate::i18n::tr("given names")).desired_width(150.0));
                         ui.add(egui::TextEdit::singleline(&mut a.surname).hint_text("surname").desired_width(130.0));
-                        if ui.button("Remove").clicked() {
+                        if ui.button(crate::i18n::tr("Remove")).clicked() {
                             remove = Some(i);
                         }
                     });
@@ -848,7 +848,7 @@ impl App {
                 if let Some(i) = remove {
                     p.alt_names.remove(i);
                 }
-                if ui.button("Add another name").clicked() {
+                if ui.button(crate::i18n::tr("Add another name")).clicked() {
                     p.alt_names.push(AltName { kind: "aka".to_string(), ..Default::default() });
                 }
             }
@@ -858,7 +858,7 @@ impl App {
                 let p = self.db.people.get_mut(&id).unwrap();
                 ui.horizontal(|ui| {
                     notes::note_tag_menu(ui, &mut p.notes);
-                    ui.label(RichText::new("Lines starting with ~ are private: kept here, left off printouts.").small().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Lines starting with ~ are private: kept here, left off printouts.")).small().weak());
                 });
                 ui.add(egui::TextEdit::multiline(&mut p.notes).desired_rows(6).desired_width(f32::INFINITY));
             }
@@ -874,25 +874,25 @@ impl App {
             }
             }
             "contact" => {
-                ui.label(RichText::new("How to reach a living relative. Living people, and these details, are left out of private copies and printouts that keep the living private.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("How to reach a living relative. Living people, and these details, are left out of private copies and printouts that keep the living private.")).small().weak());
                 let p = self.db.people.get_mut(&id).unwrap();
                 egui::Grid::new("edit_contact").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
-                    ui.label("Address");
+                    ui.label(crate::i18n::tr("Address"));
                     ui.add(egui::TextEdit::multiline(&mut p.contact.addr).desired_rows(2).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Phone");
+                    ui.label(crate::i18n::tr("Phone"));
                     ui.add(egui::TextEdit::singleline(&mut p.contact.phone).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Email");
+                    ui.label(crate::i18n::tr("Email"));
                     ui.add(egui::TextEdit::singleline(&mut p.contact.email).desired_width(260.0));
                     ui.end_row();
-                    ui.label("Web page");
-                    ui.add(egui::TextEdit::singleline(&mut p.contact.url).hint_text("https://").desired_width(260.0));
+                    ui.label(crate::i18n::tr("Web page"));
+                    ui.add(egui::TextEdit::singleline(&mut p.contact.url).hint_text(crate::i18n::tr("https://")).desired_width(260.0));
                     ui.end_row();
                 });
             }
             "lds" => {
-                ui.label(RichText::new("Baptism, confirmation, initiatory, endowment and sealings, with the temple and status, as in PAF. Choose a temple from the list, or search it by place or code.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Baptism, confirmation, initiatory, endowment and sealings, with the temple and status, as in PAF. Choose a temple from the list, or search it by place or code.")).small().weak());
                 let rows = self.lds_rows(id);
                 let mut add: Option<LdsRow> = None;
                 let mut remove: Option<LdsRow> = None;
@@ -907,12 +907,12 @@ impl App {
                                 ditto(ui, &mut e.date, |t| t.hint_text("date").desired_width(110.0), &mut last_date);
                                 temples::temple_picker(ui, ("lds_t", i), &mut e.temp, &mut search);
                                 temples::status_picker(ui, ("lds_s", i), &mut e.stat);
-                                if ui.small_button("Remove").clicked() {
+                                if ui.small_button(crate::i18n::tr("Remove")).clicked() {
                                     remove = Some(r.clone());
                                 }
                             }
                             None => {
-                                if ui.button("Add").clicked() {
+                                if ui.button(crate::i18n::tr("Add")).clicked() {
                                     add = Some(r.clone());
                                 }
                             }
@@ -934,16 +934,16 @@ impl App {
                 let mut remove: Option<usize> = None;
                 for (i, e) in p.events.iter_mut().enumerate() {
                     ui.horizontal(|ui| {
-                        egui::ComboBox::from_id_salt(("ev", i)).selected_text(if e.kind.is_empty() { "Other" } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
+                        egui::ComboBox::from_id_salt(("ev", i)).selected_text(if e.kind.is_empty() { crate::i18n::tr("Other") } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
                             for k in EVENT_KINDS.iter() {
-                                ui.selectable_value(&mut e.kind, k.to_string(), *k);
+                                ui.selectable_value(&mut e.kind, k.to_string(), crate::i18n::trv(*k));
                             }
                         });
                         ditto(ui, &mut e.date, |t| t.hint_text("date").desired_width(110.0), &mut self.x.ditto_date);
                         ditto(ui, &mut e.place, |t| t.hint_text("place").desired_width(150.0), &mut self.x.ditto_place);
                         ui.add(egui::TextEdit::singleline(&mut e.val).hint_text("details").desired_width(150.0));
                         conf_combo(ui, ("evcf", i), &mut e.conf);
-                        if ui.button("Remove").clicked() {
+                        if ui.button(crate::i18n::tr("Remove")).clicked() {
                             remove = Some(i);
                         }
                     });
@@ -965,16 +965,16 @@ impl App {
                 if let Some(i) = remove {
                     p.events.remove(i);
                 }
-                if ui.button("Add event").clicked() {
+                if ui.button(crate::i18n::tr("Add event")).clicked() {
                     p.events.push(Event { kind: "Residence".to_string(), ..Default::default() });
                 }
             }
             }
             "timeline" => {
                 let tl = self.db.timeline(id);
-            egui::CollapsingHeader::new("Timeline").default_open(false).show(ui, |ui| {
+            egui::CollapsingHeader::new(crate::i18n::tr("Timeline")).default_open(false).show(ui, |ui| {
                 if tl.is_empty() {
-                    ui.label("Add dates to see a timeline.");
+                    ui.label(crate::i18n::tr("Add dates to see a timeline."));
                 }
                 for (d, t) in &tl {
                     ui.label(format!("{}   {}", if d.is_empty() { "-" } else { d.as_str() }, t));
@@ -982,7 +982,7 @@ impl App {
             });
             }
             "sources" => {
-            ui.label(RichText::new("Pick a source you have used before, or add a new one. A source can back up many people and facts.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Pick a source you have used before, or add a new one. A source can back up many people and facts.")).small().weak());
             {
                 let p = self.db.people.get_mut(&id).unwrap();
                 cite_list(ui, "psrc", &mut p.sources, Some(&FACTS), "General", &mut self.db.sources, &mut self.db.next, &mut self.src_pick);
@@ -992,14 +992,14 @@ impl App {
             "todo" => self.todo_panel(ui, id),
             "journal" => self.journal_panel(ui, id),
             "more" => {
-            if ui.button("Merge with another person...").on_hover_text("Use this when the same person is in your tree twice").clicked() {
+            if ui.button(crate::i18n::tr("Merge with another person...")).on_hover_text(crate::i18n::tr("Use this when the same person is in your tree twice")).clicked() {
                 self.merge_open = true;
                 self.merge_other = None;
                 self.merge_id.clear();
             }
             ui.add_space(4.0);
             let label = if self.confirm { "Click again to delete" } else { "Delete person" };
-            if ui.button(label).clicked() {
+            if ui.button(crate::i18n::trv(label)).clicked() {
                 if self.confirm {
                     *act = Some(Action::Delete);
                 } else {
@@ -1022,18 +1022,18 @@ impl App {
             let cid = ui.make_persistent_id(("dock", it.sec.as_str()));
             egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), cid, true)
                 .show_header(ui, |ui| {
-                    ui.label(RichText::new(dock_title(&it.sec)).strong());
+                    ui.label(RichText::new(crate::i18n::trv(dock_title(&it.sec))).strong());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.small_button("x").on_hover_text("Hide this panel").clicked() {
+                        if ui.small_button("x").on_hover_text(crate::i18n::tr("Hide this panel")).clicked() {
                             cmd = Some((i, 3));
                         }
-                        if ui.small_button("Float").on_hover_text("Pop this panel out into its own window").clicked() {
+                        if ui.small_button(crate::i18n::tr("Float")).on_hover_text(crate::i18n::tr("Pop this panel out into its own window")).clicked() {
                             cmd = Some((i, 2));
                         }
-                        if ui.small_button("v").on_hover_text("Move down").clicked() {
+                        if ui.small_button("v").on_hover_text(crate::i18n::tr("Move down")).clicked() {
                             cmd = Some((i, 1));
                         }
-                        if ui.small_button("^").on_hover_text("Move up").clicked() {
+                        if ui.small_button("^").on_hover_text(crate::i18n::tr("Move up")).clicked() {
                             cmd = Some((i, 0));
                         }
                     });
@@ -1064,21 +1064,21 @@ impl App {
         if editing {
             egui::Frame::group(ui.style()).show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("Editing. Changes are only kept when you press Save.").strong());
-                    if ui.button("Save").clicked() {
+                    ui.label(RichText::new(crate::i18n::tr("Editing. Changes are only kept when you press Save.")).strong());
+                    if ui.button(crate::i18n::tr("Save")).clicked() {
                         *act = Some(Action::EditSave);
                     }
-                    if ui.button("Cancel").on_hover_text("Put this person back exactly as they were before you pressed Edit").clicked() {
+                    if ui.button(crate::i18n::tr("Cancel")).on_hover_text(crate::i18n::tr("Put this person back exactly as they were before you pressed Edit")).clicked() {
                         *act = Some(Action::EditCancel);
                     }
                 });
             });
         } else {
             ui.horizontal(|ui| {
-                if ui.button("Edit").on_hover_text("Unlock this page to make changes").clicked() {
+                if ui.button(crate::i18n::tr("Edit")).on_hover_text(crate::i18n::tr("Unlock this page to make changes")).clicked() {
                     *act = Some(Action::EditStart);
                 }
-                ui.label(RichText::new("Locked. Press Edit to change anything.").weak());
+                ui.label(RichText::new(crate::i18n::tr("Locked. Press Edit to change anything.")).weak());
             });
         }
         self.problem_flags(ui, id);
@@ -1118,8 +1118,8 @@ impl App {
             }
             let mut open = true;
             let mut dock_back = false;
-            egui::Window::new(dock_title(&it.sec)).id(egui::Id::new(("float", it.sec.as_str()))).open(&mut open).default_size([420.0, 420.0]).show(&ctx, |ui| {
-                if ui.small_button("Dock back on the right").clicked() {
+            egui::Window::new(crate::i18n::trv(dock_title(&it.sec))).id(egui::Id::new(("float", it.sec.as_str()))).open(&mut open).default_size([420.0, 420.0]).show(&ctx, |ui| {
+                if ui.small_button(crate::i18n::tr("Dock back on the right")).clicked() {
                     dock_back = true;
                 }
                 egui::ScrollArea::vertical().id_salt(("float_scroll", it.sec.as_str())).show(ui, |ui| {
@@ -1142,9 +1142,9 @@ impl App {
         let mut changed = false;
         let mut reset = false;
         ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new("Panels").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Panels")).small().weak());
             for it in self.settings.dock.iter_mut() {
-                if ui.selectable_label(it.on, dock_title(&it.sec)).on_hover_text("Show or hide this panel on the right").clicked() {
+                if ui.selectable_label(it.on, crate::i18n::trv(dock_title(&it.sec))).on_hover_text(crate::i18n::tr("Show or hide this panel on the right")).clicked() {
                     it.on = !it.on;
                     if it.on {
                         it.float = false;
@@ -1154,10 +1154,10 @@ impl App {
             }
             let mut apply: Option<Vec<DockItem>> = None;
             let mut apply_w: Option<f32> = None;
-            ui.menu_button("Layouts", |ui| {
-                ui.label(RichText::new("Ready-made").small().weak());
+            ui.menu_button(crate::i18n::tr("Layouts"), |ui| {
+                ui.label(RichText::new(crate::i18n::tr("Ready-made")).small().weak());
                 for (name, secs) in LAYOUT_PRESETS {
-                    if ui.button(*name).clicked() {
+                    if ui.button(crate::i18n::trv(*name)).clicked() {
                         let mut d: Vec<DockItem> = secs.iter().map(|s| DockItem { sec: s.to_string(), on: true, float: false }).collect();
                         for x in default_dock() {
                             if !d.iter().any(|y| y.sec == x.sec) {
@@ -1171,7 +1171,7 @@ impl App {
                 let mut del: Option<usize> = None;
                 if !self.settings.layouts.is_empty() {
                     ui.separator();
-                    ui.label(RichText::new("Yours").small().weak());
+                    ui.label(RichText::new(crate::i18n::tr("Yours")).small().weak());
                     for (i, l) in self.settings.layouts.iter().enumerate() {
                         ui.horizontal(|ui| {
                             if ui.button(l.name.as_str()).clicked() {
@@ -1179,7 +1179,7 @@ impl App {
                                 apply_w = Some(l.width);
                                 ui.close_menu();
                             }
-                            if ui.small_button("x").on_hover_text("Forget this layout").clicked() {
+                            if ui.small_button("x").on_hover_text(crate::i18n::tr("Forget this layout")).clicked() {
                                 del = Some(i);
                             }
                         });
@@ -1187,8 +1187,8 @@ impl App {
                 }
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.add(egui::TextEdit::singleline(&mut self.x.layout_name).hint_text("Name for this layout").desired_width(150.0));
-                    if ui.add_enabled(!self.x.layout_name.trim().is_empty(), egui::Button::new("Save current")).clicked() {
+                    ui.add(egui::TextEdit::singleline(&mut self.x.layout_name).hint_text(crate::i18n::tr("Name for this layout")).desired_width(150.0));
+                    if ui.add_enabled(!self.x.layout_name.trim().is_empty(), egui::Button::new(crate::i18n::tr("Save current"))).clicked() {
                         let name = self.x.layout_name.trim().to_string();
                         self.settings.layouts.retain(|l| l.name != name);
                         self.settings.layouts.push(Layout { name, dock: self.settings.dock.clone(), width: self.settings.dock_w });
@@ -1209,7 +1209,7 @@ impl App {
                 }
                 changed = true;
             }
-            if ui.small_button("Reset layout").clicked() {
+            if ui.small_button(crate::i18n::tr("Reset layout")).clicked() {
                 reset = true;
             }
         });

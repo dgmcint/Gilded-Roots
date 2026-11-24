@@ -7,3 +7,4 @@ dist/
 
 # Claude Code local settings (may contain passwords or tokens)
 .claude/
+__pycache__/

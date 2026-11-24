@@ -54,13 +54,13 @@ impl App {
         self.nav_bar(ui, act);
         ui.horizontal(|ui| {
             for (k, l) in [(ChartKind::Fan, "Fan chart"), (ChartKind::Hourglass, "Hourglass"), (ChartKind::Lifespans, "Lifespans")] {
-                if ui.selectable_label(self.x.chart == k, RichText::new(l).size(15.0)).clicked() {
+                if ui.selectable_label(self.x.chart == k, RichText::new(crate::i18n::trv(l)).size(15.0)).clicked() {
                     self.x.chart = k;
                 }
             }
             ui.separator();
             if self.x.chart != ChartKind::Lifespans {
-                ui.label("Generations:");
+                ui.label(crate::i18n::tr("Generations:"));
                 let g = self.x.fan_gens.clamp(3, 8);
                 if ui.add_enabled(g > 3, egui::Button::new("-")).clicked() {
                     self.x.fan_gens = g - 1;
@@ -73,13 +73,13 @@ impl App {
             if self.x.chart == ChartKind::Fan {
                 ui.separator();
                 for (deg, l) in [(180.0, "Half"), (240.0, "240\u{b0}"), (360.0, "Full circle")] {
-                    if ui.selectable_label((self.x.fan_deg - deg).abs() < 1.0, l).clicked() {
+                    if ui.selectable_label((self.x.fan_deg - deg).abs() < 1.0, crate::i18n::trv(l)).clicked() {
                         self.x.fan_deg = deg;
                     }
                 }
             }
             ui.separator();
-            if ui.button("Print or save as PDF...").clicked() {
+            if ui.button(crate::i18n::tr("Print or save as PDF...")).clicked() {
                 *act = Some(Action::PrintChart);
             }
         });
@@ -248,12 +248,12 @@ impl App {
         if let Some((k, w)) = who_at(hovered) {
             match w {
                 Some(id) => {
-                    resp.clone().on_hover_text(format!("{}\nDouble-click to open, right-click for more", self.db.label(id)));
+                    resp.clone().on_hover_text(crate::i18n::trf("{}\nDouble-click to open, right-click for more", &["", "\nDouble-click to open, right-click for more"], &[(self.db.label(id)).to_string()]));
                 }
                 None if k > 1 => {
                     let child = anc.get(k / 2).copied().flatten();
                     if child.is_some() {
-                        resp.clone().on_hover_text(if k % 2 == 0 { "Click to add a father" } else { "Click to add a mother" });
+                        resp.clone().on_hover_text(if k % 2 == 0 { crate::i18n::tr("Click to add a father") } else { crate::i18n::tr("Click to add a mother") });
                     }
                 }
                 _ => {}
@@ -450,7 +450,7 @@ impl App {
             .collect();
         let known: Vec<i32> = spans.iter().flat_map(|s| [s.2, s.3]).flatten().collect();
         if known.is_empty() {
-            ui.label(RichText::new("Add birth or death dates to see lifespans.").italics().weak());
+            ui.label(RichText::new(crate::i18n::tr("Add birth or death dates to see lifespans.")).italics().weak());
             return;
         }
         let y0 = (known.iter().min().unwrap() - 5) / 10 * 10;

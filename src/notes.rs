@@ -191,19 +191,19 @@ impl App {
         }
         let mut open = true;
         let mut apply = false;
-        egui::Window::new("Find and replace in notes").open(&mut open).default_size([640.0, 520.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Find and replace in notes")).open(&mut open).default_size([640.0, 520.0]).show(ctx, |ui| {
             egui::Grid::new("nfr").num_columns(2).show(ui, |ui| {
-                ui.label("Find");
+                ui.label(crate::i18n::tr("Find"));
                 if ui.add(egui::TextEdit::singleline(&mut self.x.nfr_find).desired_width(320.0)).changed() {
                     self.x.nfr_skip.clear();
                 }
                 ui.end_row();
-                ui.label("Replace with");
-                ui.add(egui::TextEdit::singleline(&mut self.x.nfr_with).hint_text("leave empty to delete the words").desired_width(320.0));
+                ui.label(crate::i18n::tr("Replace with"));
+                ui.add(egui::TextEdit::singleline(&mut self.x.nfr_with).hint_text(crate::i18n::tr("leave empty to delete the words")).desired_width(320.0));
                 ui.end_row();
             });
             ui.horizontal(|ui| {
-                if ui.checkbox(&mut self.x.nfr_case, "Match capitals").changed() || ui.checkbox(&mut self.x.nfr_whole, "Whole words only").changed() {
+                if ui.checkbox(&mut self.x.nfr_case, crate::i18n::tr("Match capitals")).changed() || ui.checkbox(&mut self.x.nfr_whole, crate::i18n::tr("Whole words only")).changed() {
                     self.x.nfr_skip.clear();
                 }
             });
@@ -215,7 +215,7 @@ impl App {
                 })
                 .collect();
             if self.x.nfr_find.is_empty() {
-                ui.weak("Type the words to find. Every note is searched: people, families, events, shared notes, sources and repositories.");
+                ui.weak(crate::i18n::tr("Type the words to find. Every note is searched: people, families, events, shared notes, sources and repositories."));
                 return;
             }
             let notes_hit: Vec<&NoteAt> = {
@@ -223,13 +223,13 @@ impl App {
                 v.dedup();
                 v
             };
-            ui.label(format!("{} matches in {} notes. Untick any note to leave it as it is.", hits.len(), notes_hit.len()));
+            ui.label(crate::i18n::trf("{} matches in {} notes. Untick any note to leave it as it is.", &["", " matches in ", " notes. Untick any note to leave it as it is."], &[(hits.len()).to_string(), (notes_hit.len()).to_string()]));
             let ticked = notes_hit.iter().filter(|a| !self.x.nfr_skip.contains(&format!("{:?}", a))).count();
             ui.horizontal(|ui| {
-                if ui.add_enabled(ticked > 0, egui::Button::new(format!("Replace in {} ticked notes", ticked))).clicked() {
+                if ui.add_enabled(ticked > 0, egui::Button::new(crate::i18n::trf("Replace in {} ticked notes", &["Replace in ", " ticked notes"], &[(ticked).to_string()]))).clicked() {
                     apply = true;
                 }
-                ui.label(RichText::new("Undo (Ctrl+Z) puts them back.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("Undo (Ctrl+Z) puts them back.")).small().weak());
             });
             ui.separator();
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
@@ -275,7 +275,7 @@ impl App {
                     });
                 }
                 if hits.len() > 1000 {
-                    ui.weak(format!("...and {} more matches (all are replaced).", hits.len() - 1000));
+                    ui.weak(crate::i18n::trf("...and {} more matches (all are replaced).", &["...and ", " more matches (all are replaced)."], &[(hits.len() - 1000).to_string()]));
                 }
             });
         });
@@ -299,7 +299,7 @@ impl App {
             }
             self.x.next_label = Some(format!("Replaced \"{}\" in {} notes", f, n));
             self.dirty = true;
-            self.status = format!("Replaced \"{}\" with \"{}\" in {} notes.", f, w, n);
+            self.status = crate::i18n::trf("Replaced \"{}\" with \"{}\" in {} notes.", &["Replaced \"", "\" with \"", "\" in ", " notes."], &[(f).to_string(), (w).to_string(), (n).to_string()]);
         }
         self.x.nfr_open = open;
     }
@@ -307,10 +307,10 @@ impl App {
 
 /// A menu of topic tags for a note: picking one starts a new line "Tag: " at the end.
 pub(crate) fn note_tag_menu(ui: &mut egui::Ui, text: &mut String) {
-    ui.menu_button("Add a tag", |ui| {
-        ui.label(RichText::new("Starts a new line with the topic, e.g. \"Military: \"").small().weak());
+    ui.menu_button(crate::i18n::tr("Add a tag"), |ui| {
+        ui.label(RichText::new(crate::i18n::tr("Starts a new line with the topic, e.g. \"Military: \"")).small().weak());
         for t in NOTE_TAGS {
-            if ui.button(*t).clicked() {
+            if ui.button(crate::i18n::trv(*t)).clicked() {
                 if !text.is_empty() && !text.ends_with('\n') {
                     text.push('\n');
                 }
@@ -319,7 +319,7 @@ pub(crate) fn note_tag_menu(ui: &mut egui::Ui, text: &mut String) {
             }
         }
         ui.separator();
-        if ui.button("Private line (~)").on_hover_text("A line starting with ~ is kept in the tree but left off printouts and private copies").clicked() {
+        if ui.button(crate::i18n::tr("Private line (~)")).on_hover_text(crate::i18n::tr("A line starting with ~ is kept in the tree but left off printouts and private copies")).clicked() {
             if !text.is_empty() && !text.ends_with('\n') {
                 text.push('\n');
             }

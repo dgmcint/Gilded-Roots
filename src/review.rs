@@ -311,7 +311,7 @@ pub fn show_compare(ui: &mut egui::Ui, c: &Compare, picks: Option<&mut HashMap<&
         ui.label("");
         ui.end_row();
         for r in &c.rows {
-            ui.label(r.label);
+            ui.label(crate::i18n::trv(r.label));
             let choosable = matches!(r.st, St::Differ | St::Compatible);
             match (&mut picks, choosable) {
                 (Some(p), true) => {
@@ -329,7 +329,7 @@ pub fn show_compare(ui: &mut egui::Ui, c: &Compare, picks: Option<&mut HashMap<&
                 }
             }
             let (t, col) = st_text(r.st);
-            ui.label(RichText::new(t).small().color(col));
+            ui.label(RichText::new(crate::i18n::trv(t)).small().color(col));
             ui.end_row();
         }
         for r in &c.rels {
@@ -340,14 +340,14 @@ pub fn show_compare(ui: &mut egui::Ui, c: &Compare, picks: Option<&mut HashMap<&
                 St::Differ => St::Differ,
                 s => s,
             });
-            ui.label(RichText::new(t).small().color(col));
+            ui.label(RichText::new(crate::i18n::trv(t)).small().color(col));
             ui.end_row();
         }
         for (label, a, b) in &c.counts {
             if *a == 0 && *b == 0 {
                 continue;
             }
-            ui.label(RichText::new(*label).weak());
+            ui.label(RichText::new(crate::i18n::trv(*label)).weak());
             ui.label(RichText::new(a.to_string()).weak());
             ui.label(RichText::new(b.to_string()).weak());
             ui.label(RichText::new("combined").small().weak());
@@ -355,7 +355,7 @@ pub fn show_compare(ui: &mut egui::Ui, c: &Compare, picks: Option<&mut HashMap<&
         }
     });
     if picks.is_some() && c.rows.iter().any(|r| matches!(r.st, St::Differ | St::Compatible)) {
-        ui.label(RichText::new("Click the value to keep where the records differ. The other value is saved in the person's notes, so nothing is lost.").small().weak());
+        ui.label(RichText::new(crate::i18n::tr("Click the value to keep where the records differ. The other value is saved in the person's notes, so nothing is lost.")).small().weak());
     }
 }
 
@@ -422,19 +422,19 @@ impl App {
         let mut swap = false;
         let mut go: Option<u32> = None;
         let c = compare(&self.db, rv.left, &self.db, rv.right, true);
-        egui::Window::new("Review before merging").open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Review before merging")).open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
             egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("The LEFT record is kept. The RIGHT record is folded into it and removed.").strong());
-                    if ui.button("Swap sides").clicked() {
+                    ui.label(RichText::new(crate::i18n::tr("The LEFT record is kept. The RIGHT record is folded into it and removed.")).strong());
+                    if ui.button(crate::i18n::tr("Swap sides")).clicked() {
                         swap = true;
                     }
                 });
                 ui.horizontal(|ui| {
-                    if ui.link(format!("Open left: {}  #{}", self.db.label(rv.left), rv.left)).clicked() {
+                    if ui.link(crate::i18n::trf("Open left: {}  #{}", &["Open left: ", "  #", ""], &[(self.db.label(rv.left)).to_string(), (rv.left).to_string()])).clicked() {
                         go = Some(rv.left);
                     }
-                    if ui.link(format!("Open right: {}  #{}", self.db.label(rv.right), rv.right)).clicked() {
+                    if ui.link(crate::i18n::trf("Open right: {}  #{}", &["Open right: ", "  #", ""], &[(self.db.label(rv.right)).to_string(), (rv.right).to_string()])).clicked() {
                         go = Some(rv.right);
                     }
                 });
@@ -443,19 +443,19 @@ impl App {
                 show_compare(ui, &c, Some(&mut rv.picks), &lt, &rt);
                 ui.add_space(8.0);
                 ui.separator();
-                ui.label("When merged, the person keeps every fact, event, source, photo and note from both records, and both sets of family links (a person with two sets of parents keeps both).");
+                ui.label(crate::i18n::tr("When merged, the person keeps every fact, event, source, photo and note from both records, and both sets of family links (a person with two sets of parents keeps both)."));
                 ui.add_space(4.0);
-                ui.checkbox(&mut rv.sure, format!("I have compared these records{} and they are the same person.", if c.conflicts() > 0 { ", including the differences above," } else { "" }));
+                ui.checkbox(&mut rv.sure, crate::i18n::trf("I have compared these records{} and they are the same person.", &["I have compared these records", " and they are the same person."], &[(if c.conflicts() > 0 { ", including the differences above," } else { "" }).to_string()]));
                 if c.serious() {
-                    ui.checkbox(&mut rv.sure2, "I understand the warnings marked ! above and still want to merge them.");
+                    ui.checkbox(&mut rv.sure2, crate::i18n::tr("I understand the warnings marked ! above and still want to merge them."));
                 }
                 let ready = rv.sure && (!c.serious() || rv.sure2);
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(ready, egui::Button::new("Merge these two people")).clicked() {
+                    if ui.add_enabled(ready, egui::Button::new(crate::i18n::tr("Merge these two people"))).clicked() {
                         do_merge = true;
                     }
                     if !ready {
-                        ui.label(RichText::new("Tick the box to enable merging.").small().weak());
+                        ui.label(RichText::new(crate::i18n::tr("Tick the box to enable merging.")).small().weak());
                     }
                 });
             });
@@ -471,7 +471,7 @@ impl App {
                 let name = display_name(&self.db.people[&rv.left]);
                 self.merge_reviewed(rv.left, rv.right, &rv.picks);
                 self.sel = Some(rv.left);
-                self.status = format!("Merged the two records into {}. Use Undo if this was a mistake.", name);
+                self.status = crate::i18n::trf("Merged the two records into {}. Use Undo if this was a mistake.", &["Merged the two records into ", ". Use Undo if this was a mistake."], &[(name).to_string()]);
                 self.dirty = true;
                 self.dups.retain(|d| self.db.people.contains_key(&d.0) && self.db.people.contains_key(&d.1));
             }
@@ -540,15 +540,12 @@ impl App {
         let Some(mut im) = self.imerge.take() else { return };
         let mut open = true;
         let mut finish = false;
-        egui::Window::new("Add to my tree: check possible matches").open(&mut open).default_size([980.0, 640.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Add to my tree: check possible matches")).open(&mut open).default_size([980.0, 640.0]).show(ctx, |ui| {
             let total = im.inc.people.len();
             let n_same = im.same.len();
             let undecided = im.order.iter().filter(|i| !im.same.contains_key(i) && !im.different.contains(i)).count();
-            ui.label(format!(
-                "{} contains {} people. {} of them look like someone already in your tree. Nothing is merged unless you confirm that pair.",
-                im.file, total, im.order.len()
-            ));
-            ui.label(RichText::new("People you do not confirm are added as new, separate people. You can still merge them later from Tools > Find duplicates.").small().weak());
+            ui.label(crate::i18n::trf("{} contains {} people. {} of them look like someone already in your tree. Nothing is merged unless you confirm that pair.", &["", " contains ", " people. ", " of them look like someone already in your tree. Nothing is merged unless you confirm that pair."], &[(im.file).to_string(), (total).to_string(), (im.order.len()).to_string()]));
+            ui.label(RichText::new(crate::i18n::tr("People you do not confirm are added as new, separate people. You can still merge them later from Tools > Find duplicates.")).small().weak());
             ui.separator();
             ui.horizontal_top(|ui| {
                 ui.vertical(|ui| {
@@ -577,7 +574,7 @@ impl App {
                     ui.set_min_width(600.0);
                     egui::ScrollArea::vertical().id_salt("imcmp").max_height(430.0).show(ui, |ui| {
                         let Some(inc_id) = im.sel.filter(|s| im.inc.people.contains_key(s)) else {
-                            ui.label("No possible matches to check.");
+                            ui.label(crate::i18n::tr("No possible matches to check."));
                             return;
                         };
                         let opts: Vec<MatchCand> = im.options(inc_id).into_iter().cloned().collect();
@@ -588,7 +585,7 @@ impl App {
                             im.opt = 0;
                         }
                         if opts.len() > 1 {
-                            ui.label(RichText::new(format!("{} people in your tree could be this person. Choose which one to compare:", opts.len())).strong());
+                            ui.label(RichText::new(crate::i18n::trf("{} people in your tree could be this person. Choose which one to compare:", &["", " people in your tree could be this person. Choose which one to compare:"], &[(opts.len()).to_string()])).strong());
                             for (k, o) in opts.iter().enumerate() {
                                 if ui.selectable_label(im.opt == k, format!("{}  #{}   {}", self.db.label(o.dst), o.dst, o.strength())).clicked() {
                                     im.opt = k;
@@ -597,42 +594,42 @@ impl App {
                             ui.separator();
                         }
                         let cand = opts[im.opt].clone();
-                        ui.label(RichText::new(format!("Why it looks like a match: {}", if cand.why.is_empty() { "nothing in particular".to_string() } else { cand.why.join(", ") })).small());
+                        ui.label(RichText::new(crate::i18n::trf("Why it looks like a match: {}", &["Why it looks like a match: ", ""], &[(if cand.why.is_empty() { "nothing in particular".to_string() } else { cand.why.join(", ") }).to_string()])).small());
                         if !cand.against.is_empty() {
-                            ui.label(RichText::new(format!("Against: {}", cand.against.join(", "))).small().color(Color32::from_rgb(225, 100, 90)));
+                            ui.label(RichText::new(crate::i18n::trf("Against: {}", &["Against: ", ""], &[(cand.against.join(", ")).to_string()])).small().color(Color32::from_rgb(225, 100, 90)));
                         }
-                        ui.label(RichText::new(format!("Match strength: {}", cand.strength())).small().weak());
+                        ui.label(RichText::new(crate::i18n::trf("Match strength: {}", &["Match strength: ", ""], &[(cand.strength()).to_string()])).small().weak());
                         let c = compare(&self.db, cand.dst, &im.inc, inc_id, false);
-                        show_compare(ui, &c, None, "In your tree", &format!("In {}", im.file));
+                        show_compare(ui, &c, None, "In your tree", &crate::i18n::trf("In {}", &["In ", ""], &[(im.file).to_string()]));
                         if c.conflicts() > 0 {
-                            ui.label(RichText::new("Where they differ, your tree's value is kept and the file's value is written into the person's notes.").small().weak());
+                            ui.label(RichText::new(crate::i18n::tr("Where they differ, your tree's value is kept and the file's value is written into the person's notes.")).small().weak());
                         }
                         ui.add_space(8.0);
                         let taken = im.taken(cand.dst, inc_id);
                         let is_same = im.same.get(&inc_id) == Some(&cand.dst);
                         ui.horizontal(|ui| {
                             if is_same {
-                                ui.label(RichText::new("Confirmed: these will be merged.").strong());
-                                if ui.button("Undo").clicked() {
+                                ui.label(RichText::new(crate::i18n::tr("Confirmed: these will be merged.")).strong());
+                                if ui.button(crate::i18n::tr("Undo")).clicked() {
                                     im.same.remove(&inc_id);
                                 }
                             } else {
                                 let can = !taken;
-                                if ui.add_enabled(can, egui::Button::new("Yes, they are the same person: merge")).clicked() {
+                                if ui.add_enabled(can, egui::Button::new(crate::i18n::tr("Yes, they are the same person: merge"))).clicked() {
                                     im.same.insert(inc_id, cand.dst);
                                     im.different.remove(&inc_id);
                                 }
-                                if ui.button("No, different people: keep both").clicked() {
+                                if ui.button(crate::i18n::tr("No, different people: keep both")).clicked() {
                                     im.same.remove(&inc_id);
                                     im.different.insert(inc_id);
                                 }
                             }
                         });
                         if taken {
-                            ui.label(RichText::new("Another person from the file is already confirmed as this person in your tree.").small().color(Color32::from_rgb(214, 160, 60)));
+                            ui.label(RichText::new(crate::i18n::tr("Another person from the file is already confirmed as this person in your tree.")).small().color(Color32::from_rgb(214, 160, 60)));
                         }
                         if c.serious() {
-                            ui.label(RichText::new("Read the warnings marked ! before you confirm.").small().color(Color32::from_rgb(225, 100, 90)));
+                            ui.label(RichText::new(crate::i18n::tr("Read the warnings marked ! before you confirm.")).small().color(Color32::from_rgb(225, 100, 90)));
                         }
                     });
                 });
@@ -641,8 +638,8 @@ impl App {
             let strong = im.strong();
             if !strong.is_empty() {
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut im.bulk_ok, format!("I have looked through the {} strong matches (same name, birth year and relatives)", strong.len()));
-                    if ui.add_enabled(im.bulk_ok, egui::Button::new("Confirm all of them")).clicked() {
+                    ui.checkbox(&mut im.bulk_ok, crate::i18n::trf("I have looked through the {} strong matches (same name, birth year and relatives)", &["I have looked through the ", " strong matches (same name, birth year and relatives)"], &[(strong.len()).to_string()]));
+                    if ui.add_enabled(im.bulk_ok, egui::Button::new(crate::i18n::tr("Confirm all of them"))).clicked() {
                         for (i, d) in &strong {
                             if !im.taken(*d, *i) {
                                 im.same.insert(*i, *d);
@@ -652,18 +649,12 @@ impl App {
                     }
                 });
             }
-            ui.label(format!(
-                "Summary: {} will be merged into people already in your tree, {} possible matches you decided are different, {} possible matches undecided (added as new people), and {} people with no match added as new.",
-                n_same,
-                im.different.len(),
-                undecided,
-                total.saturating_sub(im.order.len())
-            ));
+            ui.label(crate::i18n::trf("Summary: {} will be merged into people already in your tree, {} possible matches you decided are different, {} possible matches undecided (added as new people), and {} people with no match added as new.", &["Summary: ", " will be merged into people already in your tree, ", " possible matches you decided are different, ", " possible matches undecided (added as new people), and ", " people with no match added as new."], &[(n_same).to_string(), (im.different.len()).to_string(), (undecided).to_string(), (total.saturating_sub(im.order.len())).to_string()]));
             ui.horizontal(|ui| {
-                if ui.button("Add to my tree").clicked() {
+                if ui.button(crate::i18n::tr("Add to my tree")).clicked() {
                     finish = true;
                 }
-                ui.label(RichText::new("A safety backup of your tree is made first.").small().weak());
+                ui.label(RichText::new(crate::i18n::tr("A safety backup of your tree is made first.")).small().weak());
             });
         });
         if finish {
@@ -674,7 +665,7 @@ impl App {
                 if self.sel.is_none() {
                     self.sel = self.db.people.keys().next().copied();
                 }
-                self.status = format!("Added {} new people and merged {} that you confirmed were already in your tree.", added, matched);
+                self.status = crate::i18n::trf("Added {} new people and merged {} that you confirmed were already in your tree.", &["Added ", " new people and merged ", " that you confirmed were already in your tree."], &[(added).to_string(), (matched).to_string()]);
                 self.dirty = true;
             }
             return;
@@ -682,7 +673,7 @@ impl App {
         if open {
             self.imerge = Some(im);
         } else {
-            self.status = "Nothing was added.".to_string();
+            self.status = crate::i18n::tr("Nothing was added.").to_string();
         }
     }
 }

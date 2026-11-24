@@ -105,6 +105,9 @@ pub(crate) struct Settings {
     /// Text colour set by a colour scheme. None keeps the theme's own text colour.
     #[serde(default)]
     pub(crate) ink: Option<[u8; 3]>,
+    /// The language of the program, by its code (i18n::LANGUAGES); "" is English.
+    #[serde(default)]
+    pub(crate) language: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -181,7 +184,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new() }
+        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new() }
     }
 }
 
@@ -292,7 +295,7 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
             if i > 0 {
                 ui.separator();
             }
-            ui.label(RichText::new(s.group).small().weak());
+            ui.label(RichText::new(crate::i18n::trv(s.group)).small().weak());
         }
         ui.horizontal(|ui| {
             let (rect, _) = ui.allocate_exact_size(vec2(28.0, 16.0), Sense::hover());
@@ -300,7 +303,7 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
             ui.painter().rect(rect, 3.0_f32, bg, Stroke::new(1.0_f32, Color32::GRAY));
             let dot = Rect::from_center_size(rect.center(), vec2(10.0, 8.0));
             ui.painter().rect_filled(dot, 2.0_f32, Color32::from_rgb(s.ink[0], s.ink[1], s.ink[2]));
-            if ui.selectable_label(settings.is_scheme(s), s.name).clicked() {
+            if ui.selectable_label(settings.is_scheme(s), crate::i18n::trv(s.name)).clicked() {
                 settings.use_scheme(s);
                 picked = true;
             }

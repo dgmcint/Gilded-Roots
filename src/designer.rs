@@ -211,41 +211,41 @@ impl App {
         let mut load: Option<Design> = None;
         let mut del: Option<usize> = None;
         let mut save_as = false;
-        egui::Window::new("Report designer").open(&mut open).default_size([760.0, 620.0]).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Report designer")).open(&mut open).default_size([760.0, 620.0]).show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
-                ui.label("Saved designs:");
+                ui.label(crate::i18n::tr("Saved designs:"));
                 if saved.is_empty() {
-                    ui.label(RichText::new("none yet").weak());
+                    ui.label(RichText::new(crate::i18n::tr("none yet")).weak());
                 }
                 for (i, s) in saved.iter().enumerate() {
                     if ui.button(s.name.as_str()).clicked() {
                         load = Some(s.clone());
                     }
-                    if ui.small_button("x").on_hover_text("Forget this design").clicked() {
+                    if ui.small_button("x").on_hover_text(crate::i18n::tr("Forget this design")).clicked() {
                         del = Some(i);
                     }
                 }
             });
             ui.separator();
             egui::Grid::new("dz").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-                ui.label("Title");
+                ui.label(crate::i18n::tr("Title"));
                 ui.add(egui::TextEdit::singleline(&mut d.title).desired_width(360.0));
                 ui.end_row();
-                ui.label("Who");
+                ui.label(crate::i18n::tr("Who"));
                 ui.horizontal_wrapped(|ui| {
                     for (v, l) in [(0u8, "Everyone"), (1, "Ancestors of the selected person"), (2, "Descendants of the selected person"), (3, "Bookmarked"), (4, "One surname")] {
-                        ui.selectable_value(&mut d.who, v, l);
+                        ui.selectable_value(&mut d.who, v, crate::i18n::trv(l));
                     }
                     if d.who == 4 {
                         ui.add(egui::TextEdit::singleline(&mut d.surname).hint_text("surname").desired_width(120.0));
                     }
                 });
                 ui.end_row();
-                ui.label("Columns");
+                ui.label(crate::i18n::tr("Columns"));
                 ui.horizontal_wrapped(|ui| {
                     for (k, l) in COLUMNS {
                         let mut on = d.cols.iter().any(|c| c == k);
-                        if ui.checkbox(&mut on, *l).changed() {
+                        if ui.checkbox(&mut on, crate::i18n::trv(*l)).changed() {
                             if on {
                                 d.cols.push(k.to_string());
                             } else {
@@ -255,46 +255,46 @@ impl App {
                     }
                 });
                 ui.end_row();
-                ui.label("Sort by");
+                ui.label(crate::i18n::tr("Sort by"));
                 ui.horizontal(|ui| {
                     for (v, l) in [("surname", "Surname"), ("name", "Name"), ("born", "Birth date"), ("id", "ID")] {
-                        if ui.selectable_label(d.sort == v, l).clicked() {
+                        if ui.selectable_label(d.sort == v, crate::i18n::trv(l)).clicked() {
                             d.sort = v.to_string();
                         }
                     }
-                    ui.checkbox(&mut d.group_surname, "Group by surname");
+                    ui.checkbox(&mut d.group_surname, crate::i18n::tr("Group by surname"));
                 });
                 ui.end_row();
-                ui.label("Page");
+                ui.label(crate::i18n::tr("Page"));
                 ui.horizontal(|ui| {
-                    ui.selectable_value(&mut d.landscape, true, "Landscape");
-                    ui.selectable_value(&mut d.landscape, false, "Portrait");
-                    ui.checkbox(&mut d.hide_living, "Keep living people private");
+                    ui.selectable_value(&mut d.landscape, true, crate::i18n::tr("Landscape"));
+                    ui.selectable_value(&mut d.landscape, false, crate::i18n::tr("Portrait"));
+                    ui.checkbox(&mut d.hide_living, crate::i18n::tr("Keep living people private"));
                 });
                 ui.end_row();
             });
             ui.horizontal(|ui| {
-                if ui.button(RichText::new("Print or save as PDF").strong()).clicked() {
+                if ui.button(RichText::new(crate::i18n::tr("Print or save as PDF")).strong()).clicked() {
                     print = true;
                 }
-                if ui.button("Save as spreadsheet (CSV)...").clicked() {
+                if ui.button(crate::i18n::tr("Save as spreadsheet (CSV)...")).clicked() {
                     csv = true;
                 }
                 ui.separator();
-                ui.add(egui::TextEdit::singleline(&mut d.name).hint_text("Name for this design").desired_width(160.0));
-                if ui.add_enabled(!d.name.trim().is_empty(), egui::Button::new("Save design")).clicked() {
+                ui.add(egui::TextEdit::singleline(&mut d.name).hint_text(crate::i18n::tr("Name for this design")).desired_width(160.0));
+                if ui.add_enabled(!d.name.trim().is_empty(), egui::Button::new(crate::i18n::tr("Save design"))).clicked() {
                     save_as = true;
                 }
             });
             ui.separator();
             // preview of the first rows
             let (db, ids) = self.design_rows(&d);
-            ui.label(RichText::new(format!("Preview: {} people", ids.len())).strong());
+            ui.label(RichText::new(crate::i18n::trf("Preview: {} people", &["Preview: ", " people"], &[(ids.len()).to_string()])).strong());
             let cols: Vec<(&str, &str)> = COLUMNS.iter().copied().filter(|c| d.cols.iter().any(|x| x == c.0)).collect();
             egui::ScrollArea::both().auto_shrink([false, false]).show(ui, |ui| {
                 egui::Grid::new("dprev").striped(true).num_columns(cols.len().max(1)).spacing([12.0, 4.0]).show(ui, |ui| {
                     for c in &cols {
-                        ui.label(RichText::new(c.1).strong());
+                        ui.label(RichText::new(crate::i18n::trv(c.1)).strong());
                     }
                     ui.end_row();
                     for id in ids.iter().take(40) {
@@ -305,7 +305,7 @@ impl App {
                     }
                 });
                 if ids.len() > 40 {
-                    ui.label(RichText::new(format!("... and {} more on the printed report", ids.len() - 40)).weak());
+                    ui.label(RichText::new(crate::i18n::trf("... and {} more on the printed report", &["... and ", " more on the printed report"], &[(ids.len() - 40).to_string()])).weak());
                 }
             });
         });
@@ -321,7 +321,7 @@ impl App {
             self.settings.reports.retain(|r| r.name != name);
             self.settings.reports.push(Design { name, ..d.clone() });
             save_settings(&self.settings);
-            self.status = "Report design saved.".into();
+            self.status = crate::i18n::tr("Report design saved.").into();
         }
         if print {
             let h = self.design_html(&d);
@@ -329,7 +329,7 @@ impl App {
         }
         if csv {
             let text = self.design_csv(&d);
-            if let Some(p) = rfd::FileDialog::new().set_file_name(format!("{}.csv", sanitize(&d.title))).add_filter("Spreadsheet (CSV)", &["csv"]).save_file() {
+            if let Some(p) = rfd::FileDialog::new().set_file_name(format!("{}.csv", sanitize(&d.title))).add_filter(crate::i18n::tr("Spreadsheet (CSV)"), &["csv"]).save_file() {
                 self.status = match atomic_write(&p, text.as_bytes()) {
                     Ok(_) => format!("Saved {}", p.display()),
                     Err(e) => format!("Could not save: {}", e),

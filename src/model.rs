@@ -212,7 +212,7 @@ pub(crate) fn conf_badge(ui: &mut egui::Ui, v: &str) {
     if let Some(c) = CONFIDENCE.iter().find(|c| c.0 == v.trim()) {
         let col = Color32::from_rgb(c.2[0], c.2[1], c.2[2]);
         egui::Frame::none().fill(col.gamma_multiply(0.18)).stroke(Stroke::new(1.0_f32, col)).rounding(8.0).inner_margin(egui::Margin::symmetric(6.0, 1.0)).show(ui, |ui| {
-            ui.label(RichText::new(c.1).small().color(col));
+            ui.label(RichText::new(crate::i18n::trv(c.1)).small().color(col));
         });
     } else {
         ui.label("");
@@ -223,13 +223,13 @@ pub(crate) fn conf_badge(ui: &mut egui::Ui, v: &str) {
 pub(crate) fn conf_combo(ui: &mut egui::Ui, id: impl std::hash::Hash, v: &mut String) -> bool {
     let mut changed = false;
     let shown = conf_label(v).unwrap_or("How sure? (not rated)");
-    egui::ComboBox::from_id_salt(id).selected_text(RichText::new(shown).small()).width(190.0).show_ui(ui, |ui| {
-        if ui.selectable_label(v.is_empty(), "Not rated").clicked() {
+    egui::ComboBox::from_id_salt(id).selected_text(RichText::new(crate::i18n::trv(shown)).small()).width(190.0).show_ui(ui, |ui| {
+        if ui.selectable_label(v.is_empty(), crate::i18n::tr("Not rated")).clicked() {
             v.clear();
             changed = true;
         }
         for c in CONFIDENCE {
-            if ui.selectable_label(v == c.0, c.1).clicked() {
+            if ui.selectable_label(v == c.0, crate::i18n::trv(c.1)).clicked() {
                 *v = c.0.to_string();
                 changed = true;
             }

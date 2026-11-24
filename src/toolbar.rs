@@ -313,22 +313,22 @@ pub(crate) fn tool_row(ui: &mut egui::Ui, which: &str, tools: &[Tool], settings:
                 ui.painter().galley(pos2(ir.max.x + 5.0, rect.center().y - g.size().y / 2.0), g, col);
             }
             let tip = if t.tip.is_empty() { t.label.to_string() } else { t.tip.clone() };
-            let resp = if t.enabled { resp.on_hover_text(tip) } else { resp.on_hover_text(format!("{} (not available here)", tip)) };
+            let resp = if t.enabled { resp.on_hover_text(tip) } else { resp.on_hover_text(crate::i18n::trf("{} (not available here)", &["", " (not available here)"], &[(tip).to_string()])) };
             if resp.clicked() {
                 clicked = Some(t.id);
             }
         }
     });
     resp.response.interact(Sense::click()).context_menu(|ui| {
-        ui.label(RichText::new(format!("{} toolbar", which)).strong());
-        if ui.checkbox(&mut settings.tb_words, "Show words beside the pictures").changed() {
+        ui.label(RichText::new(crate::i18n::trf("{} toolbar", &["", " toolbar"], &[(which).to_string()])).strong());
+        if ui.checkbox(&mut settings.tb_words, crate::i18n::tr("Show words beside the pictures")).changed() {
             changed = true;
         }
-        if ui.checkbox(&mut settings.tb_large, "Large buttons").changed() {
+        if ui.checkbox(&mut settings.tb_large, crate::i18n::tr("Large buttons")).changed() {
             changed = true;
         }
         ui.separator();
-        ui.label(RichText::new("Buttons to show").small().weak());
+        ui.label(RichText::new(crate::i18n::tr("Buttons to show")).small().weak());
         for t in tools.iter().filter(|t| t.id != GAP) {
             let mut on = !settings.tb_hidden.iter().any(|h| h == t.id);
             if ui.checkbox(&mut on, t.label).changed() {
@@ -341,12 +341,12 @@ pub(crate) fn tool_row(ui: &mut egui::Ui, which: &str, tools: &[Tool], settings:
             }
         }
         ui.separator();
-        if ui.button("Show every button").clicked() {
+        if ui.button(crate::i18n::tr("Show every button")).clicked() {
             let ids: Vec<&str> = tools.iter().map(|t| t.id).collect();
             settings.tb_hidden.retain(|h| !ids.contains(&h.as_str()));
             changed = true;
         }
-        if ui.button(format!("Hide the {} toolbar", which.to_lowercase())).clicked() {
+        if ui.button(crate::i18n::trf("Hide the {} toolbar", &["Hide the ", " toolbar"], &[(which.to_lowercase()).to_string()])).clicked() {
             if which == "Main" {
                 settings.tb_main = false;
             } else {
@@ -375,21 +375,21 @@ impl App {
             _ => "",
         };
         let tools = vec![
-            Tool::new("back", Icon::Back, "Back", "Back to the person before").enabled(!self.back.is_empty()),
-            Tool::new("forward", Icon::Forward, "Forward", "Forward again").enabled(!self.fwd.is_empty()),
-            Tool::new("home", Icon::Home, "Home", "Go to the home person (Home key)").enabled(self.db.home.is_some() || has),
+            Tool::new("back", Icon::Back, crate::i18n::tr("Back"), crate::i18n::tr("Back to the person before")).enabled(!self.back.is_empty()),
+            Tool::new("forward", Icon::Forward, crate::i18n::tr("Forward"), crate::i18n::tr("Forward again")).enabled(!self.fwd.is_empty()),
+            Tool::new("home", Icon::Home, crate::i18n::tr("Home"), crate::i18n::tr("Go to the home person (Home key)")).enabled(self.db.home.is_some() || has),
             Tool::new(GAP, Icon::Back, "", ""),
-            Tool::new("add", Icon::AddPerson, "Add person", "Add a new person to the tree"),
-            Tool::new("edit", Icon::Edit, "Edit", "Edit the selected person (opens their page)").enabled(has && self.editing.is_none()),
+            Tool::new("add", Icon::AddPerson, crate::i18n::tr("Add person"), crate::i18n::tr("Add a new person to the tree")),
+            Tool::new("edit", Icon::Edit, crate::i18n::tr("Edit"), crate::i18n::tr("Edit the selected person (opens their page)")).enabled(has && self.editing.is_none()),
             Tool::new(GAP, Icon::Back, "", ""),
-            Tool::new("find", Icon::Find, "Find", "Find a person by name, place or ID (F3)"),
-            Tool::new("jump", Icon::Jump, "Quick jump", "Jump to any person, tab or command by typing (Ctrl/Cmd+K)"),
+            Tool::new("find", Icon::Find, crate::i18n::tr("Find"), crate::i18n::tr("Find a person by name, place or ID (F3)")),
+            Tool::new("jump", Icon::Jump, crate::i18n::tr("Quick jump"), crate::i18n::tr("Jump to any person, tab or command by typing (Ctrl/Cmd+K)")),
             Tool::new(GAP, Icon::Back, "", ""),
-            Tool::new("undo", Icon::Undo, "Undo", "Undo the last change (Ctrl/Cmd+Z)").enabled(!self.undo.is_empty() || self.x.track_at.is_some()),
-            Tool::new("redo", Icon::Redo, "Redo", "Redo what was undone (Ctrl/Cmd+Y)").enabled(!self.redo.is_empty()),
+            Tool::new("undo", Icon::Undo, crate::i18n::tr("Undo"), crate::i18n::tr("Undo the last change (Ctrl/Cmd+Z)")).enabled(!self.undo.is_empty() || self.x.track_at.is_some()),
+            Tool::new("redo", Icon::Redo, crate::i18n::tr("Redo"), crate::i18n::tr("Redo what was undone (Ctrl/Cmd+Y)")).enabled(!self.redo.is_empty()),
             Tool::new(GAP, Icon::Back, "", ""),
-            Tool::new("print", Icon::Print, "Print", if print_what.is_empty() { "Print (on the Pedigree, Family, Descendants, Individual and Charts tabs)".to_string() } else { print_what.to_string() }).enabled(has && !print_what.is_empty()),
-            Tool::new("backup", Icon::Backup, "Back up now", "Make a checked backup of your tree and photos now").enabled(self.x.practice.is_none()),
+            Tool::new("print", Icon::Print, crate::i18n::tr("Print"), if print_what.is_empty() { "Print (on the Pedigree, Family, Descendants, Individual and Charts tabs)".to_string() } else { print_what.to_string() }).enabled(has && !print_what.is_empty()),
+            Tool::new("backup", Icon::Backup, crate::i18n::tr("Back up now"), crate::i18n::tr("Make a checked backup of your tree and photos now")).enabled(self.x.practice.is_none()),
         ];
         match tool_row(ui, "Main", &tools, &mut self.settings) {
             Some("back") => *act = Some(Action::Back),
@@ -427,58 +427,58 @@ impl App {
                 let first_fam = sel.and_then(|s| self.db.fams_of(s).first().copied());
                 let kids = first_fam.and_then(|f| self.db.fams.get(&f)).map_or(0, |f| f.kids.len());
                 ("Family", vec![
-                    Tool::new("fam_father", Icon::Father, "Add father", "Add a father for the selected person").enabled(has && f.is_none()),
-                    Tool::new("fam_mother", Icon::Mother, "Add mother", "Add a mother for the selected person").enabled(has && m.is_none()),
-                    Tool::new("fam_spouse", Icon::Spouse, "Add spouse", "Add a husband, wife or partner").enabled(has),
-                    Tool::new("fam_child", Icon::Child, "Add child", "Add a child (to their first family)").enabled(has),
-                    Tool::new("fam_sibling", Icon::Sibling, "Add brother or sister", "").enabled(has),
+                    Tool::new("fam_father", Icon::Father, crate::i18n::tr("Add father"), crate::i18n::tr("Add a father for the selected person")).enabled(has && f.is_none()),
+                    Tool::new("fam_mother", Icon::Mother, crate::i18n::tr("Add mother"), crate::i18n::tr("Add a mother for the selected person")).enabled(has && m.is_none()),
+                    Tool::new("fam_spouse", Icon::Spouse, crate::i18n::tr("Add spouse"), crate::i18n::tr("Add a husband, wife or partner")).enabled(has),
+                    Tool::new("fam_child", Icon::Child, crate::i18n::tr("Add child"), crate::i18n::tr("Add a child (to their first family)")).enabled(has),
+                    Tool::new("fam_sibling", Icon::Sibling, crate::i18n::tr("Add brother or sister"), "").enabled(has),
                     Tool::new(GAP, Icon::Back, "", ""),
-                    Tool::new("fam_sort", Icon::Sort, "Sort children", "Put the children of their first family in order of birth").enabled(kids > 1),
-                    Tool::new("fam_print", Icon::Print, "Family group sheet", "Print the family group sheet").enabled(has),
+                    Tool::new("fam_sort", Icon::Sort, crate::i18n::tr("Sort children"), crate::i18n::tr("Put the children of their first family in order of birth")).enabled(kids > 1),
+                    Tool::new("fam_print", Icon::Print, crate::i18n::tr("Family group sheet"), crate::i18n::tr("Print the family group sheet")).enabled(has),
                 ])
             }
             View::Pedigree | View::Descendants => {
                 let ped = self.view == View::Pedigree;
                 let mut v = vec![
-                    Tool::new("ch_out", Icon::ZoomOut, "Smaller", "Zoom out (Ctrl/Cmd -)").enabled(z > 0.3),
-                    Tool::new("ch_in", Icon::ZoomIn, "Bigger", "Zoom in (Ctrl/Cmd +)").enabled(z < 1.75),
-                    Tool::new("ch_fit", Icon::Fit, "Fit", "Fit the chart to the window (F5)"),
+                    Tool::new("ch_out", Icon::ZoomOut, crate::i18n::tr("Smaller"), crate::i18n::tr("Zoom out (Ctrl/Cmd -)")).enabled(z > 0.3),
+                    Tool::new("ch_in", Icon::ZoomIn, crate::i18n::tr("Bigger"), crate::i18n::tr("Zoom in (Ctrl/Cmd +)")).enabled(z < 1.75),
+                    Tool::new("ch_fit", Icon::Fit, crate::i18n::tr("Fit"), crate::i18n::tr("Fit the chart to the window (F5)")),
                     Tool::new(GAP, Icon::Back, "", ""),
-                    Tool::new("ch_home", Icon::Star, "Make home person", "Make the selected person the home person").enabled(has && !is_home),
+                    Tool::new("ch_home", Icon::Star, crate::i18n::tr("Make home person"), crate::i18n::tr("Make the selected person the home person")).enabled(has && !is_home),
                 ];
                 v.push(Tool::new(GAP, Icon::Back, "", ""));
-                v.push(if ped { Tool::new("ch_print_ped", Icon::Print, "Print pedigree", "Print the pedigree chart") } else { Tool::new("ch_print_desc", Icon::Print, "Print descendants", "Print the descendant chart") }.enabled(has));
+                v.push(if ped { Tool::new("ch_print_ped", Icon::Print, crate::i18n::tr("Print pedigree"), crate::i18n::tr("Print the pedigree chart")) } else { Tool::new("ch_print_desc", Icon::Print, crate::i18n::tr("Print descendants"), crate::i18n::tr("Print the descendant chart")) }.enabled(has));
                 (if ped { "Pedigree" } else { "Descendants" }, v)
             }
             View::Person => {
                 let editing = self.editing.is_some();
                 ("Individual", vec![
-                    if editing { Tool::new("ind_done", Icon::Done, "Done", "Save and finish editing") } else { Tool::new("ind_edit", Icon::Edit, "Edit", "Unlock this page to change it") }.enabled(has),
+                    if editing { Tool::new("ind_done", Icon::Done, crate::i18n::tr("Done"), crate::i18n::tr("Save and finish editing")) } else { Tool::new("ind_edit", Icon::Edit, crate::i18n::tr("Edit"), crate::i18n::tr("Unlock this page to change it")) }.enabled(has),
                     Tool::new(GAP, Icon::Back, "", ""),
-                    Tool::new("ind_files", Icon::Clip, "Add files", "Add photos, documents or recordings to this person").enabled(has),
-                    Tool::new("ind_story", Icon::Story, "Write a story", "").enabled(has),
-                    Tool::new("ind_rec", Icon::Mic, "Record a story", "Record a spoken story with the microphone").enabled(has && self.rec.is_none()),
+                    Tool::new("ind_files", Icon::Clip, crate::i18n::tr("Add files"), crate::i18n::tr("Add photos, documents or recordings to this person")).enabled(has),
+                    Tool::new("ind_story", Icon::Story, crate::i18n::tr("Write a story"), "").enabled(has),
+                    Tool::new("ind_rec", Icon::Mic, crate::i18n::tr("Record a story"), crate::i18n::tr("Record a spoken story with the microphone")).enabled(has && self.rec.is_none()),
                     Tool::new(GAP, Icon::Back, "", ""),
-                    Tool::new("ind_print", Icon::Print, "Family book", "Print a family book (individual summary) for this person").enabled(has),
+                    Tool::new("ind_print", Icon::Print, crate::i18n::tr("Family book"), crate::i18n::tr("Print a family book (individual summary) for this person")).enabled(has),
                 ])
             }
             View::Memories | View::Gallery => ("Memories", vec![
-                Tool::new("mem_files", Icon::Clip, "Add files", "Add photos, documents or recordings to the selected person").enabled(has),
-                Tool::new("mem_story", Icon::Story, "Write a story", "").enabled(has),
-                Tool::new("mem_rec", Icon::Mic, "Record a story", "Record a spoken story with the microphone").enabled(has && self.rec.is_none()),
+                Tool::new("mem_files", Icon::Clip, crate::i18n::tr("Add files"), crate::i18n::tr("Add photos, documents or recordings to the selected person")).enabled(has),
+                Tool::new("mem_story", Icon::Story, crate::i18n::tr("Write a story"), "").enabled(has),
+                Tool::new("mem_rec", Icon::Mic, crate::i18n::tr("Record a story"), crate::i18n::tr("Record a spoken story with the microphone")).enabled(has && self.rec.is_none()),
                 Tool::new(GAP, Icon::Back, "", ""),
-                Tool::new("mem_select", Icon::Select, "Select...", "Tick several items to remove them in one go").enabled(self.settings.mem_kind != 6),
+                Tool::new("mem_select", Icon::Select, crate::i18n::tr("Select..."), crate::i18n::tr("Tick several items to remove them in one go")).enabled(self.settings.mem_kind != 6),
             ]),
-            View::Charts => ("Charts", vec![Tool::new("chart_print", Icon::Print, "Print chart", "Print this chart").enabled(has)]),
+            View::Charts => ("Charts", vec![Tool::new("chart_print", Icon::Print, crate::i18n::tr("Print chart"), crate::i18n::tr("Print this chart")).enabled(has)]),
             View::Table => ("People", vec![
-                Tool::new("tbl_find", Icon::Find, "Find", "Find a person (F3)"),
-                Tool::new("tbl_csv", Icon::Sheet, "Save as spreadsheet", "Save the rows shown as a CSV file for Excel, Numbers or Google Sheets"),
+                Tool::new("tbl_find", Icon::Find, crate::i18n::tr("Find"), crate::i18n::tr("Find a person (F3)")),
+                Tool::new("tbl_csv", Icon::Sheet, crate::i18n::tr("Save as spreadsheet"), crate::i18n::tr("Save the rows shown as a CSV file for Excel, Numbers or Google Sheets")),
             ]),
             View::Map => ("Map", vec![
-                Tool::new("map_fit", Icon::Fit, "Fit to pins", "Zoom to show every pin"),
-                Tool::new("map_world", Icon::Globe, "World", "Show the whole world"),
+                Tool::new("map_fit", Icon::Fit, crate::i18n::tr("Fit to pins"), crate::i18n::tr("Zoom to show every pin")),
+                Tool::new("map_world", Icon::Globe, crate::i18n::tr("World"), crate::i18n::tr("Show the whole world")),
                 Tool::new(GAP, Icon::Back, "", ""),
-                Tool::new("map_me", Icon::Pin, "This person", "Show only the selected person's places").enabled(has),
+                Tool::new("map_me", Icon::Pin, crate::i18n::tr("This person"), crate::i18n::tr("Show only the selected person's places")).enabled(has),
             ]),
             View::Dna => return,
         };

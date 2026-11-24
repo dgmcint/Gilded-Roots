@@ -138,30 +138,30 @@ impl App {
             return;
         }
         let mut open = true;
-        egui::Window::new("Date calculator").open(&mut open).default_width(420.0).resizable(false).show(ctx, |ui| {
+        egui::Window::new(crate::i18n::tr("Date calculator")).open(&mut open).default_width(420.0).resizable(false).show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.x.calc_mode, 0, "Age on a date");
-                ui.selectable_value(&mut self.x.calc_mode, 1, "Born from an age");
-                ui.selectable_value(&mut self.x.calc_mode, 2, "Between two dates");
+                ui.selectable_value(&mut self.x.calc_mode, 0, crate::i18n::tr("Age on a date"));
+                ui.selectable_value(&mut self.x.calc_mode, 1, crate::i18n::tr("Born from an age"));
+                ui.selectable_value(&mut self.x.calc_mode, 2, crate::i18n::tr("Between two dates"));
             });
             ui.separator();
             let sel_birth = self.sel.and_then(|i| self.db.people.get(&i)).map(|p| (display_name(p), p.bd.clone()));
             match self.x.calc_mode {
                 0 => {
-                    ui.label("How old was someone on a given day?");
+                    ui.label(crate::i18n::tr("How old was someone on a given day?"));
                     egui::Grid::new("calc0").num_columns(2).show(ui, |ui| {
-                        ui.label("Born");
+                        ui.label(crate::i18n::tr("Born"));
                         ui.horizontal(|ui| {
-                            ui.add(egui::TextEdit::singleline(&mut self.x.calc_a).hint_text("e.g. 3 Feb 1838").desired_width(150.0));
+                            ui.add(egui::TextEdit::singleline(&mut self.x.calc_a).hint_text(crate::i18n::tr("e.g. 3 Feb 1838")).desired_width(150.0));
                             if let Some((n, bd)) = &sel_birth {
-                                if !bd.is_empty() && ui.small_button("Use the selected person").on_hover_text(format!("{n}, born {bd}")).clicked() {
+                                if !bd.is_empty() && ui.small_button(crate::i18n::tr("Use the selected person")).on_hover_text(crate::i18n::trf("{n}, born {bd}", &["", ", born ", ""], &[(n).to_string(), (bd).to_string()])).clicked() {
                                     self.x.calc_a = bd.clone();
                                 }
                             }
                         });
                         ui.end_row();
-                        ui.label("On");
-                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_b).hint_text("e.g. 1 Jun 1880").desired_width(150.0));
+                        ui.label(crate::i18n::tr("On"));
+                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_b).hint_text(crate::i18n::tr("e.g. 1 Jun 1880")).desired_width(150.0));
                         ui.end_row();
                     });
                     let r = match (whole_date(&self.x.calc_a), whole_date(&self.x.calc_b)) {
@@ -179,13 +179,13 @@ impl App {
                     ui.label(RichText::new(r).strong());
                 }
                 1 => {
-                    ui.label("A census or record gives an age: when could the person have been born?");
+                    ui.label(crate::i18n::tr("A census or record gives an age: when could the person have been born?"));
                     egui::Grid::new("calc1").num_columns(2).show(ui, |ui| {
-                        ui.label("Age");
-                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_age).hint_text("e.g. 34").desired_width(60.0));
+                        ui.label(crate::i18n::tr("Age"));
+                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_age).hint_text(crate::i18n::tr("e.g. 34")).desired_width(60.0));
                         ui.end_row();
-                        ui.label("On (date of the record)");
-                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_b).hint_text("e.g. 1 Jun 1880, or 1880").desired_width(150.0));
+                        ui.label(crate::i18n::tr("On (date of the record)"));
+                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_b).hint_text(crate::i18n::tr("e.g. 1 Jun 1880, or 1880")).desired_width(150.0));
                         ui.end_row();
                     });
                     let r = match self.x.calc_age.trim().parse::<u32>().ok().and_then(|a| born_from_age(a, &self.x.calc_b)) {
@@ -196,19 +196,19 @@ impl App {
                     ui.label(RichText::new(r).strong());
                 }
                 _ => {
-                    ui.label("How long between two dates, and what day of the week each was.");
+                    ui.label(crate::i18n::tr("How long between two dates, and what day of the week each was."));
                     egui::Grid::new("calc2").num_columns(2).show(ui, |ui| {
-                        ui.label("From");
-                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_a).hint_text("e.g. 14 Jun 1924").desired_width(150.0));
+                        ui.label(crate::i18n::tr("From"));
+                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_a).hint_text(crate::i18n::tr("e.g. 14 Jun 1924")).desired_width(150.0));
                         ui.end_row();
-                        ui.label("To");
-                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_b).hint_text("e.g. 11 Dec 1975").desired_width(150.0));
+                        ui.label(crate::i18n::tr("To"));
+                        ui.add(egui::TextEdit::singleline(&mut self.x.calc_b).hint_text(crate::i18n::tr("e.g. 11 Dec 1975")).desired_width(150.0));
                         ui.end_row();
                     });
                     ui.add_space(6.0);
                     for (l, s) in [("From", &self.x.calc_a), ("To", &self.x.calc_b)] {
                         if let Ok((y, m, d)) = whole_date(s) {
-                            ui.label(format!("{}: {} was a {}.", l, fmt_date(y, m, d), weekday(y, m, d)));
+                            ui.label(crate::i18n::trf("{}: {} was a {}.", &["", ": ", " was a ", "."], &[(l).to_string(), (fmt_date(y, m, d)).to_string(), (weekday(y, m, d)).to_string()]));
                         }
                     }
                     match (whole_date(&self.x.calc_a), whole_date(&self.x.calc_b)) {
@@ -216,20 +216,20 @@ impl App {
                             let (a, b) = if day_number(b.0, b.1, b.2) < day_number(a.0, a.1, a.2) { (b, a) } else { (a, b) };
                             let days = day_number(b.0, b.1, b.2) - day_number(a.0, a.1, a.2);
                             let (y, m, d) = span(a, b);
-                            ui.label(RichText::new(format!("{}, {} and {} ({} in all).", plural(y as i64, "year"), plural(m as i64, "month"), plural(d as i64, "day"), plural(days, "day"))).strong());
+                            ui.label(RichText::new(crate::i18n::trf("{}, {} and {} ({} in all).", &["", ", ", " and ", " (", " in all)."], &[(plural(y as i64, "year")).to_string(), (plural(m as i64, "month")).to_string(), (plural(d as i64, "day")).to_string(), (plural(days, "day")).to_string()])).strong());
                         }
                         (Err(e), _) if !self.x.calc_a.trim().is_empty() => {
-                            ui.weak(format!("From: {e}."));
+                            ui.weak(crate::i18n::trf("From: {e}.", &["From: ", "."], &[(e).to_string()]));
                         }
                         (_, Err(e)) if !self.x.calc_b.trim().is_empty() => {
-                            ui.weak(format!("To: {e}."));
+                            ui.weak(crate::i18n::trf("To: {e}.", &["To: ", "."], &[(e).to_string()]));
                         }
                         _ => {}
                     }
                 }
             }
             ui.add_space(4.0);
-            ui.label(RichText::new("Dates use today's calendar (Gregorian) throughout; records before a country changed calendars may be 10 to 13 days different.").small().weak());
+            ui.label(RichText::new(crate::i18n::tr("Dates use today's calendar (Gregorian) throughout; records before a country changed calendars may be 10 to 13 days different.")).small().weak());
         });
         self.x.calc_open = open;
     }
@@ -240,14 +240,14 @@ impl App {
         }
         let mut open = true;
         let mut go: Option<u32> = None;
-        egui::Window::new("Soundex").open(&mut open).default_width(380.0).show(ctx, |ui| {
-            ui.label(RichText::new("Soundex gives surnames that sound alike the same code (Smith, Smyth and Smithe are all S530), as used in US census indexes.").small().weak());
-            ui.add(egui::TextEdit::singleline(&mut self.x.soundex_q).hint_text("a surname, e.g. Harwood").desired_width(220.0));
+        egui::Window::new(crate::i18n::tr("Soundex")).open(&mut open).default_width(380.0).show(ctx, |ui| {
+            ui.label(RichText::new(crate::i18n::tr("Soundex gives surnames that sound alike the same code (Smith, Smyth and Smithe are all S530), as used in US census indexes.")).small().weak());
+            ui.add(egui::TextEdit::singleline(&mut self.x.soundex_q).hint_text(crate::i18n::tr("a surname, e.g. Harwood")).desired_width(220.0));
             let code = sound_key(&self.x.soundex_q);
             if code.is_empty() {
                 return;
             }
-            ui.label(RichText::new(format!("Soundex code: {}", code)).strong().size(16.0));
+            ui.label(RichText::new(crate::i18n::trf("Soundex code: {}", &["Soundex code: ", ""], &[(code).to_string()])).strong().size(16.0));
             let mut same: BTreeMap<String, Vec<u32>> = BTreeMap::new();
             for (id, p) in &self.db.people {
                 for s in [&p.surname, &p.maiden] {
@@ -258,10 +258,10 @@ impl App {
             }
             ui.separator();
             if same.is_empty() {
-                ui.weak("No surname in this tree has that code.");
+                ui.weak(crate::i18n::tr("No surname in this tree has that code."));
                 return;
             }
-            ui.label(format!("Surnames in this tree with the code {}:", code));
+            ui.label(crate::i18n::trf("Surnames in this tree with the code {}:", &["Surnames in this tree with the code ", ":"], &[(code).to_string()]));
             egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
                 for (s, ids) in &same {
                     egui::CollapsingHeader::new(format!("{} ({})", s, ids.len())).id_salt(("sx", s)).show(ui, |ui| {

@@ -61,23 +61,23 @@ impl PdfView {
         let title = format!("{}  (page {} of {})", self.title, self.page + 1, self.pages);
         egui::Window::new(title).id(egui::Id::new("pdf_viewer")).open(&mut open).default_size([760.0, 860.0]).show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
-                if ui.add_enabled(self.page > 0, egui::Button::new("< Previous")).clicked() {
+                if ui.add_enabled(self.page > 0, egui::Button::new(crate::i18n::tr("< Previous"))).clicked() {
                     self.page -= 1;
                 }
                 let mut shown = (self.page + 1) as u32;
-                ui.label("Page");
+                ui.label(crate::i18n::tr("Page"));
                 if ui.add(egui::DragValue::new(&mut shown).range(1..=self.pages as u32)).changed() {
                     self.page = (shown as usize).saturating_sub(1).min(self.pages - 1);
                 }
-                ui.label(format!("of {}", self.pages));
-                if ui.add_enabled(self.page + 1 < self.pages, egui::Button::new("Next >")).clicked() {
+                ui.label(crate::i18n::trf("of {}", &["of ", ""], &[(self.pages).to_string()]));
+                if ui.add_enabled(self.page + 1 < self.pages, egui::Button::new(crate::i18n::tr("Next >"))).clicked() {
                     self.page += 1;
                 }
                 ui.separator();
-                if ui.selectable_label(self.zoom == 0.0, "Fit width").clicked() {
+                if ui.selectable_label(self.zoom == 0.0, crate::i18n::tr("Fit width")).clicked() {
                     self.zoom = 0.0;
                 }
-                if ui.selectable_label((self.zoom - 1.0).abs() < 0.01, "Actual size").clicked() {
+                if ui.selectable_label((self.zoom - 1.0).abs() < 0.01, crate::i18n::tr("Actual size")).clicked() {
                     self.zoom = 1.0;
                 }
                 if ui.button("-").clicked() {
@@ -88,7 +88,7 @@ impl PdfView {
                 }
                 ui.label(format!("{:.0}%", self.current_zoom(ui.available_width()) * 100.0));
                 ui.separator();
-                if ui.button("Open in my PDF app").on_hover_text("To print, search the text or fill in forms").clicked() {
+                if ui.button(crate::i18n::tr("Open in my PDF app")).on_hover_text(crate::i18n::tr("To print, search the text or fill in forms")).clicked() {
                     open_path(&self.path);
                 }
             });
@@ -137,7 +137,7 @@ impl PdfView {
             }
             if let Some(e) = &self.error {
                 ui.colored_label(Color32::from_rgb(220, 120, 90), e);
-                if ui.button("Open in my PDF app instead").clicked() {
+                if ui.button(crate::i18n::tr("Open in my PDF app instead")).clicked() {
                     open_path(&self.path);
                 }
             }
@@ -156,7 +156,7 @@ impl PdfView {
                     }
                     None if self.error.is_none() => {
                         ui.spinner();
-                        ui.label("Drawing the page...");
+                        ui.label(crate::i18n::tr("Drawing the page..."));
                     }
                     None => {}
                 }
