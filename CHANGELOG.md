@@ -2,7 +2,9 @@
 
 Major work so far, in the order it was done.
 
-## Coming next: the Research tab
+## 1.0.7 (24 November 2026)
+
+**Research**
 
 - **A Research tab** for your own research files: archived emails, scanned notes and letters, recordings, PDFs,
   documents, spreadsheets and saved web pages, kept with the tree. Add files one by one or a whole folder at once.
@@ -25,7 +27,7 @@ Major work so far, in the order it was done.
   lists, citations, sources, stories, captions, research files, the notepad and the journal, grouped by person.
 - Fixed: on Windows and Linux, Ctrl+F could switch to full screen instead of opening Find.
 
-## Coming next: at home on a Mac and on Linux
+**At home on a Mac and on Linux**
 
 - **Settings window:** Edit > Settings... (Cmd+, on a Mac, Ctrl+, elsewhere) gathers the choices that were spread
   over the menus: appearance, font, language, names and dates, charts, toolbars, printing and privacy, the tree,
@@ -37,7 +39,7 @@ Major work so far, in the order it was done.
 - **Tidier spacing:** roomier buttons, menus and windows.
 - **Linux:** the window now matches its desktop entry, so the dock shows the Gilded Roots icon.
 
-## Coming next: help and the guided tour
+**Help and the guided tour**
 
 - **Tutorials and a guided tour** (Help > Tutorials, and on the welcome screen): seven short lessons on the sample
   family: finding your way around, adding relatives, changing facts, photos and documents, charts and

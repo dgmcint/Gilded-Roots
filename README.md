@@ -54,6 +54,11 @@ and photos came across, and anything that could not be carried over. Your origin
   schedule with a second copy on a USB stick or drive, saved daily versions, and a sample family to practise on.
 - **Research tools.** Research journal, confidence ratings on every fact, historical events in timelines,
   family statistics, a smarter duplicate finder, a report designer, and separate trees for separate projects.
+- **Research tab.** Your own research files kept with the tree: archived emails (.eml, .mbox from Gmail or Apple
+  Mail, Outlook .msg) read right in the program with their attachments, scanned notes and letters, recordings,
+  PDFs, documents and saved web pages. Tag and search them, link them to the people, facts and families they are
+  about, type a transcription, and cite one as a source's evidence in one click. Also theories (evidence for and
+  against), a letters log, a research notepad (F10), and **Search everything** across the whole tree.
 - **DNA.** Autosomal results (ethnicity table, bar chart and map; match lists with shared cM and a "How related?"
   guide), Y-DNA and mtDNA (haplogroup, markers or mutations, matches, and the direct line drawn on the map).
   Match lists import from CSV, tab-separated and Excel files exported by FTDNA, Ancestry, 23andMe, MyHeritage
@@ -71,11 +76,6 @@ and photos came across, and anything that could not be carried over. Your origin
 - Automatic updates: when a new version is released, ask whether to update, then download it, verify it and restart
 - Open Ancestral Quest databases (.aq, including the newer AQ 16 format) directly, alongside GEDCOM import from Ancestral Quest
 - Optional online features, such as working with FamilySearch, that stay off until you turn them on yourself
-- A home for your research files: archived emails (.eml, .mbox, Outlook .msg), audio, PDFs, documents, scans and
-  web pages, kept together in a **Research** tab with search and tags. Each item can be linked to the people,
-  families and events it is about, attached to a source as its evidence (with a citation and transcription), and
-  shown in that person's Individual page. Emails keep their sender, date and attachments, and can be read inside
-  the program
 
 ## Install
 
