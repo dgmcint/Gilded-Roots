@@ -326,7 +326,9 @@ impl App {
         let id = LESSONS[t.lesson].id.to_string();
         if !self.settings.tour_done.contains(&id) {
             self.settings.tour_done.push(id);
-            save_settings(&self.settings);
+            if !cfg!(test) {
+                save_settings(&self.settings);
+            }
         }
         self.x.tour = None;
         self.x.tour_list = true;

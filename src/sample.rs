@@ -54,6 +54,9 @@ fn media(file: &str, caption: &str) -> Media {
 }
 
 pub fn sample_family() -> Db {
+    // tests that point HOME elsewhere wait until the sample pictures are in place
+    #[cfg(test)]
+    let _home = crate::home_lock();
     place_files();
     let mut db = Db { sample: true, ..Default::default() };
     let p = |db: &mut Db, name: &str, sex: &str, bd: &str, bp: &str, dd: &str, dp: &str| -> u32 {

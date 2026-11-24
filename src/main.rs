@@ -63,6 +63,16 @@ mod notes;
 mod templates;
 mod i18n;
 mod tour;
+
+/// Tests that point HOME at a folder of their own hold this, so tests running at the same time
+/// never write photos or settings into another test's folder.
+#[cfg(test)]
+pub(crate) static HOME_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+#[cfg(test)]
+pub(crate) fn home_lock() -> std::sync::MutexGuard<'static, ()> {
+    HOME_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+}
 #[cfg(test)]
 mod bigtree;
 pub(crate) use model::*;
