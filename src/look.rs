@@ -374,6 +374,9 @@ impl App {
                 if ui.button(tr("Where my tree is kept...")).clicked() {
                     self.show_loc = true;
                 }
+                heading(ui, tr("Research journal"));
+                changed |= ui.checkbox(&mut self.settings.auto_log, tr("Note what I do in the research journal")).changed();
+                ui.label(RichText::new(tr("Adding research files is written in the journal by itself, with the day and the person.")).small().weak());
                 heading(ui, tr("Microphone"));
                 let cur = if self.settings.mic.is_empty() { tr("System default").to_string() } else { self.settings.mic.clone() };
                 egui::ComboBox::from_id_salt("settings_mic").selected_text(cur).width(300.0).show_ui(ui, |ui| {

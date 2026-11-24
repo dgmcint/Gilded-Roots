@@ -8,3 +8,7 @@ dist/
 # Claude Code local settings (may contain passwords or tokens)
 .claude/
 __pycache__/
+
+# Ancestral Quest sample databases (test files, not part of the program)
+*.aq
+*.aqz

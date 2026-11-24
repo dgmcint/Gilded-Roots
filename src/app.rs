@@ -14,6 +14,7 @@ pub(crate) enum View {
     Map,
     Memories,
     Dna,
+    Research,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -109,6 +110,32 @@ pub(crate) struct Extra {
     /// The Settings window (Cmd+, / Ctrl+,) and the page it shows.
     pub(crate) settings_open: bool,
     pub(crate) settings_page: usize,
+    /// The Research tab: the chosen item, the kind shown (None = all), the search, filters.
+    pub(crate) research_sel: Option<u32>,
+    pub(crate) research_kind: Option<u8>,
+    pub(crate) research_q: String,
+    pub(crate) research_only_sel: bool,
+    pub(crate) research_tag: String,
+    pub(crate) research_link_sel: bool,
+    pub(crate) research_confirm: Option<u32>,
+    pub(crate) research_view_pic: Option<String>,
+    /// The Research tab's page (0 files, 1 theories, 2 letters) and the theory or letter chosen.
+    pub(crate) research_tab: u8,
+    pub(crate) theory_sel: Option<u32>,
+    pub(crate) theory_confirm: bool,
+    pub(crate) letter_sel: Option<u32>,
+    pub(crate) letter_confirm: bool,
+    /// The research notepad (F10): open, the page shown, where the cursor is, deleting a page.
+    pub(crate) notepad_open: bool,
+    pub(crate) notepad_page: u32,
+    pub(crate) notepad_cursor: Option<(usize, usize)>,
+    pub(crate) notepad_confirm: bool,
+    /// Search everything: open, the words, what was found (and for which words and tree state).
+    pub(crate) sall_open: bool,
+    pub(crate) sall_focus: bool,
+    pub(crate) sall_q: String,
+    pub(crate) sall_key: Option<(String, u64, usize)>,
+    pub(crate) sall_found: Vec<crate::searchall::Found>,
     /// The People tab's toolbar asked for the rows to be saved as a spreadsheet.
     pub(crate) csv_req: bool,
     /// A file read for importing, waiting in the Import options window, and the choices there.
@@ -386,6 +413,8 @@ pub(crate) enum Action {
     GroupToggle(usize, u32),
     /// Open the Groups window counting from this person
     GroupsOpen(u32),
+    /// A website was searched for a person: (site, person), for the research journal
+    Searched(&'static str, u32),
 }
 
 pub(crate) struct App {

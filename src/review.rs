@@ -405,7 +405,9 @@ impl App {
     }
 
     pub fn merge_reviewed(&mut self, keep: u32, gone: u32, picks: &HashMap<&'static str, bool>) {
+        let who = self.db.label(keep);
         self.db.merge_reviewed(keep, gone, picks);
+        self.auto_log(&format!("Merged two records of {}", who), "Gilded Roots", Some(keep), "");
         if self.sel == Some(gone) {
             self.sel = Some(keep);
         }

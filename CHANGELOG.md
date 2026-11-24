@@ -2,6 +2,29 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: the Research tab
+
+- **A Research tab** for your own research files: archived emails, scanned notes and letters, recordings, PDFs,
+  documents, spreadsheets and saved web pages, kept with the tree. Add files one by one or a whole folder at once.
+- **Emails are read in the program:** .eml files, whole .mbox mailboxes (Gmail's Google Takeout, Apple Mail's Export
+  Mailbox) split into one item per email, and Outlook .msg files. Attachments are kept (but never programs), and one
+  can become an item of its own.
+- Each item can be **tagged, searched, linked** to the people, facts and families it is about, and given a
+  **transcription**. Choose the source it is evidence for and **cite it** on a fact in one click, with the file
+  attached.
+- A person's Memories panel lists their research files. Adding research files is noted in the research journal.
+- **A research notepad** (Tools > Research notepad, or F10): dated pages that float over the program, saved as you
+  type, with a button to send a line to the selected person's notes or to-do list.
+- **Theories:** a question you are working on, with evidence for and against (each can point to a research file
+  or source), how sure you are, and your conclusion.
+- **Letters:** a log of the letters and emails sent to archives and relatives, with what is still waiting for a
+  reply and a day to write again.
+- **The research journal fills itself in** (can be turned off in Settings): research files added, citations made
+  from Research, website searches, imports and merges.
+- **Search everything** (Search menu, Cmd/Ctrl+Shift+F): one search through names, facts, places, notes, to-do
+  lists, citations, sources, stories, captions, research files, the notepad and the journal, grouped by person.
+- Fixed: on Windows and Linux, Ctrl+F could switch to full screen instead of opening Find.
+
 ## Coming next: at home on a Mac and on Linux
 
 - **Settings window:** Edit > Settings... (Cmd+, on a Mac, Ctrl+, elsewhere) gathers the choices that were spread

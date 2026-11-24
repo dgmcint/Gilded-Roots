@@ -241,6 +241,7 @@ impl App {
                 for (site, url) in links {
                     if ui.button(crate::i18n::trv(site)).clicked() {
                         ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+                        *act = Some(Action::Searched(site, id));
                         ui.close_menu();
                     }
                 }

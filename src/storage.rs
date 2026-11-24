@@ -231,7 +231,7 @@ pub(crate) fn is_image(f: &str) -> bool {
 pub(crate) fn is_media_name(f: &str) -> bool {
     matches!(
         ext_of(f).as_str(),
-        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "heic" | "heif" | "tif" | "tiff" | "pdf" | "doc" | "docx" | "rtf" | "txt" | "odt" | "htm" | "html" | "wav" | "mp3" | "m4a" | "ogg" | "flac" | "aac" | "mp4" | "mov" | "avi"
+        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "heic" | "heif" | "tif" | "tiff" | "pdf" | "doc" | "docx" | "rtf" | "txt" | "odt" | "htm" | "html" | "wav" | "mp3" | "m4a" | "ogg" | "flac" | "aac" | "mp4" | "mov" | "avi" | "eml" | "msg" | "mht" | "mhtml" | "webarchive" | "xls" | "xlsx" | "csv" | "ods"
     )
 }
 

@@ -76,6 +76,7 @@ impl App {
             self.sel = db.home.or_else(|| db.people.keys().next().copied());
             self.db = db;
             self.status = crate::i18n::trf("Imported {} people.", &["Imported ", " people."], &[(n).to_string()]);
+            self.auto_log(&format!("Imported {} people", n), "Gilded Roots", None, "");
             self.dirty = true;
         }
     }

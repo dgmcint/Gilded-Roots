@@ -487,6 +487,12 @@ renumbered); and **A couple** (type part of each partner's name, in either order
 their family). **Search → Find by ID number** and **Search → Find a couple** open it on those. The relationship
 finder names blood and legal relationships separately (for example, adoptive versus birth parent).
 
+**Search → Search everything...** (**Cmd+Shift+F** on a Mac, **Ctrl+Shift+F** elsewhere) looks through the whole
+tree at once: names, facts and places, notes, to-do lists, citations, sources, the text of stories, captions, research
+files and their emails and transcriptions, the research notepad and the research journal. Every word you type must be
+found, in any order. Results are grouped by person; click one to go there (a person's page, a source, a research file,
+a notepad page).
+
 ## Places
 **Tools → Places...** (or **F9**) lists every place in your tree and how often it is used. Pick one to see who was born,
 married, died or buried there, oldest first. **Spelled more than one way** groups places that are probably the same
@@ -560,6 +566,58 @@ for that person.
 note saying how it was worked out and the gravestone as the source. It never replaces a birth date already there
 unless you tick **Replace**. A warning appears for dates before 1752 (the old calendar), approximate death dates, and
 burial dates (usually a few days after death).
+
+## The Research tab: emails, scans and documents
+The **Research** tab keeps your own research files with the tree: archived emails from relatives and archives,
+scanned notes and letters, recordings, PDFs, documents, spreadsheets and saved web pages. Files are copied into the
+media folder; the originals are never changed.
+
+1. Click **+ Add**, then **Files...** to choose files, or **A whole folder...** to bring in everything in a folder.
+   Tick **Link new files to** first to link them all to the selected person.
+2. Choose an item in the list on the left. On the right you can change its title, date and kind, open or play it,
+   and type a **transcription** of what a scan or letter says, so it can be searched.
+3. Under **About**, click **+ Link** to link the selected person, **+ Fact** to say which fact it is about (their
+   Birth, a Census), and tick the families it is about.
+4. Give it **tags** (census, letters, a family line), separated by commas. Click a tag at the top to show only
+   those items.
+5. Under **Evidence**, choose the source it is evidence for, or click **New source from this**. **Cite it on:** then
+   adds a citation to each fact you chose, with the transcription as its text and the file attached.
+
+**Emails.** Saved emails (.eml), whole mailboxes (.mbox, made by Gmail's Google Takeout and by Apple Mail's
+**Mailbox → Export Mailbox**) and Outlook messages (.msg) are read right in the tab: who it is from and to, the date,
+the subject and the text. A mailbox becomes one item per email, tagged with the mailbox's name. Attachments that are
+pictures, PDFs, documents or recordings are kept, and **Add to Research** makes one an item of its own; programs and
+other unsafe files are left out. Outlook's .pst data files can't be read; in Outlook, drag the emails you want to a
+folder (they become .msg files) and add those.
+
+The search box looks through titles, emails, transcriptions, tags and the names of linked people. **Only about the
+selected person** narrows the list. A person's **Memories** panel lists their research files; click one to open it in
+the Research tab. When **Note what I do in the research journal** is on (Settings, Tree page), adding research files is
+noted in the research journal by itself, as are website searches, imports, merges and citations added from
+Research. Those entries end with "(noted by Gilded Roots)".
+
+## Theories and letters
+The Research tab has two more pages beside **Files**.
+
+**Theories** is for a question you are working on: "Was Thomas's father the William Harwood in the 1880 census of
+Leeds?" Click **+ New theory**, write the question, and link the people it is about. Add **evidence for** and
+**evidence against** as you find it; each piece can point to a research file or a source. Mark how sure you are
+(Still open, Likely, Proven, Disproven, Set aside), and write your **conclusion** and the reasons for it.
+
+**Letters** is a log of the letters and emails you send to archives, libraries, churches and relatives, and what
+came back. Click **+ Letter sent** or **+ Letter received**; note who it was to or from, the subject and the people
+it is about, and link the letter itself if you added it under Files. Letters still **waiting for a reply** are
+counted. Give a **Write again on** day (written like 2026-12-01) and the letter turns orange in the list when that
+day comes.
+
+## Research notepad
+**Tools → Research notepad...** (or **F10**) opens a notepad that floats over the program, for jotting things down
+while you research: what you looked at, names to follow up, call numbers. It is kept with your tree and saved as you
+type. **+ New page** starts a page named after today; click a page's name to go back to it, and give it a title of your
+own if you like. **Insert today's date** stamps the day where the cursor is.
+
+Put the cursor on a line (or select some text) and click **Line to their notes** or **Line to their to-do list** to
+send it to the selected person. A page left empty is not kept when you close the notepad.
 
 ## Research journal
 **Tools → Research journal** keeps a dated record of each search: what you were looking for, where you looked (an

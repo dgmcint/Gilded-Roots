@@ -164,7 +164,7 @@ impl App {
                     }
                     ui.label(RichText::new(crate::i18n::tr("Right-click a toolbar to choose its buttons.")).small().weak());
                     ui.separator();
-                    for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
+                    for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                         if ui.button(crate::i18n::trv(l)).clicked() {
                             self.view = v;
                             ui.close_menu();
@@ -297,6 +297,11 @@ impl App {
                     if ui.add(menu_item(crate::i18n::tr("Find individual..."), "F3")).clicked() {
                         self.find_open = true;
                         self.x.find_mode = 0;
+                        ui.close_menu();
+                    }
+                    if ui.add(menu_item(crate::i18n::tr("Search everything..."), "Cmd+Shift+F")).clicked() {
+                        self.x.sall_open = true;
+                        self.x.sall_focus = true;
                         ui.close_menu();
                     }
                     if ui.button(crate::i18n::tr("Find by ID number...")).clicked() {
@@ -433,6 +438,9 @@ impl App {
                                 for (site, url) in tools::search_links(p) {
                                     if ui.button(crate::i18n::trv(site)).clicked() {
                                         ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+                                        if let Some(i) = self.sel {
+                                            act = Some(Action::Searched(site, i));
+                                        }
                                         ui.close_menu();
                                     }
                                 }
@@ -455,8 +463,12 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
-                    if ui.button(crate::i18n::tr("Research to-do list...")).clicked() {
+                    if ui.add(menu_item(crate::i18n::tr("Research to-do list..."), "F8")).clicked() {
                         self.x.todo_open = true;
+                        ui.close_menu();
+                    }
+                    if ui.add(menu_item(crate::i18n::tr("Research notepad..."), "F10")).clicked() {
+                        self.x.notepad_open = true;
                         ui.close_menu();
                     }
                     if ui.button(crate::i18n::tr("Research journal...")).clicked() {
@@ -591,6 +603,8 @@ impl App {
                             ("F7", "Data checker"),
                             ("F8", "Research to-do list"),
                             ("F9", "Places"),
+                            ("F10", "Research notepad"),
+                            ("Ctrl/Cmd+Shift+F", "Search everything: notes, sources, stories, research files, the notepad"),
                             ("F11  (Mac: Ctrl+Cmd+F)", "Full screen"),
                             ("F12", "History of changes"),
                             ("Arrow keys", "Move around the chart"),
@@ -642,13 +656,13 @@ impl App {
         }
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Dna, "DNA")] {
+                for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                     let mut t = RichText::new(crate::i18n::trv(l)).size(16.0);
                     if self.view == v {
                         t = t.strong();
                     }
                     let r = ui.selectable_label(self.view == v, t);
-                    crate::tour::mark(match v { View::Family => "tab:Family", View::Pedigree => "tab:Pedigree", View::Descendants => "tab:Descendants", View::Person => "tab:Individual", View::Memories => "tab:Memories", View::Charts => "tab:Charts", View::Table => "tab:People", View::Map => "tab:Map", _ => "tab:DNA" }, r.rect);
+                    crate::tour::mark(match v { View::Family => "tab:Family", View::Pedigree => "tab:Pedigree", View::Descendants => "tab:Descendants", View::Person => "tab:Individual", View::Memories => "tab:Memories", View::Charts => "tab:Charts", View::Table => "tab:People", View::Map => "tab:Map", View::Research => "tab:Research", _ => "tab:DNA" }, r.rect);
                     if r.clicked() {
                         self.view = v;
                     }
@@ -729,6 +743,7 @@ impl App {
                 View::Map => self.map_view(ui, &mut act),
                 View::Memories => self.memories_view(ui, &mut act),
                 View::Dna => self.dna_view(ui, &mut act),
+                View::Research => self.research_view(ui, &mut act),
             }
         });
 
@@ -805,6 +820,8 @@ impl App {
             }
         }
         self.todo_window(ctx, &mut act);
+        self.notepad_window(ctx);
+        self.search_all_window(ctx, &mut act);
         self.places_window(ctx, &mut act);
         self.tombstone_window(ctx);
         self.census_window(ctx);
@@ -819,6 +836,7 @@ impl App {
         self.media_folders_window(ctx);
         self.import_window(ctx);
         self.settings_window(ctx, &mut act);
+        self.research_picture(ctx);
         if self.x.tidy_pending && self.media_job.is_none() {
             self.tidy_media();
         }
@@ -2056,6 +2074,10 @@ impl App {
                 self.redo_action();
             }
         }
+        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::F)) {
+            self.x.sall_open = true;
+            self.x.sall_focus = true;
+        }
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::F)) {
             self.find_open = true;
         }
@@ -2163,6 +2185,10 @@ impl App {
                         let h = self.pedigree_html(r);
                         self.open_print(h);
                     }
+                }
+                Action::Searched(site, i) => {
+                    let who = self.db.label(i);
+                    self.auto_log(&format!("Searched {} for {}", site, who), site, Some(i), "");
                 }
                 Action::Bookmark(i) => {
                     if let Some(k) = self.db.bookmarks.iter().position(|x| *x == i) {

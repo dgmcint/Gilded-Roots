@@ -118,6 +118,15 @@ pub(crate) fn language() -> String {
     CODE.lock().map(|c| c.clone()).unwrap_or_default()
 }
 
+/// The translation of text that is not built into the program as such (a fact's name kept in
+/// the tree, "Birth"), or the text itself.
+pub(crate) fn tr_dyn(s: &str) -> String {
+    match table() {
+        None => s.to_string(),
+        Some(t) => t.get(s).copied().unwrap_or(s).to_string(),
+    }
+}
+
 /// The translation of a piece of text, or the text itself.
 #[inline]
 pub(crate) fn tr(s: &'static str) -> &'static str {

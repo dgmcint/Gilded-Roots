@@ -125,6 +125,14 @@ pub(crate) fn media_in_use(db: &Db) -> HashSet<String> {
         used.extend(f.media.iter().filter(|m| !m.file.is_empty()).map(|m| m.file.clone()));
     }
     db.each_cite(&mut |_, _, c| used.extend(c.media.iter().filter(|m| !m.file.is_empty()).map(|m| m.file.clone())));
+    for r in &db.research {
+        if !r.file.is_empty() {
+            used.insert(r.file.clone());
+        }
+        if let Some(e) = &r.email {
+            used.extend(e.attachments.iter().map(|a| a.0.clone()));
+        }
+    }
     used
 }
 

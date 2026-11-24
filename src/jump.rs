@@ -12,7 +12,7 @@ impl App {
         let typing = ctx.wants_keyboard_input();
         let pressed = ctx.input_mut(|i| {
             let mut v: Vec<u8> = Vec::new();
-            for (n, k) in [(1u8, Key::F1), (2, Key::F2), (3, Key::F3), (4, Key::F4), (5, Key::F5), (6, Key::F6), (7, Key::F7), (8, Key::F8), (9, Key::F9), (11, Key::F11), (12, Key::F12)] {
+            for (n, k) in [(1u8, Key::F1), (2, Key::F2), (3, Key::F3), (4, Key::F4), (5, Key::F5), (6, Key::F6), (7, Key::F7), (8, Key::F8), (9, Key::F9), (10, Key::F10), (11, Key::F11), (12, Key::F12)] {
                 if i.consume_key(M::NONE, k) {
                     v.push(n);
                 }
@@ -20,7 +20,9 @@ impl App {
             if i.consume_key(M::COMMAND | M::SHIFT, Key::Slash) || i.consume_key(M::COMMAND, Key::Questionmark) || i.consume_key(M::COMMAND | M::SHIFT, Key::Questionmark) {
                 v.push(1);
             }
-            if i.consume_key(M::COMMAND | M::CTRL, Key::F) {
+            // full screen is Ctrl+Cmd+F on a Mac (on other computers Ctrl+F would match this too,
+            // and that is Find; they use F11)
+            if MAC && i.consume_key(M::COMMAND | M::CTRL, Key::F) {
                 v.push(11);
             }
             // Settings (Cmd+, on a Mac, Ctrl+, elsewhere), Print, and Quit (Ctrl+Q on Linux;
@@ -67,13 +69,15 @@ impl App {
                         View::Memories => View::Charts,
                         View::Charts => View::Table,
                         View::Table => View::Map,
-                        View::Map => View::Dna,
+                        View::Map => View::Research,
+                        View::Research => View::Dna,
                         View::Dna => View::Family,
                     }
                 }
                 7 => self.check_open = true,
                 8 => self.x.todo_open = !self.x.todo_open,
                 9 => self.x.places_open = !self.x.places_open,
+                10 => self.x.notepad_open = !self.x.notepad_open,
                 11 => {
                     let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
                     ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fs));
@@ -102,9 +106,12 @@ impl App {
             ("People table (everyone in a list)", Jump::View(View::Table)),
             ("Map of places", Jump::View(View::Map)),
             ("Memories: photos, stories, recordings, documents, notes", Jump::View(View::Memories)),
+            ("Research: archived emails, scans, recordings, documents", Jump::View(View::Research)),
             ("DNA: ethnicity estimate and matches", Jump::View(View::Dna)),
             ("Write a story", Jump::Window("story")),
             ("Research to-do list", Jump::Window("todo")),
+            ("Research notepad", Jump::Window("notepad")),
+            ("Search everything", Jump::Window("searchall")),
             ("Places", Jump::Window("places")),
             ("History of changes", Jump::Window("history")),
             ("Research journal", Jump::Window("journal")),
@@ -201,6 +208,11 @@ impl App {
             Jump::View(v) => self.view = v,
             Jump::Window(w) => match w {
                 "todo" => self.x.todo_open = true,
+                "notepad" => self.x.notepad_open = true,
+                "searchall" => {
+                    self.x.sall_open = true;
+                    self.x.sall_focus = true;
+                }
                 "todo_add" => {
                     self.x.todo_open = true;
                     self.view = View::Person;

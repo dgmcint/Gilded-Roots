@@ -37,6 +37,7 @@ pub(crate) enum Icon {
     Sheet,
     Globe,
     Pin,
+    Notepad,
 }
 
 /// Draws an icon in `r` with lines of colour `c`.
@@ -232,6 +233,15 @@ pub(crate) fn paint_icon(p: &egui::Painter, r: Rect, icon: Icon, c: Color32) {
             line(&[(-0.42, -0.15), (0.0, 0.8), (0.42, -0.15)]);
             head(0.0, -0.3, 0.15);
         }
+        Icon::Notepad => {
+            line(&[(-0.6, -0.6), (0.6, -0.6), (0.6, 0.8), (-0.6, 0.8), (-0.6, -0.6)]);
+            for x in [-0.3, 0.0, 0.3] {
+                line(&[(x, -0.8), (x, -0.45)]);
+            }
+            for y in [-0.15, 0.15, 0.45] {
+                line(&[(-0.35, y), (0.35, y)]);
+            }
+        }
     }
 }
 
@@ -385,6 +395,7 @@ impl App {
             Tool::new(GAP, Icon::Back, "", ""),
             Tool::new("find", Icon::Find, crate::i18n::tr("Find"), crate::i18n::tr("Find a person by name, place or ID (F3)")),
             Tool::new("jump", Icon::Jump, crate::i18n::tr("Quick jump"), crate::i18n::tr("Jump to any person, tab or command by typing (Ctrl/Cmd+K)")),
+            Tool::new("notepad", Icon::Notepad, crate::i18n::tr("Notepad"), crate::i18n::tr("The research notepad (F10)")),
             Tool::new(GAP, Icon::Back, "", ""),
             Tool::new("undo", Icon::Undo, crate::i18n::tr("Undo"), crate::i18n::tr("Undo the last change (Ctrl/Cmd+Z)")).enabled(!self.undo.is_empty() || self.x.track_at.is_some()),
             Tool::new("redo", Icon::Redo, crate::i18n::tr("Redo"), crate::i18n::tr("Redo what was undone (Ctrl/Cmd+Y)")).enabled(!self.redo.is_empty()),
@@ -400,6 +411,7 @@ impl App {
             Some("edit") => *act = Some(Action::EditStart),
             Some("find") => self.find_open = true,
             Some("jump") => self.x.jump_open = true,
+            Some("notepad") => self.x.notepad_open = !self.x.notepad_open,
             Some("undo") => self.undo_action(),
             Some("redo") => self.redo_action(),
             Some("print") => {
@@ -481,7 +493,7 @@ impl App {
                 Tool::new(GAP, Icon::Back, "", ""),
                 Tool::new("map_me", Icon::Pin, crate::i18n::tr("This person"), crate::i18n::tr("Show only the selected person's places")).enabled(has),
             ]),
-            View::Dna => return,
+            View::Dna | View::Research => return,
         };
         match tool_row(ui, which, &tools, &mut self.settings) {
             Some("fam_father") => *act = Some(Action::Add(Kind::Father)),
@@ -563,7 +575,7 @@ mod tests {
         // every picture draws at any size
         let _ = ctx.run(input(), |c| {
             egui::CentralPanel::default().show(c, |ui| {
-                let all = [Icon::Back, Icon::Forward, Icon::Home, Icon::AddPerson, Icon::Edit, Icon::Done, Icon::Find, Icon::Jump, Icon::Undo, Icon::Redo, Icon::Print, Icon::Backup, Icon::Father, Icon::Mother, Icon::Spouse, Icon::Child, Icon::Sibling, Icon::Sort, Icon::Star, Icon::ZoomIn, Icon::ZoomOut, Icon::Fit, Icon::Story, Icon::Mic, Icon::Clip, Icon::Select, Icon::Sheet, Icon::Globe, Icon::Pin];
+                let all = [Icon::Back, Icon::Forward, Icon::Home, Icon::AddPerson, Icon::Edit, Icon::Done, Icon::Find, Icon::Jump, Icon::Undo, Icon::Redo, Icon::Print, Icon::Backup, Icon::Father, Icon::Mother, Icon::Spouse, Icon::Child, Icon::Sibling, Icon::Sort, Icon::Star, Icon::ZoomIn, Icon::ZoomOut, Icon::Fit, Icon::Story, Icon::Mic, Icon::Clip, Icon::Select, Icon::Sheet, Icon::Globe, Icon::Pin, Icon::Notepad];
                 for (n, i) in all.iter().enumerate() {
                     for s in [12.0, 22.0, 48.0] {
                         paint_icon(ui.painter(), Rect::from_min_size(pos2(n as f32 * 50.0, s * 2.0), vec2(s, s)), *i, Color32::WHITE);

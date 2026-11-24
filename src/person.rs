@@ -357,7 +357,10 @@ impl App {
                     }
                 });
             }
-            "media" => self.person_memories(ui, act, id, false, &mut pdf_req),
+            "media" => {
+                self.person_memories(ui, act, id, false, &mut pdf_req);
+                self.person_research(ui, id);
+            }
             "more" => {
                 none(ui, crate::i18n::tr("Press Edit to merge or delete this person."));
             }
@@ -988,7 +991,10 @@ impl App {
                 cite_list(ui, "psrc", &mut p.sources, Some(&FACTS), "General", &mut self.db.sources, &mut self.db.next, &mut self.src_pick);
             }
             }
-            "media" => self.person_memories(ui, act, id, true, pdf_req),
+            "media" => {
+                self.person_memories(ui, act, id, true, pdf_req);
+                self.person_research(ui, id);
+            }
             "todo" => self.todo_panel(ui, id),
             "journal" => self.journal_panel(ui, id),
             "more" => {

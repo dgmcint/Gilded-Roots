@@ -738,6 +738,18 @@ pub(crate) struct Db {
     /// Saved groups of people (Tools > Groups), kept with the tree.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) groups: Vec<Group>,
+    /// Research files: archived emails, scans, recordings, documents (the Research tab).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) research: Vec<crate::research::ResearchItem>,
+    /// The research notepad's pages (F10).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) notepad: Vec<crate::notepad::NotePage>,
+    /// Research theories: a question, the evidence for and against, and how sure (Research tab).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) theories: Vec<crate::theories::Theory>,
+    /// The log of letters and emails sent and received while researching (Research tab).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) letters: Vec<crate::theories::Letter>,
 }
 
 /// A named set of people, and the steps it was made with.
@@ -754,7 +766,7 @@ pub(crate) struct Group {
 
 impl Default for Db {
     fn default() -> Self {
-        Db { people: BTreeMap::new(), fams: Fams::default(), next: 0, media_folders: false, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new() }
+        Db { people: BTreeMap::new(), fams: Fams::default(), next: 0, media_folders: false, sample: false, sources: BTreeMap::new(), repos: BTreeMap::new(), notes: BTreeMap::new(), records: Vec::new(), bookmarks: Vec::new(), journal: Vec::new(), history: Vec::new(), place_coords: BTreeMap::new(), dna: Vec::new(), ver: 4, home: None, groups: Vec::new(), research: Vec::new(), notepad: Vec::new(), theories: Vec::new(), letters: Vec::new() }
     }
 }
 

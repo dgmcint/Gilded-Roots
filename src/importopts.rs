@@ -467,6 +467,7 @@ impl App {
                 self.fwd.clear();
                 self.dirty = true;
                 self.status = if c.place == 2 { format!("Imported {} people into the new tree \"{}\".", n, name) } else { format!("Imported {} people.", n) };
+                self.auto_log(&format!("Imported {} people from {}", n, file), "Gilded Roots", None, "");
             }
         }
         if c.tidy_places {
