@@ -2,7 +2,7 @@
 
 Major work so far, in the order it was done.
 
-## Coming next: languages
+## 1.0.6 (23 November 2026)
 
 - **Languages:** View > Language puts the whole program into English, German, Spanish, French,
   Italian, Dutch, Norwegian, Brazilian Portuguese or Swedish, each listed in its own words. It
