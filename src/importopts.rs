@@ -308,7 +308,7 @@ impl App {
             ui.add_enabled_ui(!empty_here, |ui| {
                 ui.radio_value(&mut c.place, 0, crate::i18n::tr("Add to my tree (you check and confirm every possible match)"));
             });
-            ui.radio_value(&mut c.place, 1, if empty_here { "Make it my tree" } else { "Replace my tree with it (a backup is made first)" });
+            ui.radio_value(&mut c.place, 1, if empty_here { crate::i18n::tr("Make it my tree") } else { crate::i18n::tr("Replace my tree with it (a backup is made first)") });
             ui.horizontal(|ui| {
                 ui.radio_value(&mut c.place, 2, crate::i18n::tr("A new tree of its own, named"));
                 ui.add_enabled(c.place == 2, egui::TextEdit::singleline(&mut pend.tree_name).desired_width(200.0));

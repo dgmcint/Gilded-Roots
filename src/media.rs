@@ -1122,7 +1122,7 @@ impl App {
                     ui.add_space(4.0);
                     ui.checkbox(del, crate::i18n::trf("Also take the {} file(s) out of the media folder", &["Also take the ", " file(s) out of the media folder"], &[(freed.len()).to_string()]));
                     ui.label(RichText::new(crate::i18n::tr("Only files that no one else in the tree uses. They are moved to the \"Removed files\" folder in your Gilded Roots folder, not deleted, so you can put one back or delete them yourself later.")).small().weak());
-                    ui.label(RichText::new(if *del { "Undo (Ctrl+Z) brings the items back; moved files go back from the Removed files folder." } else { "Left unticked, the files stay in your media folder and Undo (Ctrl+Z) brings everything back." }).small().weak());
+                    ui.label(RichText::new(if *del { crate::i18n::tr("Undo (Ctrl+Z) brings the items back; moved files go back from the Removed files folder.") } else { crate::i18n::tr("Left unticked, the files stay in your media folder and Undo (Ctrl+Z) brings everything back.") }).small().weak());
                 }
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {

@@ -441,7 +441,7 @@ impl App {
                     ui.horizontal(|ui| {
                         ui.label(crate::i18n::tr("Generations"));
                         ui.add(egui::DragValue::new(&mut self.x.group_gens).range(0..=99));
-                        ui.label(RichText::new(if self.x.group_gens == 0 { "(all)" } else { "" }).weak());
+                        ui.label(RichText::new(if self.x.group_gens == 0 { crate::i18n::tr("(all)") } else { "" }).weak());
                     });
                 }
                 ui.checkbox(&mut self.x.group_sibs, crate::i18n::tr("With their brothers and sisters"));
@@ -499,7 +499,7 @@ impl App {
                     FieldKind::Flag => 0,
                 };
                 if needs_value(kind, test) {
-                    ui.add(egui::TextEdit::singleline(&mut self.x.group_val).hint_text(if kind == FieldKind::Year { "a year, e.g. 1900" } else { "e.g. Idaho" }).desired_width(220.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.x.group_val).hint_text(if kind == FieldKind::Year { crate::i18n::tr("a year, e.g. 1900") } else { crate::i18n::tr("e.g. Idaho") }).desired_width(220.0));
                 }
                 let ready = !needs_value(kind, test) || !self.x.group_val.trim().is_empty();
                 let hits = if ready { matching(&self.db, fi, test, &self.x.group_val) } else { BTreeSet::new() };

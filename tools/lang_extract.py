@@ -65,13 +65,31 @@ def collect():
         ct = code(tokenize(src))
         line_at = lambda pos: src.count("\n", 0, pos) + 1
         stack = []  # (bracket char, is_call, call name)
-        in_test = False
+        test_end = -1  # skip #[cfg(test)] items and #[test] functions
         for k, (kind, a, b) in enumerate(ct):
             text = src[a:b]
+            if k <= test_end:
+                continue
+            if text == "#" and k + 4 < len(ct) and src[ct[k+2][1]:ct[k+2][2]] in ("cfg", "test"):
+                attr = src[ct[k+1][1]:ct[k+6][2]] if k + 6 < len(ct) else ""
+                if src[ct[k+2][1]:ct[k+2][2]] == "test" or "cfg(test)" in attr.replace(" ", ""):
+                    m = k
+                    while m < len(ct) and src[ct[m][1]] != "{":
+                        m += 1
+                    depth = 0
+                    for m2 in range(m, len(ct)):
+                        ch = src[ct[m2][1]]
+                        if ct[m2][0] == "punct" and ch == "{": depth += 1
+                        elif ct[m2][0] == "punct" and ch == "}":
+                            depth -= 1
+                            if depth == 0:
+                                test_end = m2
+                                break
+                    continue
             if kind == "punct" and text in "([{":
                 prev = src[ct[k-1][1]:ct[k-1][2]] if k else ""
                 prev2 = src[ct[k-2][1]:ct[k-2][2]] if k > 1 else ""
-                is_call = text == "(" and (ct[k-1][0] == "ident" or prev in (")", ">") ) and prev not in ("if", "match", "in", "return")
+                is_call = text == "(" and (ct[k-1][0] == "ident" or prev in (")", ">", "!")) and prev not in ("if", "match", "in", "return")
                 name = prev2 if prev == "!" else prev
                 stack.append((text, is_call, name))
                 continue
@@ -97,6 +115,9 @@ def collect():
             nxt = src[ct[k+1][1]:ct[k+1][2]] if k + 1 < len(ct) else ""
             if nxt not in (",", ")", "]", "}"):
                 continue
+            value = literal_value(text)
+            if not re.match(r"[A-Z0-9(<+.\"]", value) or re.search(r"[&=@]", value) or "{" in value and "}" in value and not re.search(r"[a-z]{3,} [a-z]{2,}", value):
+                continue  # list entries shown on screen start with a capital letter; skip data and code
             if prev == "=>" or (stack and not stack[-1][1] and stack[-1][0] in "([") :
                 found.setdefault(literal_value(text), f"{fn}:{line_at(a)}")
     return found

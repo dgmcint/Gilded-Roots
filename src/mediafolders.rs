@@ -304,7 +304,7 @@ impl App {
             ui.label(RichText::new(crate::i18n::tr("Nothing is deleted and your tree is not changed: files are only moved, and the backup copy of the media folder is sorted the same way. Undo does not need to move anything back.")).small().weak());
             ui.separator();
             if plan.is_empty() {
-                ui.label(if on { "Everything is already in its folder." } else { "No files need moving (there may be no files yet)." });
+                ui.label(if on { crate::i18n::tr("Everything is already in its folder.") } else { crate::i18n::tr("No files need moving (there may be no files yet).") });
             } else {
                 let folders: HashSet<&str> = plan.iter().map(|m| m.to.as_str()).collect();
                 ui.label(RichText::new(crate::i18n::trf("{} file(s) will move into {} folder(s):", &["", " file(s) will move into ", " folder(s):"], &[(plan.len()).to_string(), (folders.len()).to_string()])).strong());

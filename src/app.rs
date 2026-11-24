@@ -477,9 +477,9 @@ impl App {
         let notice = if load_notice.is_empty() { None } else { Some(load_notice) };
         let recovered = notice.is_some();
         let mut status = if db.sample {
-            "Showing sample data. Use File > Import GEDCOM to load your own tree.".to_string()
+            crate::i18n::tr("Showing sample data. Use File > Import GEDCOM to load your own tree.").to_string()
         } else if db.people.is_empty() {
-            "Welcome! Add your first person, or import a tree with File > Import tree.".to_string()
+            crate::i18n::tr("Welcome! Add your first person, or import a tree with File > Import tree.").to_string()
         } else {
             String::new()
         };

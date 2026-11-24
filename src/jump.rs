@@ -288,7 +288,7 @@ impl App {
                     let mut last_kind = String::new();
                     for (k, (label, kind, _)) in results.iter().enumerate() {
                         if *kind != last_kind {
-                            ui.label(RichText::new(if kind == "person" { "People" } else { "Commands" }).small().weak());
+                            ui.label(RichText::new(if kind == "person" { crate::i18n::tr("People") } else { crate::i18n::tr("Commands") }).small().weak());
                             last_kind = kind.clone();
                         }
                         let rr = ui.selectable_label(k == cur, RichText::new(label.as_str()).size(15.0));

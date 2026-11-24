@@ -253,7 +253,7 @@ impl App {
                 None if k > 1 => {
                     let child = anc.get(k / 2).copied().flatten();
                     if child.is_some() {
-                        resp.clone().on_hover_text(if k % 2 == 0 { "Click to add a father" } else { "Click to add a mother" });
+                        resp.clone().on_hover_text(if k % 2 == 0 { crate::i18n::tr("Click to add a father") } else { crate::i18n::tr("Click to add a mother") });
                     }
                 }
                 _ => {}

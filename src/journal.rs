@@ -184,7 +184,7 @@ impl App {
         egui::Window::new(crate::i18n::tr("Research journal")).open(&mut open).default_size([640.0, 600.0]).show(ctx, |ui| {
             if let Some(j) = self.x.journal_new.as_mut() {
                 egui::Frame::group(ui.style()).show(ui, |ui| {
-                    ui.label(RichText::new(if self.x.journal_edit.is_some() { "Edit entry" } else { "New entry" }).strong());
+                    ui.label(RichText::new(if self.x.journal_edit.is_some() { crate::i18n::tr("Edit entry") } else { crate::i18n::tr("New entry") }).strong());
                     egui::Grid::new("jform").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
                         ui.label(crate::i18n::tr("Date"));
                         ui.add(egui::TextEdit::singleline(&mut j.date).desired_width(160.0));

@@ -1116,7 +1116,7 @@ impl App {
             ui.add(egui::TextEdit::singleline(&mut self.x.dna.find).hint_text(crate::i18n::tr("Filter by name or notes")).desired_width(180.0));
             egui::ComboBox::from_id_salt("dna_side").selected_text(if self.x.dna.side.is_empty() { "Any side".to_string() } else { self.x.dna.side.clone() }).width(100.0).show_ui(ui, |ui| {
                 for s in ["", "Paternal", "Maternal", "Both", "Unknown"] {
-                    if ui.selectable_label(self.x.dna.side == s, if s.is_empty() { "Any side" } else { s }).clicked() {
+                    if ui.selectable_label(self.x.dna.side == s, if s.is_empty() { crate::i18n::tr("Any side") } else { s }).clicked() {
                         self.x.dna.side = s.to_string();
                     }
                 }
@@ -1416,7 +1416,7 @@ impl App {
             let mut open = true;
             let mut done = false;
             let mut delete = false;
-            egui::Window::new(if i == usize::MAX { "Add a DNA match" } else { "DNA match" }).open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(if i == usize::MAX { crate::i18n::tr("Add a DNA match") } else { crate::i18n::tr("DNA match") }).open(&mut open).resizable(false).show(ctx, |ui| {
                 let num = |ui: &mut egui::Ui, v: &mut Option<f32>, hint: &str| {
                     let mut s = v.map(|x| if x.fract() == 0.0 { format!("{:.0}", x) } else { format!("{}", x) }).unwrap_or_default();
                     if ui.add(egui::TextEdit::singleline(&mut s).hint_text(hint).desired_width(90.0)).changed() {
@@ -1452,7 +1452,7 @@ impl App {
                     ui.label(crate::i18n::tr("Side"));
                     egui::ComboBox::from_id_salt("dna_m_side").selected_text(if m.side.is_empty() { "Not known".to_string() } else { m.side.clone() }).show_ui(ui, |ui| {
                         for s in SIDES {
-                            if ui.selectable_label(m.side == *s, if s.is_empty() { "Not known" } else { s }).clicked() {
+                            if ui.selectable_label(m.side == *s, if s.is_empty() { crate::i18n::tr("Not known") } else { s }).clicked() {
                                 m.side = s.to_string();
                             }
                         }

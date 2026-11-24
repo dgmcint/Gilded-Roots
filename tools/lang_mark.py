@@ -20,7 +20,7 @@ CALLS = {
     "on_hover_text_at_pointer": 0, "hint_text": 0, "hyperlink_to": 0, "selected_text": 0,
     "collapsing": 0, "colored_label": 1, "small": 0, "strong": 0, "weak": 0,
     "add_filter": 0, "set_title": 0, "set_description": 0, "from_label": 0,
-    "image_and_text": 1, "show_tooltip_text": 2,
+    "image_and_text": 1, "show_tooltip_text": 2, "link": 0,
 }
 # Type::new(text) constructors
 CTORS = {"RichText", "Button", "Label", "Window", "CollapsingHeader", "Checkbox",
@@ -242,9 +242,15 @@ def process(path):
             return
         # constructors and things that are not plain text: leave (their own text is handled)
         first = src[k0[1]:k0[2]]
-        if first in CTORS or first in ("egui", "eframe", "crate", "if", "match", "move", "|", "RichText", "WidgetText", "LayoutJob"):
+        if first == "if":
+            for j in range(a0, a1 + 1):
+                t = ct[j]
+                if t[0] == "str" and src[ct[j-1][1]] == "{" and j + 1 <= a1 and src[ct[j+1][1]] == "}" \
+                        and is_texty(src[t[1]:t[2]]):
+                    edits.append((t[1], t[2], "crate::i18n::tr(%s)" % src[t[1]:t[2]])); stats["tr"] += 1
             return
-        # an `if c { "a" } else { "b" }` is left alone except its literals are not handled here
+        if first in CTORS or first in ("egui", "eframe", "crate", "match", "move", "|", "RichText", "WidgetText", "LayoutJob"):
+            return
         # plain paths: x, self.x, x.y, &x, *x, x[i], x.0, x.method()
         if any(t[0] in ("str", "rawstr") for t in ct[a0:a1+1]):
             return

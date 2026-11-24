@@ -68,7 +68,7 @@ impl App {
                     }
                     {
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-                        if ui.button(if fs { "Leave full screen        F11" } else { "Full screen        F11 (Mac: Ctrl+Cmd+F)" }).clicked() {
+                        if ui.button(if fs { crate::i18n::tr("Leave full screen        F11") } else { crate::i18n::tr("Full screen        F11 (Mac: Ctrl+Cmd+F)") }).clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fs));
                             ui.close_menu();
                         }
@@ -266,7 +266,7 @@ impl App {
                     });
                     {
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-                        if ui.button(if fs { "Leave full screen" } else { "Full screen" }).clicked() {
+                        if ui.button(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }).clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fs));
                             ui.close_menu();
                         }
@@ -318,7 +318,7 @@ impl App {
                     if ui.checkbox(&mut self.settings.hide_living, crate::i18n::tr("Keep living people private")).on_hover_text(crate::i18n::tr("Printed charts, sheets and reports show living people as \"Living\" with no dates or places")).changed() {
                         save_settings(&self.settings);
                     }
-                    ui.menu_button(if self.settings.paper_a4 { "Paper: A4" } else { "Paper: US Letter" }, |ui| {
+                    ui.menu_button(if self.settings.paper_a4 { crate::i18n::tr("Paper: A4") } else { crate::i18n::tr("Paper: US Letter") }, |ui| {
                         for (v, l) in [(false, "US Letter (8.5 x 11 in)"), (true, "A4 (210 x 297 mm)")] {
                             if ui.selectable_label(self.settings.paper_a4 == v, crate::i18n::trv(l)).clicked() {
                                 self.settings.paper_a4 = v;
@@ -1119,7 +1119,7 @@ impl App {
                                         ui.add(egui::TextEdit::singleline(&mut s.abbr).hint_text(crate::i18n::tr("used in short lists")).desired_width(380.0));
                                         ui.end_row();
                                         ui.label(crate::i18n::tr("Type of source"));
-                                        egui::ComboBox::from_id_salt("srckind").selected_text(if s.kind.is_empty() { "not set" } else { s.kind.as_str() }).width(200.0).show_ui(ui, |ui| {
+                                        egui::ComboBox::from_id_salt("srckind").selected_text(if s.kind.is_empty() { crate::i18n::tr("not set") } else { s.kind.as_str() }).width(200.0).show_ui(ui, |ui| {
                                             ui.selectable_value(&mut s.kind, String::new(), crate::i18n::tr("not set"));
                                             for k in SOURCE_KINDS {
                                                 ui.selectable_value(&mut s.kind, k.to_string(), crate::i18n::trv(*k));

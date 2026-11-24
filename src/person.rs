@@ -281,7 +281,7 @@ impl App {
                 } else {
                     egui::Grid::new("read_ev").num_columns(2).striped(true).spacing([18.0, 6.0]).show(ui, |ui| {
                         for e in &p.events {
-                            ui.label(RichText::new(if e.kind.is_empty() { "Other" } else { e.kind.as_str() }).size(14.0).strong());
+                            ui.label(RichText::new(if e.kind.is_empty() { crate::i18n::tr("Other") } else { e.kind.as_str() }).size(14.0).strong());
                             ui.vertical(|ui| {
                                 let mut line = both(&e.date, &e.place);
                                 if !e.val.trim().is_empty() {
@@ -693,7 +693,7 @@ impl App {
                             let mut remove: Option<usize> = None;
                             for (i, e) in f.events.iter_mut().enumerate() {
                                 ui.horizontal(|ui| {
-                                    egui::ComboBox::from_id_salt(("fev", *fid, i)).selected_text(if e.kind.is_empty() { "Other" } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
+                                    egui::ComboBox::from_id_salt(("fev", *fid, i)).selected_text(if e.kind.is_empty() { crate::i18n::tr("Other") } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
                                         for k in FAM_KINDS.iter() {
                                             ui.selectable_value(&mut e.kind, k.to_string(), crate::i18n::trv(*k));
                                         }
@@ -835,7 +835,7 @@ impl App {
                         let shown = if a.kind.is_empty() { "other name".to_string() } else { a.kind.clone() };
                         egui::ComboBox::from_id_salt(("alt", i)).selected_text(shown).width(100.0).show_ui(ui, |ui| {
                             for k in kinds {
-                                ui.selectable_value(&mut a.kind, k.to_string(), if k.is_empty() { "other name" } else { k });
+                                ui.selectable_value(&mut a.kind, k.to_string(), if k.is_empty() { crate::i18n::tr("other name") } else { k });
                             }
                         });
                         ui.add(egui::TextEdit::singleline(&mut a.given).hint_text(crate::i18n::tr("given names")).desired_width(150.0));
@@ -934,7 +934,7 @@ impl App {
                 let mut remove: Option<usize> = None;
                 for (i, e) in p.events.iter_mut().enumerate() {
                     ui.horizontal(|ui| {
-                        egui::ComboBox::from_id_salt(("ev", i)).selected_text(if e.kind.is_empty() { "Other" } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
+                        egui::ComboBox::from_id_salt(("ev", i)).selected_text(if e.kind.is_empty() { crate::i18n::tr("Other") } else { e.kind.as_str() }).width(140.0).show_ui(ui, |ui| {
                             for k in EVENT_KINDS.iter() {
                                 ui.selectable_value(&mut e.kind, k.to_string(), crate::i18n::trv(*k));
                             }

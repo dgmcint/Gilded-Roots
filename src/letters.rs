@@ -50,9 +50,9 @@ impl App {
             let target = self.x.last_text_focus;
             ui.label(
                 RichText::new(if target.is_some() {
-                    "Click a letter to put it where you were typing. It is also copied, so you can paste it elsewhere."
+                    crate::i18n::tr("Click a letter to put it where you were typing. It is also copied, so you can paste it elsewhere.")
                 } else {
-                    "Click in a box first (a name or place), then click a letter. Letters are also copied, so you can paste them."
+                    crate::i18n::tr("Click in a box first (a name or place), then click a letter. Letters are also copied, so you can paste them.")
                 })
                 .small()
                 .weak(),

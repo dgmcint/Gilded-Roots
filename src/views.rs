@@ -306,7 +306,7 @@ impl App {
             ui.close_menu();
         }
         let marked = self.db.bookmarks.contains(&id);
-        if ui.button(if marked { "Remove bookmark" } else { "Bookmark this person" }).clicked() {
+        if ui.button(if marked { crate::i18n::tr("Remove bookmark") } else { crate::i18n::tr("Bookmark this person") }).clicked() {
             *act = Some(Action::Bookmark(id));
             ui.close_menu();
         }
@@ -517,8 +517,8 @@ impl App {
                 ui.menu_button(crate::i18n::tr("Recent"), |ui| pick(ui, act, &recent));
             });
             let marked = self.db.bookmarks.contains(&sel);
-            ui.menu_button(if marked { "Bookmarks \u{2605}" } else { "Bookmarks" }, |ui| {
-                if ui.button(if marked { "Remove bookmark for this person" } else { "Bookmark this person" }).clicked() {
+            ui.menu_button(if marked { crate::i18n::tr("Bookmarks \u{2605}") } else { crate::i18n::tr("Bookmarks") }, |ui| {
+                if ui.button(if marked { crate::i18n::tr("Remove bookmark for this person") } else { crate::i18n::tr("Bookmark this person") }).clicked() {
                     *act = Some(Action::Bookmark(sel));
                     ui.close_menu();
                 }
@@ -544,7 +544,7 @@ impl App {
                             let shown = self.db.famc(sel) == Some(*f);
                             let bio = rel_is_bio(&fm.rel_to(sel, true)) && rel_is_bio(&fm.rel_to(sel, false));
                             ui.horizontal(|ui| {
-                                ui.label(RichText::new(if bio { "Biological parents" } else { "Other parents" }).small().weak());
+                                ui.label(RichText::new(if bio { crate::i18n::tr("Biological parents") } else { crate::i18n::tr("Other parents") }).small().weak());
                                 if shown {
                                     ui.label(RichText::new(crate::i18n::tr("shown on chart")).small().weak());
                                 } else if ui.small_button(crate::i18n::tr("Show on chart")).clicked() {
@@ -791,7 +791,7 @@ impl App {
                                     Stroke::NONE,
                                 ));
                                 let pid = egui::Id::new("kids_popup");
-                                let ra = ra.on_hover_text(if kids.len() == 1 { "Go down to this person's child" } else { "Go down to one of this person's children" });
+                                let ra = ra.on_hover_text(if kids.len() == 1 { crate::i18n::tr("Go down to this person's child") } else { crate::i18n::tr("Go down to one of this person's children") });
                                 if ra.clicked() {
                                     if kids.len() == 1 {
                                         *act = Some(Action::Select(kids[0].0));

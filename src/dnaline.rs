@@ -173,7 +173,7 @@ impl App {
             let t = &mut self.db.dna[si].line;
             egui::Grid::new("line_top").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
                 ui.label(crate::i18n::tr("Haplogroup"));
-                changed |= ui.add(egui::TextEdit::singleline(&mut t.haplogroup).hint_text(if y { "e.g. R-M269 or R-FGC11134" } else { "e.g. H1a1" }).font(egui::TextStyle::Heading).desired_width(320.0)).changed();
+                changed |= ui.add(egui::TextEdit::singleline(&mut t.haplogroup).hint_text(if y { crate::i18n::tr("e.g. R-M269 or R-FGC11134") } else { crate::i18n::tr("e.g. H1a1") }).font(egui::TextStyle::Heading).desired_width(320.0)).changed();
                 ui.end_row();
                 ui.label(crate::i18n::tr("Test level"));
                 egui::ComboBox::from_id_salt("line_level").selected_text(if t.level.is_empty() { "Choose".to_string() } else { t.level.clone() }).width(220.0).show_ui(ui, |ui| {
@@ -188,9 +188,9 @@ impl App {
             });
             ui.add_space(4.0);
             ui.label(RichText::new(if y {
-                "A haplogroup is the branch of humanity's paternal family tree your line belongs to. The letter is the old, broad branch; the longer the name after it, the newer and more specific the branch."
+                crate::i18n::tr("A haplogroup is the branch of humanity's paternal family tree your line belongs to. The letter is the old, broad branch; the longer the name after it, the newer and more specific the branch.")
             } else {
-                "A haplogroup is the branch of humanity's maternal family tree your line belongs to. The letter is the old, broad branch; the letters and numbers after it narrow it down."
+                crate::i18n::tr("A haplogroup is the branch of humanity's maternal family tree your line belongs to. The letter is the old, broad branch; the letters and numbers after it narrow it down.")
             }).small().weak());
             ui.separator();
             if y {
@@ -337,9 +337,9 @@ impl App {
             if t.matches.is_empty() {
                 ui.add_space(10.0);
                 ui.label(RichText::new(if y {
-                    "No matches yet. Y-DNA matches share your direct paternal line, and often your surname. The genetic distance is how many marker steps you differ by: the smaller it is, at the more markers, the closer the relationship."
+                    crate::i18n::tr("No matches yet. Y-DNA matches share your direct paternal line, and often your surname. The genetic distance is how many marker steps you differ by: the smaller it is, at the more markers, the closer the relationship.")
                 } else {
-                    "No matches yet. mtDNA matches share your direct maternal line. Because mtDNA changes very slowly, even exact matches can be related many generations back; a full-sequence test narrows that down."
+                    crate::i18n::tr("No matches yet. mtDNA matches share your direct maternal line. Because mtDNA changes very slowly, even exact matches can be related many generations back; a full-sequence test narrows that down.")
                 }).weak());
             }
         });
@@ -373,7 +373,7 @@ impl App {
             .collect();
         let mut go: Option<u32> = None;
         egui::SidePanel::left("line_list").resizable(true).default_width(320.0).show_inside(ui, |ui| {
-            ui.label(RichText::new(if y { "Father's father's line" } else { "Mother's mother's line" }).size(16.0).strong());
+            ui.label(RichText::new(if y { crate::i18n::tr("Father's father's line") } else { crate::i18n::tr("Mother's mother's line") }).size(16.0).strong());
             if !hap.trim().is_empty() {
                 ui.label(crate::i18n::trf("Haplogroup {}", &["Haplogroup ", ""], &[(hap.trim()).to_string()]));
             }
@@ -510,7 +510,7 @@ impl App {
         if let Some((i, mut m)) = self.x.line.edit.take() {
             let mut open = true;
             let (mut done, mut delete) = (false, false);
-            egui::Window::new(if i == usize::MAX { format!("Add a {} match", if y { "Y-DNA" } else { "mtDNA" }) } else { format!("{} match", if y { "Y-DNA" } else { "mtDNA" }) }).open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(if i == usize::MAX { format!("Add a {} match", if y { "Y-DNA" } else { crate::i18n::tr("mtDNA") }) } else { format!("{} match", if y { "Y-DNA" } else { crate::i18n::tr("mtDNA") }) }).open(&mut open).resizable(false).show(ctx, |ui| {
                 egui::Grid::new("line_edit").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
                     ui.label(crate::i18n::tr("Name"));
                     ui.add(egui::TextEdit::singleline(&mut m.name).desired_width(260.0));
@@ -527,7 +527,7 @@ impl App {
                         }
                     });
                     ui.end_row();
-                    ui.label(if y { "Markers compared" } else { "Compared" });
+                    ui.label(if y { crate::i18n::tr("Markers compared") } else { crate::i18n::tr("Compared") });
                     egui::ComboBox::from_id_salt("line_cmp").selected_text(if m.compared.is_empty() { "Choose".to_string() } else { m.compared.clone() }).show_ui(ui, |ui| {
                         let opts: &[&str] = if y { &["12", "25", "37", "67", "111", "Big Y"] } else { &["HVR1", "HVR1 and HVR2", "Full sequence"] };
                         for o in opts {

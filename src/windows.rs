@@ -378,7 +378,7 @@ impl App {
                     self.imp_open = true;
                 }
                 ui.horizontal(|ui| {
-                    if ui.link(if self.x.paf_help { "Hide the PAF help" } else { "Coming from PAF? Show me how" }).clicked() {
+                    if ui.link(if self.x.paf_help { crate::i18n::tr("Hide the PAF help") } else { crate::i18n::tr("Coming from PAF? Show me how") }).clicked() {
                         self.x.paf_help = !self.x.paf_help;
                     }
                 });

@@ -183,7 +183,7 @@ pub(crate) fn cite_list(
     for (i, c) in cites.iter_mut().enumerate() {
         ui.horizontal(|ui| {
             if let Some(list) = about {
-                egui::ComboBox::from_id_salt((id_key, i, "about")).selected_text(if c.about.is_empty() { "General" } else { c.about.as_str() }).width(100.0).show_ui(ui, |ui| {
+                egui::ComboBox::from_id_salt((id_key, i, "about")).selected_text(if c.about.is_empty() { crate::i18n::tr("General") } else { c.about.as_str() }).width(100.0).show_ui(ui, |ui| {
                     for f in list {
                         ui.selectable_value(&mut c.about, f.to_string(), *f);
                     }
@@ -238,7 +238,7 @@ pub(crate) fn cite_list(
         let has_more = !c.data.is_empty() || !c.url.is_empty() || !c.accessed.is_empty() || !c.note.is_empty() || !c.media.is_empty();
         ui.horizontal(|ui| {
             ui.add_space(20.0);
-            egui::CollapsingHeader::new(if has_more { "Transcription, web address, notes, pictures (filled in)" } else { "Transcription, web address, notes, pictures" })
+            egui::CollapsingHeader::new(if has_more { crate::i18n::tr("Transcription, web address, notes, pictures (filled in)") } else { crate::i18n::tr("Transcription, web address, notes, pictures") })
                 .id_salt((id_key, i, "more"))
                 .show(ui, |ui| {
                     ui.label(crate::i18n::tr("Text from the source (copy it exactly as written)"));

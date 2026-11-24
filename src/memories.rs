@@ -93,7 +93,7 @@ impl App {
                 // their own folder, once the media folder is sorted by person
                 let own = self.db.people.get(&id).map(|p| media_dir().join(person_folder_name(id, p))).filter(|d| self.db.media_folders && d.is_dir());
                 let target = own.unwrap_or_else(media_dir);
-                if ui.button(if self.db.media_folders { "Open their folder" } else { "Open media folder" }).on_hover_text(format!("{}", target.display())).clicked() {
+                if ui.button(if self.db.media_folders { crate::i18n::tr("Open their folder") } else { crate::i18n::tr("Open media folder") }).on_hover_text(format!("{}", target.display())).clicked() {
                     open_path(&target);
                 }
                 if self.rec.is_none() {

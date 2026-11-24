@@ -431,10 +431,10 @@ impl App {
                     }
                 });
                 ui.horizontal(|ui| {
-                    if ui.link(format!("Open left: {}  #{}", self.db.label(rv.left), rv.left)).clicked() {
+                    if ui.link(crate::i18n::trf("Open left: {}  #{}", &["Open left: ", "  #", ""], &[(self.db.label(rv.left)).to_string(), (rv.left).to_string()])).clicked() {
                         go = Some(rv.left);
                     }
-                    if ui.link(format!("Open right: {}  #{}", self.db.label(rv.right), rv.right)).clicked() {
+                    if ui.link(crate::i18n::trf("Open right: {}  #{}", &["Open right: ", "  #", ""], &[(self.db.label(rv.right)).to_string(), (rv.right).to_string()])).clicked() {
                         go = Some(rv.right);
                     }
                 });

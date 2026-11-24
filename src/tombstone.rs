@@ -459,7 +459,7 @@ impl App {
             });
             ui.separator();
             egui::Grid::new("tomb_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
-                ui.label(if t.from_burial { "Burial date" } else { "Death date" });
+                ui.label(if t.from_burial { crate::i18n::tr("Burial date") } else { crate::i18n::tr("Death date") });
                 ui.add(egui::TextEdit::singleline(&mut t.death).hint_text(crate::i18n::tr("e.g. 14 Mar 1872")).desired_width(200.0));
                 ui.end_row();
                 ui.label(crate::i18n::tr("The stone says"));
@@ -512,9 +512,9 @@ impl App {
                     ui.label(RichText::new(crate::i18n::trf("Saved in the tree as: {}", &["Saved in the tree as: ", ""], &[(b.ged()).to_string()])).weak());
                     if !b.exact() {
                         ui.label(RichText::new(if a.days.is_none() && a.months.is_none() {
-                            "An age in whole years means the person had passed that birthday but not the next one, so the birth falls in a one-year window."
+                            crate::i18n::tr("An age in whole years means the person had passed that birthday but not the next one, so the birth falls in a one-year window.")
                         } else {
-                            "Without the days, the birth falls in a one-month window."
+                            crate::i18n::tr("Without the days, the birth falls in a one-month window.")
                         }).small());
                     }
                     for c in cautions(&t.death, t.from_burial) {
