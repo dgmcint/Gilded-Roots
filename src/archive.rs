@@ -5,7 +5,7 @@
 
 use super::*;
 use std::io::{Read, Write};
-use zip::write::SimpleFileOptions;
+use zip::write::{FileOptions, SimpleFileOptions};
 
 pub const README: &str = "GILDED ROOTS FAMILY TREE ARCHIVE
 
@@ -23,6 +23,23 @@ In another program: import family.ged, and keep the media folder next to it.
 Any zip tool can open this file.
 ";
 
+/// The note put in a locked archive instead (everything else in it needs the password).
+pub const README_LOCKED: &str = "GILDED ROOTS FAMILY TREE ARCHIVE (LOCKED WITH A PASSWORD)
+
+This file holds a complete family history, locked with a password (AES-256).
+Everything in it except this note needs the password to open.
+
+  tree.json        the whole tree as Gilded Roots keeps it
+  family.ged       the same tree as GEDCOM 5.5.1, for other family history programs
+  media/           every photo, document, PDF, story and recording
+  manifest.txt     when the archive was made, what it holds, and checksums
+
+To restore it in Gilded Roots: File > Open Family Tree Archive, then type the password.
+Without Gilded Roots: 7-Zip (Windows), Keka or The Unarchiver (Mac), or 7z (Linux) open
+AES-locked zip files with the password. The zip tools built into Windows and macOS cannot.
+If the password is lost, nobody can open this archive.
+";
+
 /// What an archive holds, read from its manifest (or worked out when there is none).
 #[derive(Default, Debug)]
 pub struct ArchiveInfo {
@@ -34,20 +51,34 @@ pub struct ArchiveInfo {
 
 /// Write the archive to `path` (through a temporary file, so a failure never leaves half a file).
 pub fn write_archive(db: &Db, path: &Path) -> Result<ArchiveInfo, String> {
+    write_archive_locked(db, path, None)
+}
+
+/// Write the archive, locked with a password when one is given (every file but the note inside
+/// is AES-256 encrypted, the standard other zip tools such as 7-Zip read).
+pub fn write_archive_locked(db: &Db, path: &Path, password: Option<&str>) -> Result<ArchiveInfo, String> {
+    let password = password.filter(|p| !p.is_empty());
     let json = serde_json::to_vec(db).map_err(|e| e.to_string())?;
     let ex = to_ged_full(db, &ExportOpts { prune: false, media_dir: Some("media".into()) });
     let tmp = with_suffix(path, ".partial");
     let f = std::fs::File::create(&tmp).map_err(|e| io_msg(&e))?;
     let mut z = zip::ZipWriter::new(std::io::BufWriter::new(f));
-    let packed = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated).large_file(true);
-    let stored = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored).large_file(true);
+    let plain = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated).large_file(true);
+    let lock = |o: SimpleFileOptions| -> FileOptions<'_, 'static, ()> {
+        match password {
+            Some(p) => o.with_aes_encryption(zip::AesMode::Aes256, p),
+            None => o,
+        }
+    };
+    let packed = lock(plain);
+    let stored = lock(SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored).large_file(true));
     let mut info = ArchiveInfo { people: db.people.len(), families: db.families_count(), media: 0, made: today() };
     let mut sums = String::new();
-    let put = |z: &mut zip::ZipWriter<std::io::BufWriter<std::fs::File>>, name: &str, data: &[u8], opt: SimpleFileOptions| -> Result<(), String> {
+    let put = |z: &mut zip::ZipWriter<std::io::BufWriter<std::fs::File>>, name: &str, data: &[u8], opt: FileOptions<'_, 'static, ()>| -> Result<(), String> {
         z.start_file(name, opt).map_err(|e| e.to_string())?;
         z.write_all(data).map_err(|e| io_msg(&e))
     };
-    put(&mut z, "README.txt", README.as_bytes(), packed)?;
+    put(&mut z, "README.txt", if password.is_some() { README_LOCKED.as_bytes() } else { README.as_bytes() }, plain)?;
     put(&mut z, "tree.json", &json, packed)?;
     sums.push_str(&format!("tree.json {:016x}\n", fnv64(&json)));
     put(&mut z, "family.ged", ex.text.as_bytes(), packed)?;
@@ -103,7 +134,7 @@ pub fn write_archive(db: &Db, path: &Path) -> Result<ArchiveInfo, String> {
     let w = z.finish().map_err(|e| e.to_string())?;
     w.into_inner().map_err(|e| e.to_string())?.sync_all().map_err(|e| io_msg(&e))?;
     // check it before putting it in place
-    let check = read_info(&tmp)?;
+    let check = read_info_with(&tmp, password)?;
     if check.people != info.people {
         let _ = std::fs::remove_file(&tmp);
         return Err("the archive did not read back correctly".into());
@@ -117,18 +148,41 @@ fn open_zip(path: &Path) -> Result<zip::ZipArchive<std::fs::File>, String> {
     zip::ZipArchive::new(f).map_err(|_| "This is not a Family Tree Archive (it could not be opened as a zip file).".to_string())
 }
 
+/// An entry, decrypted with the password when there is one.
+fn entry<'a>(z: &'a mut zip::ZipArchive<std::fs::File>, name: &str, password: Option<&str>) -> zip::result::ZipResult<zip::read::ZipFile<'a, std::fs::File>> {
+    match password {
+        Some(p) => z.by_name_decrypt(name, p.as_bytes()),
+        None => z.by_name(name),
+    }
+}
+
+/// The message for an archive that is locked and was given no password, or the wrong one.
+pub const WRONG_PASSWORD: &str = "That password does not open this archive.";
+
+/// True when the archive is locked with a password.
+pub fn is_locked(path: &Path) -> bool {
+    let Ok(mut z) = open_zip(path) else { return false };
+    let locked = z.by_index_raw(z.index_for_name("tree.json").unwrap_or(0)).map(|e| e.encrypted()).unwrap_or(false);
+    locked
+}
+
 /// Read the tree inside an archive and check it against the manifest's checksum.
-fn read_tree(z: &mut zip::ZipArchive<std::fs::File>) -> Result<(Db, Vec<u8>), String> {
+fn read_tree(z: &mut zip::ZipArchive<std::fs::File>, password: Option<&str>) -> Result<(Db, Vec<u8>), String> {
     let mut json = Vec::new();
     {
-        let mut e = z.by_name("tree.json").map_err(|_| "This zip file has no tree.json, so it is not a Family Tree Archive.".to_string())?;
+        let mut e = match entry(z, "tree.json", password) {
+            Ok(e) => e,
+            Err(zip::result::ZipError::InvalidPassword) => return Err(WRONG_PASSWORD.into()),
+            Err(zip::result::ZipError::UnsupportedArchive(m)) if m.to_lowercase().contains("password") => return Err(WRONG_PASSWORD.into()),
+            Err(_) => return Err("This zip file has no tree.json, so it is not a Family Tree Archive.".to_string()),
+        };
         if e.size() > 2_000_000_000 {
             return Err("The tree in this archive is too large to be real.".into());
         }
-        e.read_to_end(&mut json).map_err(|e| io_msg(&e))?;
+        e.read_to_end(&mut json).map_err(|e| if password.is_some() { WRONG_PASSWORD.to_string() } else { io_msg(&e) })?;
     }
     let mut manifest = String::new();
-    if let Ok(mut m) = z.by_name("manifest.txt") {
+    if let Ok(mut m) = entry(z, "manifest.txt", password) {
         let _ = m.read_to_string(&mut manifest);
     }
     if let Some(want) = manifest.lines().find_map(|l| l.strip_prefix("tree.json ")) {
@@ -142,11 +196,16 @@ fn read_tree(z: &mut zip::ZipArchive<std::fs::File>) -> Result<(Db, Vec<u8>), St
 
 /// What an archive holds, without restoring it.
 pub fn read_info(path: &Path) -> Result<ArchiveInfo, String> {
+    read_info_with(path, None)
+}
+
+/// What an archive holds; `password` opens a locked one.
+pub fn read_info_with(path: &Path, password: Option<&str>) -> Result<ArchiveInfo, String> {
     let mut z = open_zip(path)?;
-    let (db, _) = read_tree(&mut z)?;
+    let (db, _) = read_tree(&mut z, password)?;
     let media = (0..z.len()).filter(|i| z.by_index(*i).map(|e| e.name().map(|n| n.starts_with("media/")).unwrap_or(false) && !e.is_dir()).unwrap_or(false)).count();
     let mut made = String::new();
-    if let Ok(mut m) = z.by_name("manifest.txt") {
+    if let Ok(mut m) = entry(&mut z, "manifest.txt", password) {
         let mut s = String::new();
         let _ = m.read_to_string(&mut s);
         made = s.lines().find_map(|l| l.strip_prefix("made ")).unwrap_or("").to_string();
@@ -156,12 +215,22 @@ pub fn read_info(path: &Path) -> Result<ArchiveInfo, String> {
 
 /// Unpack an archive: its media go into the media folder (files already there are kept) and the
 /// tree is returned for the caller to put in place.
+#[allow(dead_code)] // the program goes through read_archive_with; kept for tests and other callers
 pub fn read_archive(path: &Path) -> Result<(Db, usize), String> {
+    read_archive_with(path, None)
+}
+
+/// Unpack an archive; `password` opens a locked one.
+pub fn read_archive_with(path: &Path, password: Option<&str>) -> Result<(Db, usize), String> {
     let mut z = open_zip(path)?;
-    let (db, _) = read_tree(&mut z)?;
+    let (db, _) = read_tree(&mut z, password)?;
     let mut n = 0usize;
     for i in 0..z.len() {
-        let mut e = z.by_index(i).map_err(|e| e.to_string())?;
+        let encrypted = z.by_index_raw(i).map(|e| e.encrypted()).unwrap_or(false);
+        let mut e = match password.filter(|_| encrypted) {
+            Some(p) => z.by_index_decrypt(i, p.as_bytes()).map_err(|_| WRONG_PASSWORD.to_string())?,
+            None => z.by_index(i).map_err(|e| e.to_string())?,
+        };
         let Ok(name) = e.name().map(|n| n.to_string()) else { continue };
         let Some(file) = name.strip_prefix("media/") else { continue };
         // only plain file names, never folders or ".." (a damaged or hostile zip cannot write elsewhere)

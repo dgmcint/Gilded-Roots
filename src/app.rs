@@ -270,6 +270,12 @@ pub(crate) struct Extra {
     pub(crate) backup_check: f64,
     pub(crate) arch_job: Option<std::sync::mpsc::Receiver<Result<String, String>>>,
     pub(crate) arch_confirm: Option<(PathBuf, archive::ArchiveInfo)>,
+    /// Saving an archive: (lock it with a password, the password, the password typed again).
+    pub(crate) arch_save: Option<(bool, String, String)>,
+    /// Opening a locked archive: (the file, the password being typed, the last error).
+    pub(crate) arch_unlock: Option<(PathBuf, String, String)>,
+    /// The password that opened the archive waiting to be restored.
+    pub(crate) arch_pw: Option<String>,
     pub(crate) paf_help: bool,
     pub(crate) designer_open: bool,
     pub(crate) design: designer::Design,

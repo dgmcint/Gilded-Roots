@@ -371,18 +371,34 @@ impl App {
 }
 
 impl App {
+    /// File > Save Family Tree Archive: first the window that asks about a password.
     pub(crate) fn save_archive_pick(&mut self) {
         if self.x.practice.is_some() {
             self.status = crate::i18n::tr("This is the sample family; go back to your tree to archive it.").into();
             return;
         }
+        self.x.arch_save = Some((false, String::new(), String::new()));
+    }
+
+    /// Choose where to save the archive, then make it (locked when a password is given).
+    pub(crate) fn save_archive_to(&mut self, password: Option<String>) {
         let name = format!("Gilded Roots archive {}.zip", today());
         if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Save Family Tree Archive")).set_directory(start_dir()).set_file_name(&name).add_filter(crate::i18n::tr("Family Tree Archive"), &["zip"]).save_file() {
             remember_dir(&path);
             let db = self.db.clone();
             let (tx, rx) = std::sync::mpsc::channel();
             std::thread::spawn(move || {
-                let r = archive::write_archive(&db, &path).map(|i| format!("Saved the Family Tree Archive {} ({} people, {} families, {} photos and documents). Keep a copy somewhere safe.", path.display(), i.people, i.families, i.media));
+                let locked = password.is_some();
+                let r = archive::write_archive_locked(&db, &path, password.as_deref()).map(|i| {
+                    format!(
+                        "Saved the Family Tree Archive {} ({} people, {} families, {} photos and documents){}. Keep a copy somewhere safe.",
+                        path.display(),
+                        i.people,
+                        i.families,
+                        i.media,
+                        if locked { ", locked with your password" } else { "" }
+                    )
+                });
                 let _ = tx.send(r);
             });
             self.x.arch_job = Some(rx);
@@ -393,6 +409,11 @@ impl App {
     pub(crate) fn open_archive_pick(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Open Family Tree Archive")).set_directory(start_dir()).add_filter(crate::i18n::tr("Family Tree Archive"), &["zip"]).pick_file() {
             remember_dir(&path);
+            if archive::is_locked(&path) {
+                self.x.arch_unlock = Some((path, String::new(), String::new()));
+                return;
+            }
+            self.x.arch_pw = None;
             match archive::read_info(&path) {
                 Ok(info) => self.x.arch_confirm = Some((path, info)),
                 Err(e) => {

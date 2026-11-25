@@ -18,7 +18,7 @@ cpal = "0.15"
 hound = "3"
 unicode-normalization = "0.1"
 miniz_oxide = "0.8"
-zip = { version = "9", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate", "aes-crypto"] }
 ab_glyph = "0.2"
 cfb = "0.10"
 hayro = { version = "0.8", default-features = false, features = ["embed-fonts", "embed-cmaps"] }

@@ -755,6 +755,14 @@ computer, to give a copy to a relative, or to keep for the future: any zip tool 
 **File → Open Family Tree Archive** restores one. It checks the archive first and keeps your current tree as a backup
 before replacing it.
 
+**Locking an archive with a password.** When you save an archive, tick **Lock it with a password** and type the
+password twice. Everything in the archive is then locked (AES-256, the standard other zip tools use) except a short
+note saying what the file is. Opening it in Gilded Roots asks for the password; without Gilded Roots, 7-Zip
+(Windows), Keka or The Unarchiver (Mac) and 7z (Linux) open it with the password. The zip tools built into Windows
+and macOS cannot. **Write the password down somewhere safe: if it is lost, nobody can open the archive, not even
+Gilded Roots.** A locked archive is a good way to keep a copy of your tree on a USB stick, in cloud storage or with a
+relative without anyone else being able to read it.
+
 ## History of changes (F12)
 **Tools → History of changes** lists what you changed in this session, newest first ("Changed John Smith", "Added
 Mary Jones", "Changed place..."), with how long ago. Click any line to put the tree back to just before that change.

@@ -467,6 +467,106 @@ impl App {
 }
 
 impl App {
+    /// The two password windows: choosing one when saving an archive, and typing it to open one.
+    fn archive_password_windows(&mut self, ctx: &egui::Context) {
+        let mut save: Option<Option<String>> = None;
+        if let Some((lock, pw, pw2)) = &mut self.x.arch_save {
+            let mut close = false;
+            egui::Window::new(crate::i18n::tr("Save Family Tree Archive")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+                ui.set_max_width(460.0);
+                ui.label(crate::i18n::tr("One file with your whole tree, every photo, document, story and recording, and a GEDCOM copy."));
+                ui.add_space(6.0);
+                ui.checkbox(lock, crate::i18n::tr("Lock it with a password"));
+                let mut ok = true;
+                if *lock {
+                    egui::Grid::new("arch_pw").num_columns(2).spacing([8.0, 6.0]).show(ui, |ui| {
+                        ui.label(crate::i18n::tr("Password:"));
+                        ui.add(egui::TextEdit::singleline(pw).password(true).desired_width(240.0));
+                        ui.end_row();
+                        ui.label(crate::i18n::tr("Type it again:"));
+                        ui.add(egui::TextEdit::singleline(pw2).password(true).desired_width(240.0));
+                        ui.end_row();
+                    });
+                    if pw.chars().count() < 6 {
+                        ui.label(RichText::new(crate::i18n::tr("Use at least 6 letters or numbers; a short sentence is best.")).small().weak());
+                        ok = false;
+                    } else if pw != pw2 {
+                        ui.colored_label(Color32::from_rgb(222, 166, 60), crate::i18n::tr("The two passwords are not the same."));
+                        ok = false;
+                    }
+                    ui.colored_label(
+                        Color32::from_rgb(222, 166, 60),
+                        crate::i18n::tr("Write the password down and keep it somewhere safe. If it is lost, nobody can open the archive, not even Gilded Roots."),
+                    );
+                    ui.label(RichText::new(crate::i18n::tr("Other programs that open it: 7-Zip on Windows, Keka or The Unarchiver on a Mac, 7z on Linux.")).small().weak());
+                }
+                ui.add_space(6.0);
+                ui.horizontal(|ui| {
+                    if ui.add_enabled(ok, egui::Button::new(RichText::new(crate::i18n::tr("Choose where to save...")).strong())).clicked() {
+                        save = Some(if *lock { Some(pw.clone()) } else { None });
+                    }
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
+                        close = true;
+                    }
+                });
+            });
+            if close {
+                self.x.arch_save = None;
+            }
+        }
+        if let Some(pw) = save {
+            self.x.arch_save = None;
+            self.save_archive_to(pw);
+        }
+        let mut try_open: Option<(PathBuf, String)> = None;
+        if let Some((path, pw, err)) = &mut self.x.arch_unlock {
+            let mut close = false;
+            egui::Window::new(crate::i18n::tr("Open Family Tree Archive")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+                ui.set_max_width(440.0);
+                ui.label(RichText::new(path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default()).strong());
+                ui.label(crate::i18n::tr("This archive is locked with a password."));
+                ui.horizontal(|ui| {
+                    ui.label(crate::i18n::tr("Password:"));
+                    let r = ui.add(egui::TextEdit::singleline(pw).password(true).desired_width(240.0));
+                    if r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) && !pw.is_empty() {
+                        try_open = Some((path.clone(), pw.clone()));
+                    }
+                    r.request_focus();
+                });
+                if !err.is_empty() {
+                    ui.colored_label(Color32::from_rgb(222, 166, 60), err.as_str());
+                }
+                ui.add_space(6.0);
+                ui.horizontal(|ui| {
+                    if ui.add_enabled(!pw.is_empty(), egui::Button::new(RichText::new(crate::i18n::tr("Open")).strong())).clicked() {
+                        try_open = Some((path.clone(), pw.clone()));
+                    }
+                    if ui.button(crate::i18n::tr("Cancel")).clicked() {
+                        close = true;
+                    }
+                });
+            });
+            if close {
+                self.x.arch_unlock = None;
+            }
+        }
+        if let Some((path, pw)) = try_open {
+            match archive::read_info_with(&path, Some(&pw)) {
+                Ok(info) => {
+                    self.x.arch_unlock = None;
+                    self.x.arch_pw = Some(pw);
+                    self.x.arch_confirm = Some((path, info));
+                }
+                Err(e) => {
+                    if let Some(u) = &mut self.x.arch_unlock {
+                        u.2 = if e == archive::WRONG_PASSWORD { crate::i18n::tr("That password does not open this archive.").to_string() } else { e };
+                        u.1.clear();
+                    }
+                }
+            }
+        }
+    }
+
     /// Windows for the archive (confirm restore, progress) and backup settings.
     pub(crate) fn archive_windows(&mut self, ctx: &egui::Context) {
         if let Some(rx) = &self.x.arch_job {
@@ -511,8 +611,9 @@ impl App {
                 if self.x.practice.is_some() {
                     self.end_practice();
                 }
+                let pw = self.x.arch_pw.take();
                 if self.backup() {
-                    match archive::read_archive(&path) {
+                    match archive::read_archive_with(&path, pw.as_deref()) {
                         Ok((mut db, n)) => {
                             fix_names(&mut db);
                             // previews are made again on this computer
@@ -540,8 +641,10 @@ impl App {
                 }
             } else if cancel {
                 self.x.arch_confirm = None;
+                self.x.arch_pw = None;
             }
         }
+        self.archive_password_windows(ctx);
         if self.x.backup_open {
             let mut open = true;
             let mut changed = false;

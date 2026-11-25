@@ -1330,6 +1330,14 @@ mod edit_tests {
         assert!(safe_media_path("../x.txt").is_none() && safe_media_path("a/b.txt").is_none() && safe_media_path("123-story.txt").is_some());
     }
 
+    /// Writes a locked sample archive to $GR_ARCH_OUT, to check it with other zip tools.
+    #[test]
+    #[ignore]
+    fn write_locked_sample_archive() {
+        let out = std::env::var("GR_ARCH_OUT").expect("set GR_ARCH_OUT");
+        archive::write_archive_locked(&sample_family(), std::path::Path::new(&out), Some("blue horse 1848")).unwrap();
+    }
+
     #[test]
     fn archive_keeps_everything_and_rejects_bad_files() {
         let mut db = sample_family();
@@ -1350,6 +1358,35 @@ mod edit_tests {
         let mut ged = String::new();
         std::io::Read::read_to_string(&mut z.by_name("family.ged").unwrap(), &mut ged).unwrap();
         assert_eq!(gedcom::parse_ged(&ged).people.len(), db.people.len());
+        assert!(!archive::is_locked(&path));
+        // locked with a password: nothing but the note can be read without it
+        let locked = dir.join("locked archive.zip");
+        let info = archive::write_archive_locked(&db, &locked, Some("blue horse 1848")).expect("locked archive written");
+        assert_eq!(info.people, db.people.len());
+        assert!(archive::is_locked(&locked));
+        assert!(archive::read_info(&locked).is_err());
+        assert_eq!(archive::read_info_with(&locked, Some("wrong one")).unwrap_err(), archive::WRONG_PASSWORD);
+        assert_eq!(archive::read_info_with(&locked, Some("blue horse 1848")).unwrap().people, db.people.len());
+        let (db3, n3) = archive::read_archive_with(&locked, Some("blue horse 1848")).unwrap();
+        assert_eq!(serde_json::to_string(&db3).unwrap(), serde_json::to_string(&db).unwrap());
+        assert_eq!(n3, n);
+        assert!(archive::read_archive_with(&locked, Some("nope")).is_err());
+        {
+            let mut z = zip::ZipArchive::new(std::fs::File::open(&locked).unwrap()).unwrap();
+            let mut note = String::new();
+            std::io::Read::read_to_string(&mut z.by_name("README.txt").unwrap(), &mut note).unwrap();
+            assert!(note.contains("LOCKED WITH A PASSWORD"));
+            assert!(z.by_name("family.ged").is_err(), "the GEDCOM inside needs the password");
+            for i in 0..z.len() {
+                let e = z.by_index_raw(i).unwrap();
+                assert!(e.name().unwrap() == "README.txt" || e.encrypted(), "{} is locked", e.name().unwrap());
+            }
+        }
+        // and the names and places are not readable in the file itself
+        let raw = std::fs::read(&locked).unwrap();
+        let some_name = db.people.values().map(|p| p.surname.clone()).find(|s| s.len() > 4).unwrap();
+        let text_hits = raw.windows(some_name.len()).filter(|w| *w == some_name.as_bytes()).count();
+        assert_eq!(text_hits, 0, "{} is not in the locked file as plain text", some_name);
         // not a zip, and a zip with a damaged tree, are refused with a message
         std::fs::write(dir.join("bad.zip"), b"hello").unwrap();
         assert!(archive::read_info(&dir.join("bad.zip")).is_err());

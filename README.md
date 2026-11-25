@@ -51,7 +51,7 @@ and photos came across, and anything that could not be carried over. Your origin
 - **Fast to get around.** Quick jump (Ctrl/Cmd+K) to any person or command, F-key shortcuts, a History of changes
   you can step back through, and saved daily versions you can browse and restore one person from.
 - **Comfortable to read.** Adjustable text size, name and date styles, dockable panels with saved layouts, full screen.
-- **Archive and protect.** One-file Family Tree Archives with every photo and document, backups on your
+- **Archive and protect.** One-file Family Tree Archives with every photo and document (lockable with a password), backups on your
   schedule with a second copy on a USB stick or drive, saved daily versions, and a sample family to practise on.
 - **Research tools.** Research journal, confidence ratings on every fact, historical events in timelines,
   family statistics, a smarter duplicate finder, a report designer, and separate trees for separate projects.

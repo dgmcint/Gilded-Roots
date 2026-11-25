@@ -2,12 +2,14 @@
 
 Major work so far, in the order it was done.
 
-## Coming next: GEDCOM 7, GEDZIP and charts that stand out
+## Coming next: GEDCOM 7, GEDZIP, locked archives and charts that stand out
 
 - **GEDCOM 7 and GEDZIP.** File > Export GEDCOM 7 writes a GEDCOM 7 file (photos in a folder beside it) or a GEDZIP
   (.gdz: one file with the GEDCOM 7 file and every photo and document), each with everything or with living
   people private. GEDCOM 7 files and GEDZIP files can be imported, photos and all. Everything a 5.5.1 export
   keeps survives the trip to GEDCOM 7 and back.
+- **Password-locked archives.** File > Save Family Tree Archive can lock the archive with a password (AES-256,
+  readable by 7-Zip, Keka and 7z too). Opening a locked archive asks for the password.
 - **Charts that stand out.** Every tree chart now sits on its own backdrop, with the people on solid cards with
   rounded corners and a soft shadow: mid-grey cards on near-black in dark mode, white cards on a soft grey in
   light mode. A new **Colour band** switch puts a thin blue or pink band (or the two sides' colours) across the
