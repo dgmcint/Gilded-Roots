@@ -2,7 +2,7 @@
 
 Major work so far, in the order it was done.
 
-## Coming next: GEDCOM 7, GEDZIP, locked archives and charts that stand out
+## Coming next: GEDCOM 7, GEDZIP, locked archives, a family website and charts that stand out
 
 - **GEDCOM 7 and GEDZIP.** File > Export GEDCOM 7 writes a GEDCOM 7 file (photos in a folder beside it) or a GEDZIP
   (.gdz: one file with the GEDCOM 7 file and every photo and document), each with everything or with living
@@ -10,6 +10,9 @@ Major work so far, in the order it was done.
   keeps survives the trip to GEDCOM 7 and back.
 - **Password-locked archives.** File > Save Family Tree Archive can lock the archive with a password (AES-256,
   readable by 7-Zip, Keka and 7z too). Opening a locked archive asks for the password.
+- **Family website.** File > Make a family website makes a folder of linked web pages (front page with search and
+  surnames, a page per person with photo, facts, family, notes, photos and sources) that works from a USB stick
+  with no internet. Living people and private notes are always left out.
 - **Charts that stand out.** Every tree chart now sits on its own backdrop, with the people on solid cards with
   rounded corners and a soft shadow: mid-grey cards on near-black in dark mode, white cards on a soft grey in
   light mode. A new **Colour band** switch puts a thin blue or pink band (or the two sides' colours) across the

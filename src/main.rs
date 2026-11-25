@@ -28,6 +28,7 @@ mod pedstyles;
 mod homepage;
 mod gedcom;
 mod ged7;
+mod website;
 mod review;
 mod sample;
 mod temples;

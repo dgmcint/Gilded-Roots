@@ -276,6 +276,10 @@ pub(crate) struct Extra {
     pub(crate) arch_unlock: Option<(PathBuf, String, String)>,
     /// The password that opened the archive waiting to be restored.
     pub(crate) arch_pw: Option<String>,
+    /// The family website window (what to put on it), when open.
+    pub(crate) web: Option<crate::website::WebOpts>,
+    /// The website being made in the background.
+    pub(crate) web_job: Option<std::sync::mpsc::Receiver<Result<crate::website::WebInfo, String>>>,
     pub(crate) paf_help: bool,
     pub(crate) designer_open: bool,
     pub(crate) design: designer::Design,

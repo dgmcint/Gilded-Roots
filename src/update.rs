@@ -86,6 +86,10 @@ impl App {
                             ui.close_menu();
                         }
                     });
+                    if ui.button(crate::i18n::tr("Make a family website...")).on_hover_text(crate::i18n::tr("Web pages for every person, to put on a USB stick or send to relatives. Living people are left out.")).clicked() {
+                        self.web_open();
+                        ui.close_menu();
+                    }
                     {
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
                         if ui.add(menu_item(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }, if MAC { "Ctrl+Cmd+F" } else { "F11" })).clicked() {
@@ -848,6 +852,7 @@ impl App {
         self.census_window(ctx);
         self.history_window(ctx);
         self.archive_windows(ctx);
+        self.web_window(ctx);
         self.journal_window(ctx, &mut act);
         self.history_events_window(ctx);
         self.stats_window(ctx, &mut act);

@@ -763,6 +763,18 @@ and macOS cannot. **Write the password down somewhere safe: if it is lost, nobod
 Gilded Roots.** A locked archive is a good way to keep a copy of your tree on a USB stick, in cloud storage or with a
 relative without anyone else being able to read it.
 
+## Family website
+**File → Make a family website...** turns the tree into a folder of web pages to share: put it on a USB stick or a
+disc, zip it and email it, or upload it anywhere. It needs no internet and no program: open **index.html** in any
+web browser. The front page has your title and welcome text, a search box and the list of surnames; every person has
+a page with their photo, facts, parents and grandparents, families and children, notes, photos and documents, and
+sources, all linked together. The pages follow the computer's light or dark setting and work on a phone.
+
+Living people are always left out: they show only as "Living", with no name, dates, photos or page of their own.
+Private notes (lines starting with ~) are left out too. Untick **Photos and documents**, **Notes** or **Sources** to
+leave those out as well. The website is made in a new folder named after its title, inside the folder you choose;
+making it again into the same place brings it up to date.
+
 ## History of changes (F12)
 **Tools → History of changes** lists what you changed in this session, newest first ("Changed John Smith", "Added
 Mary Jones", "Changed place..."), with how long ago. Click any line to put the tree back to just before that change.
