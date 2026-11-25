@@ -13,6 +13,9 @@ Major work so far, in the order it was done.
 - **Family website.** File > Make a family website makes a folder of linked web pages (front page with search and
   surnames, a page per person with photo, facts, family, notes, photos and sources) that works from a USB stick
   with no internet. Living people and private notes are always left out.
+- **Glass looks and more colour schemes.** Glass, Dark Glass, Ocean Glass and Steel Glass (see-through panels and
+  frosted windows over a soft coloured backdrop), plus Console, Archive, Amber Screen and Pioneer from Ship's Log and
+  Paper and Classic from Family Keeper and PAF Classic.
 - **Easier to see and to use.** New High contrast light and dark, Sepia and Old Photograph colour schemes; a High
   contrast switch (outlines on every button, box and chart card); colour-blind friendly chart colours (blue and
   orange); an outline that shows where the keyboard is after pressing Tab; screen readers read the people on the

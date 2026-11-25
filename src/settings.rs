@@ -91,6 +91,9 @@ pub(crate) struct Settings {
     /// Chart colours that people with colour blindness can tell apart (blue and orange).
     #[serde(default)]
     pub(crate) cb_colours: bool,
+    /// The glass look in use (its scheme's name), or "" for none.
+    #[serde(default)]
+    pub(crate) glass: String,
     /// An outline around whatever the keyboard is on, after Tab is pressed.
     #[serde(default = "default_true")]
     pub(crate) focus_ring: bool,
@@ -214,7 +217,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, start_home: true }
+        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true }
     }
 }
 
@@ -265,39 +268,71 @@ pub(crate) struct Scheme {
     pub(crate) bg: [u8; 3],
     pub(crate) accent: [u8; 3],
     pub(crate) ink: [u8; 3],
+    /// A glass look: see-through panels and frosted windows over a soft coloured backdrop.
+    pub(crate) glass: bool,
 }
 
 pub(crate) const SCHEMES: &[Scheme] = &[
-    Scheme { name: "Slate Blue", group: "Tree pictures", dark: true, bg: [67, 82, 106], accent: [135, 141, 151], ink: [246, 238, 226] },
-    Scheme { name: "Navy", group: "Tree pictures", dark: true, bg: [30, 52, 99], accent: [115, 129, 158], ink: [255, 255, 255] },
-    Scheme { name: "Parchment", group: "Tree pictures", dark: false, bg: [226, 201, 162], accent: [140, 88, 42], ink: [66, 40, 18] },
-    Scheme { name: "Blue Linen", group: "Tree pictures", dark: true, bg: [88, 110, 142], accent: [144, 155, 171], ink: [236, 231, 220] },
-    Scheme { name: "Leather", group: "Tree pictures", dark: true, bg: [104, 52, 24], accent: [156, 117, 86], ink: [242, 224, 188] },
-    Scheme { name: "Leaf Green", group: "Genealogy sites", dark: false, bg: [243, 240, 232], accent: [104, 134, 28], ink: [52, 48, 44] },
-    Scheme { name: "Fresh Green", group: "Genealogy sites", dark: false, bg: [242, 243, 240], accent: [80, 132, 34], ink: [51, 51, 51] },
-    Scheme { name: "Deep Green", group: "Genealogy sites", dark: true, bg: [48, 88, 38], accent: [124, 150, 117], ink: [250, 252, 246] },
-    Scheme { name: "Sage", group: "Earth tones", dark: false, bg: [199, 208, 184], accent: [88, 110, 74], ink: [40, 52, 36] },
-    Scheme { name: "Olive", group: "Earth tones", dark: true, bg: [85, 90, 52], accent: [143, 145, 113], ink: [240, 236, 214] },
-    Scheme { name: "Moss", group: "Earth tones", dark: true, bg: [66, 82, 50], accent: [131, 142, 114], ink: [238, 240, 220] },
-    Scheme { name: "Forest Green", group: "Earth tones", dark: true, bg: [36, 66, 48], accent: [111, 132, 115], ink: [234, 240, 226] },
-    Scheme { name: "Terracotta", group: "Earth tones", dark: true, bg: [150, 78, 52], accent: [188, 138, 116], ink: [250, 236, 222] },
-    Scheme { name: "Clay", group: "Earth tones", dark: false, bg: [214, 180, 156], accent: [150, 80, 50], ink: [70, 40, 28] },
-    Scheme { name: "Burgundy", group: "Popular colors", dark: true, bg: [110, 28, 40], accent: [163, 107, 114], ink: [250, 236, 236] },
-    Scheme { name: "Teal", group: "Popular colors", dark: true, bg: [22, 92, 100], accent: [101, 150, 154], ink: [232, 246, 244] },
-    Scheme { name: "Plum", group: "Popular colors", dark: true, bg: [82, 46, 88], accent: [143, 117, 148], ink: [244, 234, 246] },
-    Scheme { name: "Charcoal", group: "Popular colors", dark: true, bg: [52, 54, 58], accent: [121, 123, 124], ink: [236, 236, 232] },
-    Scheme { name: "Midnight", group: "Popular colors", dark: true, bg: [20, 24, 40], accent: [98, 102, 116], ink: [226, 230, 240] },
-    Scheme { name: "Sky", group: "Popular colors", dark: false, bg: [200, 222, 240], accent: [40, 100, 170], ink: [20, 44, 70] },
-    Scheme { name: "Rose", group: "Popular colors", dark: false, bg: [236, 210, 212], accent: [160, 60, 80], ink: [80, 30, 40] },
-    Scheme { name: "Ivory", group: "Neutrals", dark: false, bg: [246, 242, 228], accent: [110, 104, 80], ink: [40, 38, 30] },
-    Scheme { name: "Linen", group: "Neutrals", dark: false, bg: [236, 230, 218], accent: [120, 100, 70], ink: [50, 44, 36] },
-    Scheme { name: "Stone", group: "Neutrals", dark: false, bg: [214, 212, 206], accent: [90, 94, 100], ink: [40, 40, 38] },
-    Scheme { name: "Taupe", group: "Neutrals", dark: false, bg: [200, 190, 178], accent: [110, 92, 76], ink: [50, 42, 36] },
-    Scheme { name: "Sepia", group: "Heritage", dark: false, bg: [234, 222, 199], accent: [122, 82, 44], ink: [52, 36, 20] },
-    Scheme { name: "Old Photograph", group: "Heritage", dark: true, bg: [56, 43, 31], accent: [176, 140, 96], ink: [242, 228, 202] },
-    Scheme { name: "High contrast light", group: "Easy to see", dark: false, bg: [255, 255, 255], accent: [0, 64, 160], ink: [0, 0, 0] },
-    Scheme { name: "High contrast dark", group: "Easy to see", dark: true, bg: [0, 0, 0], accent: [255, 214, 0], ink: [255, 255, 255] },
+    Scheme { name: "Slate Blue", group: "Tree pictures", dark: true, bg: [67, 82, 106], accent: [135, 141, 151], ink: [246, 238, 226], glass: false },
+    Scheme { name: "Navy", group: "Tree pictures", dark: true, bg: [30, 52, 99], accent: [115, 129, 158], ink: [255, 255, 255], glass: false },
+    Scheme { name: "Parchment", group: "Tree pictures", dark: false, bg: [226, 201, 162], accent: [140, 88, 42], ink: [66, 40, 18], glass: false },
+    Scheme { name: "Blue Linen", group: "Tree pictures", dark: true, bg: [88, 110, 142], accent: [144, 155, 171], ink: [236, 231, 220], glass: false },
+    Scheme { name: "Leather", group: "Tree pictures", dark: true, bg: [104, 52, 24], accent: [156, 117, 86], ink: [242, 224, 188], glass: false },
+    Scheme { name: "Leaf Green", group: "Genealogy sites", dark: false, bg: [243, 240, 232], accent: [104, 134, 28], ink: [52, 48, 44], glass: false },
+    Scheme { name: "Fresh Green", group: "Genealogy sites", dark: false, bg: [242, 243, 240], accent: [80, 132, 34], ink: [51, 51, 51], glass: false },
+    Scheme { name: "Deep Green", group: "Genealogy sites", dark: true, bg: [48, 88, 38], accent: [124, 150, 117], ink: [250, 252, 246], glass: false },
+    Scheme { name: "Sage", group: "Earth tones", dark: false, bg: [199, 208, 184], accent: [88, 110, 74], ink: [40, 52, 36], glass: false },
+    Scheme { name: "Olive", group: "Earth tones", dark: true, bg: [85, 90, 52], accent: [143, 145, 113], ink: [240, 236, 214], glass: false },
+    Scheme { name: "Moss", group: "Earth tones", dark: true, bg: [66, 82, 50], accent: [131, 142, 114], ink: [238, 240, 220], glass: false },
+    Scheme { name: "Forest Green", group: "Earth tones", dark: true, bg: [36, 66, 48], accent: [111, 132, 115], ink: [234, 240, 226], glass: false },
+    Scheme { name: "Terracotta", group: "Earth tones", dark: true, bg: [150, 78, 52], accent: [188, 138, 116], ink: [250, 236, 222], glass: false },
+    Scheme { name: "Clay", group: "Earth tones", dark: false, bg: [214, 180, 156], accent: [150, 80, 50], ink: [70, 40, 28], glass: false },
+    Scheme { name: "Burgundy", group: "Popular colors", dark: true, bg: [110, 28, 40], accent: [163, 107, 114], ink: [250, 236, 236], glass: false },
+    Scheme { name: "Teal", group: "Popular colors", dark: true, bg: [22, 92, 100], accent: [101, 150, 154], ink: [232, 246, 244], glass: false },
+    Scheme { name: "Plum", group: "Popular colors", dark: true, bg: [82, 46, 88], accent: [143, 117, 148], ink: [244, 234, 246], glass: false },
+    Scheme { name: "Charcoal", group: "Popular colors", dark: true, bg: [52, 54, 58], accent: [121, 123, 124], ink: [236, 236, 232], glass: false },
+    Scheme { name: "Midnight", group: "Popular colors", dark: true, bg: [20, 24, 40], accent: [98, 102, 116], ink: [226, 230, 240], glass: false },
+    Scheme { name: "Sky", group: "Popular colors", dark: false, bg: [200, 222, 240], accent: [40, 100, 170], ink: [20, 44, 70], glass: false },
+    Scheme { name: "Rose", group: "Popular colors", dark: false, bg: [236, 210, 212], accent: [160, 60, 80], ink: [80, 30, 40], glass: false },
+    Scheme { name: "Ivory", group: "Neutrals", dark: false, bg: [246, 242, 228], accent: [110, 104, 80], ink: [40, 38, 30], glass: false },
+    Scheme { name: "Linen", group: "Neutrals", dark: false, bg: [236, 230, 218], accent: [120, 100, 70], ink: [50, 44, 36], glass: false },
+    Scheme { name: "Stone", group: "Neutrals", dark: false, bg: [214, 212, 206], accent: [90, 94, 100], ink: [40, 40, 38], glass: false },
+    Scheme { name: "Taupe", group: "Neutrals", dark: false, bg: [200, 190, 178], accent: [110, 92, 76], ink: [50, 42, 36], glass: false },
+    Scheme { name: "Sepia", group: "Heritage", dark: false, bg: [234, 222, 199], accent: [122, 82, 44], ink: [52, 36, 20], glass: false },
+    Scheme { name: "Old Photograph", group: "Heritage", dark: true, bg: [56, 43, 31], accent: [176, 140, 96], ink: [242, 228, 202], glass: false },
+    Scheme { name: "High contrast light", group: "Easy to see", dark: false, bg: [255, 255, 255], accent: [0, 64, 160], ink: [0, 0, 0], glass: false },
+    Scheme { name: "High contrast dark", group: "Easy to see", dark: true, bg: [0, 0, 0], accent: [255, 214, 0], ink: [255, 255, 255], glass: false },
+    // Glass looks (from Ship's Log's Daylight, Glass, Flare and Command skins)
+    Scheme { name: "Glass", group: "Glass", dark: false, bg: [226, 234, 246], accent: [10, 99, 204], ink: [11, 37, 64], glass: true },
+    Scheme { name: "Dark Glass", group: "Glass", dark: true, bg: [26, 14, 14], accent: [79, 163, 184], ink: [255, 255, 255], glass: true },
+    Scheme { name: "Ocean Glass", group: "Glass", dark: true, bg: [7, 26, 69], accent: [25, 230, 255], ink: [242, 251, 255], glass: true },
+    Scheme { name: "Steel Glass", group: "Glass", dark: true, bg: [11, 26, 42], accent: [143, 216, 255], ink: [238, 248, 255], glass: true },
+    // From Ship's Log's other skins
+    Scheme { name: "Console", group: "From Ship's Log", dark: true, bg: [14, 14, 20], accent: [247, 181, 56], ink: [246, 231, 200], glass: false },
+    Scheme { name: "Archive", group: "From Ship's Log", dark: true, bg: [13, 28, 63], accent: [232, 196, 106], ink: [230, 238, 255], glass: false },
+    Scheme { name: "Amber Screen", group: "From Ship's Log", dark: true, bg: [14, 11, 7], accent: [255, 176, 0], ink: [255, 233, 199], glass: false },
+    Scheme { name: "Pioneer", group: "From Ship's Log", dark: true, bg: [26, 35, 46], accent: [111, 183, 232], ink: [223, 232, 240], glass: false },
+    // The originals of Family Keeper and PAF Classic
+    Scheme { name: "Paper", group: "From Family Keeper and PAF Classic", dark: false, bg: [245, 240, 230], accent: [47, 107, 87], ink: [42, 38, 32], glass: false },
+    Scheme { name: "Classic", group: "From Family Keeper and PAF Classic", dark: false, bg: [236, 233, 216], accent: [81, 85, 120], ink: [0, 0, 0], glass: false },
 ];
+
+/// The soft coloured backdrop behind a glass look: the four corners, then soft glows
+/// (centre as a share of the window, radius as a share of its larger side, colour).
+pub(crate) struct GlassBackdrop {
+    pub(crate) corners: [[u8; 3]; 4],
+    pub(crate) glows: &'static [([f32; 2], f32, [u8; 4])],
+}
+
+pub(crate) fn glass_backdrop(name: &str) -> GlassBackdrop {
+    match name {
+        "Dark Glass" => GlassBackdrop { corners: [[44, 22, 20], [20, 12, 30], [10, 26, 32], [34, 14, 10]], glows: &[([0.78, 0.22], 0.45, [79, 163, 184, 110]), ([0.18, 0.82], 0.4, [224, 164, 140, 80])] },
+        "Ocean Glass" => GlassBackdrop { corners: [[12, 44, 108], [7, 26, 69], [4, 18, 52], [24, 12, 66]], glows: &[([0.8, 0.2], 0.42, [25, 230, 255, 90]), ([0.2, 0.75], 0.38, [255, 90, 209, 70]), ([0.55, 0.95], 0.3, [141, 255, 106, 45])] },
+        "Steel Glass" => GlassBackdrop { corners: [[22, 44, 68], [11, 26, 42], [8, 20, 32], [18, 38, 56]], glows: &[([0.7, 0.3], 0.5, [143, 216, 255, 70]), ([0.15, 0.85], 0.35, [233, 246, 255, 30])] },
+        // "Glass": light, like a bright window over a pale sky
+        _ => GlassBackdrop { corners: [[178, 204, 244], [214, 196, 240], [244, 208, 190], [184, 224, 216]], glows: &[([0.22, 0.25], 0.38, [120, 170, 250, 120]), ([0.82, 0.72], 0.42, [250, 160, 195, 110]), ([0.6, 0.1], 0.3, [252, 226, 170, 90])] },
+    }
+}
 
 /// The light background used before colour schemes existed.
 pub(crate) fn default_light_bg() -> [u8; 3] {
@@ -306,6 +341,7 @@ pub(crate) fn default_light_bg() -> [u8; 3] {
 
 impl Settings {
     pub(crate) fn use_scheme(&mut self, s: &Scheme) {
+        self.glass = if s.glass { s.name.to_string() } else { String::new() };
         self.dark = s.dark;
         self.accent = s.accent;
         self.ink = Some(s.ink);
@@ -317,7 +353,7 @@ impl Settings {
     }
 
     pub(crate) fn is_scheme(&self, s: &Scheme) -> bool {
-        self.dark == s.dark && self.accent == s.accent && self.ink == Some(s.ink) && (if s.dark { self.bg } else { self.light_bg }) == s.bg
+        (self.glass == if s.glass { s.name } else { "" }) && self.dark == s.dark && self.accent == s.accent && self.ink == Some(s.ink) && (if s.dark { self.bg } else { self.light_bg }) == s.bg
     }
 }
 
@@ -507,6 +543,43 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     // What is selected (a tab, a chosen button, a highlighted row, selected text) must stay easy to read:
     // the fill is the accent, softened toward the background until the text on it has a contrast of
     // at least 4.5 to 1 (the usual guideline for small text), and the text on it is the theme's ink.
+    // Glass: see-through panels over the soft backdrop (painted by paint_glass_backdrop), frosted
+    // windows and menus, light edges, rounder corners.
+    let glass = !settings.glass.is_empty();
+    if glass {
+        let a = glass_rgba;
+        if dark {
+            v.panel_fill = a(255, 255, 255, 12);
+            v.window_fill = a(24, 26, 34, 220);
+            v.extreme_bg_color = a(0, 0, 0, 90);
+            v.faint_bg_color = a(255, 255, 255, 10);
+            v.widgets.noninteractive.bg_fill = a(255, 255, 255, 16);
+            v.widgets.noninteractive.weak_bg_fill = a(255, 255, 255, 16);
+            v.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, a(255, 255, 255, 50));
+            for (w, al) in [(&mut v.widgets.inactive, 30u8), (&mut v.widgets.hovered, 55), (&mut v.widgets.active, 80), (&mut v.widgets.open, 55)] {
+                w.bg_fill = a(255, 255, 255, al);
+                w.weak_bg_fill = a(255, 255, 255, al);
+                w.bg_stroke = Stroke::new(1.0_f32, a(255, 255, 255, al + 30));
+            }
+            v.window_stroke = Stroke::new(1.0_f32, a(255, 255, 255, 80));
+        } else {
+            v.panel_fill = a(255, 255, 255, 70);
+            v.window_fill = a(250, 251, 253, 228);
+            v.extreme_bg_color = a(255, 255, 255, 200);
+            v.faint_bg_color = a(255, 255, 255, 60);
+            v.widgets.noninteractive.bg_fill = a(255, 255, 255, 110);
+            v.widgets.noninteractive.weak_bg_fill = a(255, 255, 255, 110);
+            v.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, a(20, 40, 70, 40));
+            for (w, al) in [(&mut v.widgets.inactive, 150u8), (&mut v.widgets.hovered, 200), (&mut v.widgets.active, 235), (&mut v.widgets.open, 200)] {
+                w.bg_fill = a(255, 255, 255, al);
+                w.weak_bg_fill = a(255, 255, 255, al);
+                w.bg_stroke = Stroke::new(1.0_f32, a(20, 40, 70, 36));
+            }
+            v.window_stroke = Stroke::new(1.0_f32, a(255, 255, 255, 230));
+        }
+        v.window_shadow = egui::epaint::Shadow { offset: vec2(0.0, 10.0), blur: 30.0, spread: 0.0, color: Color32::from_black_alpha(if dark { 110 } else { 45 }) };
+        v.popup_shadow = egui::epaint::Shadow { offset: vec2(0.0, 6.0), blur: 18.0, spread: 0.0, color: Color32::from_black_alpha(if dark { 90 } else { 35 }) };
+    }
     // High contrast: every button and box gets a clear outline in the text colour, and the text is
     // the theme's own colour everywhere.
     if settings.high_contrast {
@@ -524,16 +597,19 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     }
     crate::pedstyles::set_cb_colours(settings.cb_colours);
     let texts = [v.widgets.noninteractive.fg_stroke.color, v.widgets.inactive.fg_stroke.color, v.widgets.active.fg_stroke.color];
-    let (sel_bg, sel_fg) = readable_selection(accent, v.panel_fill, &texts);
+    // (with glass the panels are see-through, so judge against the backdrop's own colour)
+    let behind = if glass { Color32::from_rgb(if dark { bg[0] } else { settings.light_bg[0] }, if dark { bg[1] } else { settings.light_bg[1] }, if dark { bg[2] } else { settings.light_bg[2] }) } else { v.panel_fill };
+    let (sel_bg, sel_fg) = readable_selection(accent, behind, &texts);
     v.selection.bg_fill = sel_bg;
     v.selection.stroke = Stroke::new(if settings.high_contrast { 2.0_f32 } else { 1.0_f32 }, sel_fg);
-    let r = Rounding::same(6.0);
+    let r = Rounding::same(if glass { 10.0 } else { 6.0 });
     v.widgets.noninteractive.rounding = r;
     v.widgets.inactive.rounding = r;
     v.widgets.hovered.rounding = r;
     v.widgets.active.rounding = r;
-    v.window_rounding = Rounding::same(8.0);
-    v.menu_rounding = Rounding::same(6.0);
+    v.widgets.open.rounding = r;
+    v.window_rounding = Rounding::same(if glass { 16.0 } else { 8.0 });
+    v.menu_rounding = Rounding::same(if glass { 12.0 } else { 6.0 });
     ctx.set_visuals(v);
     ctx.style_mut(apply_spacing);
 }
@@ -624,5 +700,54 @@ mod readable_tests {
             assert!(cb_sides > 0.35, "the two sides {cb_sides:.2} (usual {usual_sides:.2})");
         }
         set_cb_colours(false);
+    }
+}
+
+/// A see-through colour that blends the way its numbers say: `al` out of 255 of the colour over
+/// what is behind. (Color32::from_rgba_unmultiplied goes through linear light, which makes faint
+/// white far stronger than asked for.)
+pub(crate) fn glass_rgba(r: u8, g: u8, b: u8, al: u8) -> Color32 {
+    let m = |c: u8| ((c as u16 * al as u16) / 255) as u8;
+    Color32::from_rgba_premultiplied(m(r), m(g), m(b), al)
+}
+
+/// Paint a glass look's backdrop behind everything: a soft four-colour gradient with glows.
+/// Called at the start of each frame, before the panels (which are see-through with glass).
+pub(crate) fn paint_glass_backdrop(ctx: &egui::Context, settings: &Settings) {
+    if settings.glass.is_empty() {
+        return;
+    }
+    let g = glass_backdrop(&settings.glass);
+    let r = ctx.screen_rect();
+    let painter = ctx.layer_painter(egui::LayerId::background());
+    let c = |x: [u8; 3]| Color32::from_rgb(x[0], x[1], x[2]);
+    let mut mesh = egui::epaint::Mesh::default();
+    // a 2 x 2 grid of the four corner colours, with a centre point for a smoother mix
+    let pts = [r.left_top(), r.right_top(), r.left_bottom(), r.right_bottom()];
+    for (i, p) in pts.iter().enumerate() {
+        mesh.colored_vertex(*p, c(g.corners[i]));
+    }
+    let mid = |a: [u8; 3], b: [u8; 3], cc: [u8; 3], d: [u8; 3]| [0, 1, 2].map(|i| ((a[i] as u16 + b[i] as u16 + cc[i] as u16 + d[i] as u16) / 4) as u8);
+    mesh.colored_vertex(r.center(), c(mid(g.corners[0], g.corners[1], g.corners[2], g.corners[3])));
+    for (a, b) in [(0u32, 1u32), (1, 3), (3, 2), (2, 0)] {
+        mesh.add_triangle(a, b, 4);
+    }
+    painter.add(egui::Shape::mesh(mesh));
+    // soft glows: a fan of triangles from a coloured centre out to a see-through edge
+    let side = r.width().max(r.height());
+    for (centre, rad, col) in g.glows {
+        let ctr = egui::pos2(r.left() + centre[0] * r.width(), r.top() + centre[1] * r.height());
+        let radius = rad * side;
+        let mut m = egui::epaint::Mesh::default();
+        m.colored_vertex(ctr, glass_rgba(col[0], col[1], col[2], col[3]));
+        let n = 48;
+        for k in 0..n {
+            let t = k as f32 / n as f32 * std::f32::consts::TAU;
+            m.colored_vertex(ctr + vec2(t.cos(), t.sin()) * radius, Color32::TRANSPARENT);
+        }
+        for k in 0..n {
+            m.add_triangle(0, 1 + k, 1 + (k + 1) % n);
+        }
+        painter.add(egui::Shape::mesh(m));
     }
 }

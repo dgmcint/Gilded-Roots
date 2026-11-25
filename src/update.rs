@@ -17,6 +17,7 @@ impl App {
     /// Draws the whole program once. This is the body of the frame loop; tests call it
     /// without a window to time how long each screen takes to draw.
     pub(crate) fn frame(&mut self, ctx: &egui::Context) {
+        paint_glass_backdrop(ctx, &self.settings);
         let mut act: Option<Action> = None;
         self.type_pending_letter(ctx);
         NAME_STYLE.store(self.settings.name_style, Ordering::Relaxed);

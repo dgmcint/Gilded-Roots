@@ -876,6 +876,11 @@ on Windows and Linux). **Quit Gilded Roots** is **Cmd+Q** on a Mac and **Ctrl+Q*
 
 ## Easier to see and to use
 **Edit → Settings → Appearance** has what helps if the screen is hard to read or the mouse is hard to use:
+- **Glass** looks (Edit → Settings → Appearance, or View → Colours): **Glass** (light: frosted white over a pale sky),
+  **Dark Glass**, **Ocean Glass** and **Steel Glass**. The panels and windows are see-through over a soft coloured
+  backdrop, with light edges and rounder corners. More looks came from the family's other apps: **Console**,
+  **Archive**, **Amber Screen** and **Pioneer** (from Ship's Log), and **Paper** and **Classic** (the original looks of
+  Family Keeper and PAF Classic).
 - **Colour schemes** under **Easy to see**: **High contrast light** (black on white) and **High contrast dark** (white
   on black, with yellow for what is selected). Under **Heritage**: **Sepia** and **Old Photograph**, warm brown looks
   like an old album.

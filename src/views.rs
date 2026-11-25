@@ -98,6 +98,16 @@ impl App {
             (rgb(158, 158, 158), rgb(226, 224, 220), Color32::WHITE, rgb(250, 250, 248), rgb(31, 35, 40), rgb(96, 100, 108))
         };
         let accent = Color32::from_rgb(self.settings.accent[0], self.settings.accent[1], self.settings.accent[2]);
+        if !self.settings.glass.is_empty() && !self.settings.high_contrast {
+            // glass cards: frosted, with a light edge
+            let ink = Color32::from_rgb(self.settings.ink.map_or(if dark { 255 } else { 20 }, |c| c[0]), self.settings.ink.map_or(if dark { 255 } else { 30 }, |c| c[1]), self.settings.ink.map_or(if dark { 255 } else { 40 }, |c| c[2]));
+            let (card, hover, edge, line) = if dark {
+                (glass_rgba(255, 255, 255, 34), glass_rgba(255, 255, 255, 58), glass_rgba(255, 255, 255, 90), glass_rgba(255, 255, 255, 140))
+            } else {
+                (glass_rgba(255, 255, 255, 190), glass_rgba(255, 255, 255, 235), glass_rgba(255, 255, 255, 255), glass_rgba(20, 40, 70, 120))
+            };
+            return (Stroke::new(1.0_f32, line), Stroke::new(1.0_f32, edge), card, hover, ink, ink.gamma_multiply(0.75), accent);
+        }
         if self.settings.high_contrast {
             // clear outlines and lines in the text colour
             let ink = if dark { Color32::WHITE } else { Color32::BLACK };
@@ -108,6 +118,10 @@ impl App {
 
     /// The backdrop behind a tree chart, darker (or on light, greyer) than the cards on it.
     pub(crate) fn chart_stage(&self, ui: &egui::Ui) -> Color32 {
+        if !self.settings.glass.is_empty() {
+            // glass: the backdrop shows through, only a little deeper behind the cards
+            return if ui.visuals().dark_mode { glass_rgba(0, 0, 0, 50) } else { glass_rgba(255, 255, 255, 30) };
+        }
         if ui.visuals().dark_mode {
             let b = self.settings.bg;
             Color32::from_rgb((b[0] as f32 * 0.35) as u8, (b[1] as f32 * 0.35) as u8, (b[2] as f32 * 0.35) as u8)
