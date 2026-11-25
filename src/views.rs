@@ -70,6 +70,14 @@ pub(crate) fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>)
     }
 }
 
+/// Tell screen readers (VoiceOver, Narrator, Orca) who a box on a chart is: name and years.
+pub(crate) fn speak_person(resp: &egui::Response, db: &Db, id: u32) {
+    if let Some(p) = db.people.get(&id) {
+        let text = format!("{} {}", display_name(p), life(p)).trim().to_string();
+        resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, text.clone()));
+    }
+}
+
 /// A person's card on a chart: a soft shadow under it so it lifts off the backdrop, then the card.
 pub(crate) fn card(painter: &egui::Painter, rect: Rect, rounding: f32, fill: Color32, edge: Stroke, dark: bool) {
     let shadow = egui::epaint::Shadow { offset: vec2(0.0, 2.0), blur: 8.0, spread: 0.0, color: Color32::from_black_alpha(if dark { 110 } else { 48 }) };
@@ -90,6 +98,11 @@ impl App {
             (rgb(158, 158, 158), rgb(226, 224, 220), Color32::WHITE, rgb(250, 250, 248), rgb(31, 35, 40), rgb(96, 100, 108))
         };
         let accent = Color32::from_rgb(self.settings.accent[0], self.settings.accent[1], self.settings.accent[2]);
+        if self.settings.high_contrast {
+            // clear outlines and lines in the text colour
+            let ink = if dark { Color32::WHITE } else { Color32::BLACK };
+            return (Stroke::new(1.5_f32, ink), Stroke::new(1.5_f32, ink), box_c, hover_c, ink, ink, accent);
+        }
         (Stroke::new(1.0_f32, line_c), Stroke::new(1.0_f32, edge_c), box_c, hover_c, ink_c, head_c, accent)
     }
 
@@ -98,8 +111,11 @@ impl App {
         if ui.visuals().dark_mode {
             let b = self.settings.bg;
             Color32::from_rgb((b[0] as f32 * 0.35) as u8, (b[1] as f32 * 0.35) as u8, (b[2] as f32 * 0.35) as u8)
-        } else {
+        } else if self.settings.light_bg == default_light_bg() {
             Color32::from_rgb(232, 230, 225)
+        } else {
+            // a light colour scheme: a little deeper than its own background, so white cards stand out
+            shift(self.settings.light_bg, -12)
         }
     }
 
@@ -190,6 +206,7 @@ impl App {
                     continue;
                 }
                 let r2 = ui.interact(rect, egui::Id::new(("desc", i)), Sense::click());
+                speak_person(&r2, &self.db, n.0);
                 let is_root = i == 0;
                 let is_hl = self.hl == Some(n.0) && !is_root;
                 let fill = if is_root {
@@ -727,6 +744,7 @@ impl App {
                         Some(id) => {
                             let p = &self.db.people[&id];
                             let r2 = ui.interact(rect, egui::Id::new(("ped", g, i)), Sense::click());
+                            speak_person(&r2, &self.db, id);
                             if g == 1 && i == 0 {
                                 crate::tour::mark("ped_father", rect.intersect(ui.clip_rect()));
                             }

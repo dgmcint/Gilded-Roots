@@ -16,7 +16,13 @@ pub enum ChartKind {
 /// Fan colours: father's side cool, mother's side warm, deeper further back.
 fn fan_fill(dark: bool, paternal: bool, g: usize) -> Color32 {
     let t = (g as f32 / 8.0).min(1.0);
-    let (a, b) = if paternal { ([74, 110, 160], [40, 70, 120]) } else { ([170, 92, 110], [120, 52, 70]) };
+    let (a, b) = match (paternal, crate::pedstyles::cb_colours()) {
+        (true, false) => ([74, 110, 160], [40, 70, 120]),
+        (false, false) => ([170, 92, 110], [120, 52, 70]),
+        // colour-blind friendly: blue and orange
+        (true, true) => ([40, 120, 180], [10, 70, 130]),
+        (false, true) => ([215, 140, 30], [160, 90, 10]),
+    };
     let mix = |i: usize| (a[i] as f32 + (b[i] as f32 - a[i] as f32) * t) as u8;
     let c = Color32::from_rgb(mix(0), mix(1), mix(2));
     if dark {
@@ -392,6 +398,7 @@ impl App {
             }
             for (i, (r, id, is_root)) in boxes.iter().enumerate() {
                 let rr = ui.interact(*r, egui::Id::new(("hg", i, *id)), Sense::click());
+                crate::views::speak_person(&rr, &self.db, *id);
                 let fill = if *is_root { accent } else if rr.hovered() { hover_c } else { box_c };
                 crate::views::card(&painter, *r, 8.0, fill, edge, ui.visuals().dark_mode);
                 if self.hl == Some(*id) && !*is_root {

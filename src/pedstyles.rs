@@ -27,10 +27,37 @@ fn blend(a: Color32, b: Color32, t: f32) -> Color32 {
     Color32::from_rgb(m(a.r(), b.r()), m(a.g(), b.g()), m(a.b(), b.b()))
 }
 
-const MAN: Color32 = Color32::from_rgb(70, 120, 200);
-const WOMAN: Color32 = Color32::from_rgb(200, 80, 130);
-const FATHER_SIDE: Color32 = Color32::from_rgb(60, 150, 120);
-const MOTHER_SIDE: Color32 = Color32::from_rgb(200, 140, 50);
+/// Colour-blind friendly chart colours (Settings > Appearance): blue and orange, which people with
+/// red-green colour blindness (the common kinds) can tell apart, instead of blue and pink.
+static CB_COLOURS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub(crate) fn set_cb_colours(on: bool) {
+    CB_COLOURS.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub(crate) fn cb_colours() -> bool {
+    CB_COLOURS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// The colour for men on charts.
+pub(crate) fn man() -> Color32 {
+    if cb_colours() { Color32::from_rgb(0, 114, 178) } else { Color32::from_rgb(70, 120, 200) }
+}
+
+/// The colour for women on charts.
+pub(crate) fn woman() -> Color32 {
+    if cb_colours() { Color32::from_rgb(230, 159, 0) } else { Color32::from_rgb(200, 80, 130) }
+}
+
+/// The colour for the father's side.
+pub(crate) fn father_side() -> Color32 {
+    if cb_colours() { Color32::from_rgb(86, 180, 233) } else { Color32::from_rgb(60, 150, 120) }
+}
+
+/// The colour for the mother's side.
+pub(crate) fn mother_side() -> Color32 {
+    if cb_colours() { Color32::from_rgb(213, 94, 0) } else { Color32::from_rgb(200, 140, 50) }
+}
 
 impl App {
     /// The colour a box is tinted with: by man or woman, or by the father's or mother's side.
@@ -38,11 +65,11 @@ impl App {
     pub(crate) fn ped_tint(&self, sex: &str, side: Option<bool>) -> Option<Color32> {
         match self.settings.ped_colours {
             1 => match sex {
-                "M" => Some(MAN),
-                "F" => Some(WOMAN),
+                "M" => Some(man()),
+                "F" => Some(woman()),
                 _ => None,
             },
-            2 => side.map(|f| if f { FATHER_SIDE } else { MOTHER_SIDE }),
+            2 => side.map(|f| if f { father_side() } else { mother_side() }),
             _ => None,
         }
     }
@@ -54,11 +81,11 @@ impl App {
             return None;
         }
         if self.settings.ped_colours == 2 {
-            return side.map(|f| if f { FATHER_SIDE } else { MOTHER_SIDE });
+            return side.map(|f| if f { father_side() } else { mother_side() });
         }
         match sex {
-            "M" => Some(MAN),
-            "F" => Some(WOMAN),
+            "M" => Some(man()),
+            "F" => Some(woman()),
             _ => None,
         }
     }
@@ -162,6 +189,7 @@ impl App {
     /// gives the usual menu. Returns the response.
     fn ped_person_hit(&self, ui: &mut egui::Ui, r: Rect, id: u32, key: impl std::hash::Hash, act: &mut Option<Action>) -> egui::Response {
         let resp = ui.interact(r, egui::Id::new(("pedp", key)), Sense::click());
+        crate::views::speak_person(&resp, &self.db, id);
         if resp.double_clicked() {
             *act = Some(Action::Open(id));
         } else if resp.clicked() {
@@ -267,7 +295,7 @@ impl App {
                                 let hit = self.ped_person_hit(ui, lr, id, ("cc", col, i, k), act);
                                 let fill = self.ped_fill(if hit.hovered() { hover_c } else { box_c }, &p.sex, side);
                                 painter.rect_filled(lr.shrink2(vec2(1.0, 1.0)), 5.0, fill);
-                                let bar = if p.sex == "F" { WOMAN } else if p.sex == "M" { MAN } else { head };
+                                let bar = if p.sex == "F" { woman() } else if p.sex == "M" { man() } else { head };
                                 painter.rect_filled(Rect::from_min_size(lr.min + vec2(1.0, 3.0), vec2(4.0 * z, half - 6.0)), 2.0, bar);
                                 let face = Rect::from_min_size(lr.min + vec2(9.0 * z, 3.0), vec2(half - 6.0, half - 6.0));
                                 self.ped_face(ui, face, p, true, hover_c, head);

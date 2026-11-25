@@ -276,6 +276,9 @@ pub(crate) struct Extra {
     pub(crate) arch_unlock: Option<(PathBuf, String, String)>,
     /// The password that opened the archive waiting to be restored.
     pub(crate) arch_pw: Option<String>,
+    /// The keyboard is being used to move around (Tab was pressed since the last click), so the
+    /// focus outline shows.
+    pub(crate) kbd_nav: bool,
     /// The family website window (what to put on it), when open.
     pub(crate) web: Option<crate::website::WebOpts>,
     /// The website being made in the background.

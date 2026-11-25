@@ -853,6 +853,7 @@ impl App {
         self.history_window(ctx);
         self.archive_windows(ctx);
         self.web_window(ctx);
+        self.focus_ring(ctx);
         self.journal_window(ctx, &mut act);
         self.history_events_window(ctx);
         self.stats_window(ctx, &mut act);

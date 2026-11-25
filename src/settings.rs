@@ -85,6 +85,15 @@ pub(crate) struct Settings {
     /// A thin coloured band across the top of each pedigree card (men and women, or the two sides).
     #[serde(default)]
     pub(crate) ped_band: bool,
+    /// Stronger outlines and text, for people who find the usual look hard to see.
+    #[serde(default)]
+    pub(crate) high_contrast: bool,
+    /// Chart colours that people with colour blindness can tell apart (blue and orange).
+    #[serde(default)]
+    pub(crate) cb_colours: bool,
+    /// An outline around whatever the keyboard is on, after Tab is pressed.
+    #[serde(default = "default_true")]
+    pub(crate) focus_ring: bool,
     /// Open on the Home tab when the program starts.
     #[serde(default = "default_true")]
     pub(crate) start_home: bool,
@@ -205,7 +214,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, start_home: true }
+        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, start_home: true }
     }
 }
 
@@ -284,6 +293,10 @@ pub(crate) const SCHEMES: &[Scheme] = &[
     Scheme { name: "Linen", group: "Neutrals", dark: false, bg: [236, 230, 218], accent: [120, 100, 70], ink: [50, 44, 36] },
     Scheme { name: "Stone", group: "Neutrals", dark: false, bg: [214, 212, 206], accent: [90, 94, 100], ink: [40, 40, 38] },
     Scheme { name: "Taupe", group: "Neutrals", dark: false, bg: [200, 190, 178], accent: [110, 92, 76], ink: [50, 42, 36] },
+    Scheme { name: "Sepia", group: "Heritage", dark: false, bg: [234, 222, 199], accent: [122, 82, 44], ink: [52, 36, 20] },
+    Scheme { name: "Old Photograph", group: "Heritage", dark: true, bg: [56, 43, 31], accent: [176, 140, 96], ink: [242, 228, 202] },
+    Scheme { name: "High contrast light", group: "Easy to see", dark: false, bg: [255, 255, 255], accent: [0, 64, 160], ink: [0, 0, 0] },
+    Scheme { name: "High contrast dark", group: "Easy to see", dark: true, bg: [0, 0, 0], accent: [255, 214, 0], ink: [255, 255, 255] },
 ];
 
 /// The light background used before colour schemes existed.
@@ -494,10 +507,26 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     // What is selected (a tab, a chosen button, a highlighted row, selected text) must stay easy to read:
     // the fill is the accent, softened toward the background until the text on it has a contrast of
     // at least 4.5 to 1 (the usual guideline for small text), and the text on it is the theme's ink.
+    // High contrast: every button and box gets a clear outline in the text colour, and the text is
+    // the theme's own colour everywhere.
+    if settings.high_contrast {
+        let ink = v.widgets.noninteractive.fg_stroke.color;
+        let edge = mix(ink, v.panel_fill, 0.75);
+        v.widgets.noninteractive.bg_stroke = Stroke::new(1.5_f32, edge);
+        v.widgets.inactive.bg_stroke = Stroke::new(1.5_f32, edge);
+        v.widgets.hovered.bg_stroke = Stroke::new(2.0_f32, ink);
+        v.widgets.active.bg_stroke = Stroke::new(2.0_f32, ink);
+        v.widgets.open.bg_stroke = Stroke::new(2.0_f32, ink);
+        for w in [&mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active] {
+            w.fg_stroke = Stroke::new(w.fg_stroke.width.max(1.5), ink);
+        }
+        v.window_stroke = Stroke::new(2.0_f32, ink);
+    }
+    crate::pedstyles::set_cb_colours(settings.cb_colours);
     let texts = [v.widgets.noninteractive.fg_stroke.color, v.widgets.inactive.fg_stroke.color, v.widgets.active.fg_stroke.color];
     let (sel_bg, sel_fg) = readable_selection(accent, v.panel_fill, &texts);
     v.selection.bg_fill = sel_bg;
-    v.selection.stroke = Stroke::new(1.0_f32, sel_fg);
+    v.selection.stroke = Stroke::new(if settings.high_contrast { 2.0_f32 } else { 1.0_f32 }, sel_fg);
     let r = Rounding::same(6.0);
     v.widgets.noninteractive.rounding = r;
     v.widgets.inactive.rounding = r;
@@ -538,5 +567,62 @@ mod readable_tests {
             let t = contrast(v.widgets.noninteractive.fg_stroke.color, v.selection.bg_fill);
             assert!(t >= 4.5, "text over the selection only {t:.1} (dark {}, accent {:?})", s.dark, s.accent);
         }
+    }
+
+    /// The easy-to-see schemes and the high contrast switch really give strong contrast.
+    #[test]
+    fn high_contrast_is_high() {
+        let ctx = egui::Context::default();
+        for name in ["High contrast light", "High contrast dark"] {
+            let sc = SCHEMES.iter().find(|s| s.name == name).unwrap();
+            let mut s = Settings::default();
+            s.use_scheme(sc);
+            s.high_contrast = true;
+            apply_theme(&ctx, &s);
+            let v = ctx.style().visuals.clone();
+            assert!(contrast(v.widgets.noninteractive.fg_stroke.color, v.panel_fill) >= 15.0, "{name}: text");
+            assert!(contrast(v.widgets.inactive.fg_stroke.color, v.widgets.inactive.bg_fill) >= 7.0, "{name}: button text");
+            assert!(v.widgets.inactive.bg_stroke.width >= 1.5 && contrast(v.widgets.inactive.bg_stroke.color, v.panel_fill) >= 3.0, "{name}: buttons have a clear outline");
+        }
+        // every scheme with high contrast on still keeps selected things readable
+        for sc in SCHEMES {
+            let mut s = Settings::default();
+            s.use_scheme(sc);
+            s.high_contrast = true;
+            apply_theme(&ctx, &s);
+            let v = ctx.style().visuals.clone();
+            assert!(contrast(v.selection.stroke.color, v.selection.bg_fill) >= 4.5, "{}", sc.name);
+        }
+    }
+
+    /// The colour-blind friendly colours stay apart for people with red-green colour blindness
+    /// (checked with the usual simulation of deuteranopia and protanopia), better than the usual ones.
+    #[test]
+    fn colour_blind_colours_stay_apart() {
+        // Machado, Oliveira and Fernandes (2009), full severity
+        let deut = [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.011820, 0.042940, 0.968881]];
+        let prot = [[0.152286, 1.052583, -0.204868], [0.114503, 0.786281, 0.099216], [-0.003882, -0.048116, 1.051998]];
+        let lin = |v: u8| {
+            let v = v as f32 / 255.0;
+            if v <= 0.04045 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) }
+        };
+        let seen = |c: Color32, m: [[f32; 3]; 3]| {
+            let x = [lin(c.r()), lin(c.g()), lin(c.b())];
+            [0, 1, 2].map(|i| (m[i][0] * x[0] + m[i][1] * x[1] + m[i][2] * x[2]).clamp(0.0, 1.0).powf(1.0 / 2.2))
+        };
+        let apart = |a: Color32, b: Color32, m| {
+            let (x, y) = (seen(a, m), seen(b, m));
+            ((x[0] - y[0]).powi(2) + (x[1] - y[1]).powi(2) + (x[2] - y[2]).powi(2)).sqrt()
+        };
+        use crate::pedstyles::{father_side, man, mother_side, set_cb_colours, woman};
+        for m in [deut, prot] {
+            set_cb_colours(false);
+            let (usual_mw, usual_sides) = (apart(man(), woman(), m), apart(father_side(), mother_side(), m));
+            set_cb_colours(true);
+            let (cb_mw, cb_sides) = (apart(man(), woman(), m), apart(father_side(), mother_side(), m));
+            assert!(cb_mw > 0.35 && cb_mw > usual_mw, "men and women {cb_mw:.2} (usual {usual_mw:.2})");
+            assert!(cb_sides > 0.35, "the two sides {cb_sides:.2} (usual {usual_sides:.2})");
+        }
+        set_cb_colours(false);
     }
 }

@@ -874,6 +874,22 @@ on Windows and Linux). **Quit Gilded Roots** is **Cmd+Q** on a Mac and **Ctrl+Q*
 - The window opens at a comfortable size the first time (most of the screen, centred) and then remembers the size you
   leave it at.
 
+## Easier to see and to use
+**Edit → Settings → Appearance** has what helps if the screen is hard to read or the mouse is hard to use:
+- **Colour schemes** under **Easy to see**: **High contrast light** (black on white) and **High contrast dark** (white
+  on black, with yellow for what is selected). Under **Heritage**: **Sepia** and **Old Photograph**, warm brown looks
+  like an old album.
+- **High contrast:** every button, box, window and chart card gets a clear outline, and chart lines are drawn in the
+  text colour. Works with any colour scheme.
+- **Colour-blind friendly chart colours:** men and women, and the father's and mother's sides, are blue and orange
+  instead of blue and pink, so people with red-green colour blindness can tell them apart (the fan chart too).
+- **Show where the keyboard is:** press **Tab** to move from button to button; a bright outline shows where you are,
+  and **Space** or **Enter** presses it. The outline goes away at the next mouse click. On the charts, the arrow keys
+  move to the father (Shift: the mother), a child, and brothers and sisters.
+- **Text size** makes everything bigger, up to Largest.
+- **Screen readers** (VoiceOver on a Mac, Narrator on Windows, Orca on Linux) read buttons, menus and the people on
+  the charts by name and years.
+
 ## Language
 **View → Language** shows the program in English, Deutsch (German), Español (Spanish), Français (French), Italiano
 (Italian), Nederlands (Dutch), Norsk (Norwegian), Português (Brazilian Portuguese) or Svenska (Swedish). The

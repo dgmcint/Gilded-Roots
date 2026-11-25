@@ -199,6 +199,29 @@ pub(crate) fn apply_spacing(style: &mut egui::Style) {
 pub(crate) const SETTINGS_PAGES: [&str; 7] = ["Appearance", "Language", "Names and dates", "Charts", "Toolbars", "Printing and privacy", "Tree, backups and microphone"];
 
 impl App {
+    /// A clear outline around whatever the keyboard is on. It shows once Tab is pressed (so people
+    /// moving around with the keyboard can see where they are) and goes away at the next click.
+    pub(crate) fn focus_ring(&mut self, ctx: &egui::Context) {
+        if !self.settings.focus_ring {
+            return;
+        }
+        let (tab, pointer) = ctx.input(|i| (i.key_pressed(egui::Key::Tab), i.pointer.any_pressed()));
+        if tab {
+            self.x.kbd_nav = true;
+        } else if pointer {
+            self.x.kbd_nav = false;
+        }
+        if !self.x.kbd_nav {
+            return;
+        }
+        let Some(id) = ctx.memory(|m| m.focused()) else { return };
+        let Some(r) = ctx.read_response(id) else { return };
+        let v = ctx.style().visuals.clone();
+        let col = if v.dark_mode { lighten(v.hyperlink_color) } else { v.hyperlink_color };
+        let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("focus_ring")));
+        painter.rect_stroke(r.rect.expand(3.0), 6.0_f32, Stroke::new(2.5_f32, col));
+    }
+
     pub(crate) fn settings_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
         if !self.x.settings_open {
             return;
@@ -285,6 +308,17 @@ impl App {
                     set_use_system_font(sys);
                     install_fonts(ctx);
                 }
+                heading(ui, tr("Easier to see"));
+                if ui.checkbox(&mut self.settings.high_contrast, tr("High contrast: clear outlines on every button, box and chart")).changed() {
+                    changed = true;
+                }
+                if ui.checkbox(&mut self.settings.cb_colours, tr("Colour-blind friendly chart colours (blue and orange)")).on_hover_text(tr("Men and women, and the father's and mother's sides, in colours people with red-green colour blindness can tell apart")).changed() {
+                    changed = true;
+                }
+                if ui.checkbox(&mut self.settings.focus_ring, tr("Show where the keyboard is (an outline after pressing Tab)")).changed() {
+                    changed = true;
+                }
+                ui.label(RichText::new(tr("The \"Easy to see\" and \"Heritage\" colour schemes above include high-contrast and sepia looks. Larger text: Text size above.")).small().weak());
             }
             1 => {
                 if crate::i18n::offered().any(|l| matches!(l.0, "ja" | "zh" | "ko")) {
