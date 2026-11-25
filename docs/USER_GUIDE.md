@@ -39,7 +39,8 @@ When there is no tree yet, the welcome screen offers:
 - **New to Gilded Roots? Take the guided tour:** short lessons on a practice family (see
   [The guided tour](#the-guided-tour)).
 - **Import an existing family tree** from Ancestry, FamilySearch, MyHeritage, RootsMagic, Legacy, PAF or any
-  program that saves GEDCOM (.ged) files. PAF 5 files (.paf) can be opened directly. See
+  program that saves GEDCOM (.ged) files. PAF 5 files (.paf) and Ancestral Quest files (.aq, and .aqz backups) can be
+  opened directly. See
   [Bringing in a tree from another program](#bringing-in-a-tree-from-another-program).
 - **Create a new family tree** and add yourself first.
 - **Open a Family Tree Archive** made on this or another computer.
@@ -134,6 +135,13 @@ photos can't be read from a .paf file yet; if your file has any, the import repo
 way: in PAF choose **File → Export**, pick **GEDCOM 5.5** and tick notes, sources and multimedia links, save the .ged
 file (keep any photo folder next to it), then import that file here. **Coming from PAF? Show me how** on the welcome
 screen gives the same steps.
+
+**From Ancestral Quest.** Ancestral Quest files (.aq) can be imported directly, without Ancestral Quest, and so can its
+backups (.aqz). Names, sex, births, christenings, deaths and burials with their dates and places, "abt", "bef", "aft"
+and "between" dates, other events (occupation, immigration, residence, divorce and the rest), notes, sources with
+the page cited, photo links, marriages, and children in Ancestral Quest's order all come across. LDS ordinances,
+repositories and addresses can't be read from an .aq file yet; for those, in Ancestral Quest choose **File →
+Export**, save a GEDCOM file and import that here.
 
 **From anything else.** Export a GEDCOM (.ged) file from the other program or website (Ancestry, FamilySearch,
 MyHeritage, RootsMagic, Legacy, Gramps and others all can), then import it here.

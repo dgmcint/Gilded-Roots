@@ -1,0 +1,102 @@
+0 HEAD
+1 SOUR GILDEDROOTS
+2 NAME Gilded Roots
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Albert Edward /Testman/
+1 SEX M
+1 BIRT
+2 DATE 2 FEB 1850
+2 PLAC Leeds, Yorkshire, England
+2 SOUR @S1@
+3 PAGE Folio 12, entry 34
+1 CHR
+2 DATE 10 MAR 1850
+2 PLAC St Peter, Leeds, Yorkshire, England
+1 DEAT
+2 DATE ABT 1900
+2 PLAC Twin Falls, Twin Falls, Idaho, USA
+2 SOUR @S2@
+1 BURI
+2 DATE BEF 1901
+2 PLAC Sunset Memorial Park, Twin Falls, Idaho, USA
+1 OCCU Blacksmith
+1 IMMI
+2 DATE 4 JUL 1872
+2 PLAC New York, New York, USA
+1 NOTE Albert came to America in 1872 aboard the SS Example.
+2 CONT He worked as a blacksmith in Idaho.
+2 CONT Third line of the note.
+1 OBJE
+2 FILE photo-albert.jpg
+2 FORM jpg
+2 TITL Albert at the forge
+1 FAMS @F1@
+1 FAMS @F2@
+0 @I2@ INDI
+1 NAME Mary Ann /Oldfield/
+1 SEX F
+1 BIRT
+2 DATE BET 1850 AND 1855
+2 PLAC Halifax, Yorkshire, England
+1 DEAT
+2 DATE DEC 1920
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME George Henry /Testman/
+1 SEX M
+1 BIRT
+2 DATE 5 MAY 1878
+1 FAMC @F1@
+0 @I4@ INDI
+1 NAME Edith Rose /Testman/
+1 SEX F
+1 BIRT
+2 DATE 14 AUG 1875
+1 FAMC @F1@
+0 @I5@ INDI
+1 NAME Baby /Testman/
+1 SEX U
+1 BIRT
+2 DATE 1880
+1 DEAT
+2 DATE 1880
+1 FAMC @F1@
+0 @I6@ INDI
+1 NAME Sarah Jane /Whitfield/
+1 SEX F
+1 BIRT
+2 DATE AFT 1860
+1 FAMS @F2@
+0 @I7@ INDI
+1 NAME Delete /Me/
+1 SEX M
+1 BIRT
+2 DATE 1 JAN 1900
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I4@
+1 CHIL @I3@
+1 CHIL @I5@
+1 MARR
+2 DATE 12 JUN 1874
+2 PLAC Leeds, Yorkshire, England
+1 DIV
+2 DATE 1885
+0 @F2@ FAM
+1 HUSB @I1@
+1 WIFE @I6@
+1 MARR
+2 DATE ABT 1887
+2 PLAC Salt Lake City, Salt Lake, Utah, USA
+0 @S1@ SOUR
+1 TITL Leeds Parish Register
+1 AUTH Church of England
+1 PUBL West Yorkshire Archive Service
+0 @S2@ SOUR
+1 TITL Twin Falls Times obituary
+0 TRLR

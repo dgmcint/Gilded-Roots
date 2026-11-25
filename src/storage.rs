@@ -377,6 +377,23 @@ pub(crate) fn load_import(path: &Path) -> Result<ImportSource, String> {
             Err(_) => Err("That is a JSON file, but not a family tree saved by this app, so it can't be read. If it came from another program, export a GEDCOM (.ged) file from that program instead.".to_string()),
         };
     }
+    // An Ancestral Quest database (.aq) or backup (.aqz): read it directly.
+    if aq::is_aq(&b) {
+        let (text, notes) = aq::to_gedcom(&b)?;
+        src.program = "Ancestral Quest database (.aq), read directly".to_string();
+        src.charset = "UTF-8".to_string();
+        if notes.odd_dates > 0 {
+            src.warnings.push(format!("{} dates were stored in a way this reader doesn't understand yet, so they were left out. Please check those people against Ancestral Quest.", notes.odd_dates));
+        }
+        if notes.odd_events > 0 {
+            src.warnings.push(format!("{} events are of a kind this reader has no name for. They came in as plain events.", notes.odd_events));
+        }
+        if parse_ged_report(&text).0.people.is_empty() {
+            return Err("This Ancestral Quest file has no people in it.".to_string());
+        }
+        src.text = Some(text);
+        return Ok(src);
+    }
     // A PAF 5 database: read it directly.
     if paf::is_paf(&b) {
         let (text, notes) = paf::to_gedcom(&b)?;

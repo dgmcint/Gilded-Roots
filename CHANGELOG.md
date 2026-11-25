@@ -2,6 +2,15 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: Ancestral Quest files
+
+- **Open Ancestral Quest databases directly** (File > Import tree..., or Import an existing family tree): .aq files
+  and Ancestral Quest's .aqz backups, without needing Ancestral Quest. Names, births, christenings, deaths and
+  burials with places, "abt", "bef", "aft" and "between" dates, occupations, immigration and the other events,
+  notes, sources with the page cited, photo links, marriages, divorces and children in their order all come
+  across, through the usual Import options window and report. LDS ordinances, repositories and addresses are not
+  read yet; export a GEDCOM from Ancestral Quest for those.
+
 ## 1.0.7 (24 November 2026)
 
 **Research**

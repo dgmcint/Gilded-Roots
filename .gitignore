@@ -12,3 +12,5 @@ __pycache__/
 # Ancestral Quest sample databases (test files, not part of the program)
 *.aq
 *.aqz
+!testdata/*.aq
+!testdata/*.aqz

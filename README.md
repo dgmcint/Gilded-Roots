@@ -20,7 +20,8 @@ Family history is personal. Gilded Roots is built so that it stays yours:
 ## Moving from another program
 
 Coming from an older genealogy program? Choose **Import an existing family tree** and pick a GEDCOM (`.ged`)
-file exported from it. PAF 5 `.paf` files can also be opened directly: names, births, deaths, marriages and
+file exported from it. Ancestral Quest `.aq` files (and `.aqz` backups) open directly too, with notes, sources,
+events and photo links. PAF 5 `.paf` files can also be opened directly: names, births, deaths, marriages and
 every family link are read without needing PAF itself. If a `.paf` file also has christenings, burials, LDS
 ordinances, notes, sources or photos, export a GEDCOM from PAF instead (**File > Export**) and import that, so
 those come across too. The import report shows exactly how many people, families, sources, citations, notes
@@ -31,7 +32,7 @@ and photos came across, and anything that could not be carried over. Your origin
 - **Safe by design.** Atomic saves with read-back verification, a kept previous version, daily
   checksummed backups for 14 days, automatic recovery from damaged files, and a visible
   `Documents/Gilded Roots` data folder that you can relocate.
-- **GEDCOM in and out.** Opens PAF 5 `.paf` files directly. Reads GEDCOM 5.5 / 5.5.1 (UTF-8, UTF-16, ANSEL, Windows ANSI) from PAF, Ancestry,
+- **GEDCOM in and out.** Opens PAF 5 `.paf` and Ancestral Quest `.aq` files directly. Reads GEDCOM 5.5 / 5.5.1 (UTF-8, UTF-16, ANSEL, Windows ANSI) from PAF, Ancestry,
   FamilySearch, MyHeritage, RootsMagic, Gramps and others. Anything the app has no field for is preserved and
   written back. Every import and export is checked and reported.
 - **Real sources and citations.** Reusable source records, repositories, page/entry references, URLs, access
@@ -74,7 +75,6 @@ and photos came across, and anything that could not be carried over. Your origin
 ## Planned
 
 - Automatic updates: when a new version is released, ask whether to update, then download it, verify it and restart
-- Open Ancestral Quest databases (.aq, including the newer AQ 16 format) directly, alongside GEDCOM import from Ancestral Quest
 - Optional online features, such as working with FamilySearch, that stay off until you turn them on yourself
 
 ## Install

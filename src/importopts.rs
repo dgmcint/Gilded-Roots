@@ -232,7 +232,7 @@ impl App {
     /// File > Import: choose a file, read it, and open the options window.
     pub(crate) fn start_import(&mut self) {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
-        let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)")).set_directory(start_dir()).pick_file() else { return };
+        let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf), an Ancestral Quest file (.aq or .aqz) or a saved tree (.json)")).set_directory(start_dir()).pick_file() else { return };
         remember_dir(&path);
         self.open_import(&path);
     }

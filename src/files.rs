@@ -55,7 +55,7 @@ impl App {
 
     pub(crate) fn read_ged(&mut self) -> Option<Db> {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
-        let path = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf) or a saved tree (.json)")).set_directory(start_dir()).pick_file()?;
+        let path = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf), an Ancestral Quest file (.aq or .aqz) or a saved tree (.json)")).set_directory(start_dir()).pick_file()?;
         remember_dir(&path);
         match read_ged_file(&path) {
             Ok((db, rep)) => {

@@ -23,6 +23,7 @@ mod pdfview;
 mod table;
 mod tombstone;
 mod paf;
+mod aq;
 mod gedcom;
 mod review;
 mod sample;
