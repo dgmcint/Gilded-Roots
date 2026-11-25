@@ -15,6 +15,7 @@ pub(crate) enum View {
     Memories,
     Dna,
     Research,
+    Home,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -125,6 +126,8 @@ pub(crate) struct Extra {
     pub(crate) theory_confirm: bool,
     pub(crate) letter_sel: Option<u32>,
     pub(crate) letter_confirm: bool,
+    /// The Home tab: when the newest backup was looked for, and what was found.
+    pub(crate) home_backup: (f64, Option<std::time::SystemTime>),
     /// The research notepad (F10): open, the page shown, where the cursor is, deleting a page.
     pub(crate) notepad_open: bool,
     pub(crate) notepad_page: u32,
@@ -574,6 +577,10 @@ impl App {
 impl App {
     pub(crate) fn started(mut self) -> Self {
         self.remember_state();
+        // (the test app is made with startup_done already set, and stays on the Pedigree)
+        if self.settings.start_home && !self.db.people.is_empty() && !self.startup_done {
+            self.view = View::Home;
+        }
         self
     }
 

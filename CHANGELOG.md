@@ -2,6 +2,13 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: the Home tab
+
+- **A Home tab the program opens on** (can be turned off): the home person, recent people, "On this day" in the
+  family (births, marriages and deaths, with how many years ago), the research to-do list, what to look for next
+  (ends of the line and people with no sources), the changes made since opening, and the last backup with a
+  Back up now button.
+
 ## Coming next: pedigree styles
 
 - **A Style list above the pedigree:** Classic (as before), **Photo cards** (photo, name, years and birthplace),

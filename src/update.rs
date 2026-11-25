@@ -164,7 +164,7 @@ impl App {
                     }
                     ui.label(RichText::new(crate::i18n::tr("Right-click a toolbar to choose its buttons.")).small().weak());
                     ui.separator();
-                    for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                    for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                         if ui.button(crate::i18n::trv(l)).clicked() {
                             self.view = v;
                             ui.close_menu();
@@ -656,13 +656,13 @@ impl App {
         }
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                for (v, l) in [(View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                     let mut t = RichText::new(crate::i18n::trv(l)).size(16.0);
                     if self.view == v {
                         t = t.strong();
                     }
                     let r = ui.selectable_label(self.view == v, t);
-                    crate::tour::mark(match v { View::Family => "tab:Family", View::Pedigree => "tab:Pedigree", View::Descendants => "tab:Descendants", View::Person => "tab:Individual", View::Memories => "tab:Memories", View::Charts => "tab:Charts", View::Table => "tab:People", View::Map => "tab:Map", View::Research => "tab:Research", _ => "tab:DNA" }, r.rect);
+                    crate::tour::mark(match v { View::Family => "tab:Family", View::Pedigree => "tab:Pedigree", View::Descendants => "tab:Descendants", View::Person => "tab:Individual", View::Memories => "tab:Memories", View::Charts => "tab:Charts", View::Table => "tab:People", View::Map => "tab:Map", View::Research => "tab:Research", View::Home => "tab:Home", _ => "tab:DNA" }, r.rect);
                     if r.clicked() {
                         self.view = v;
                     }
@@ -744,6 +744,7 @@ impl App {
                 View::Memories => self.memories_view(ui, &mut act),
                 View::Dna => self.dna_view(ui, &mut act),
                 View::Research => self.research_view(ui, &mut act),
+                View::Home => self.home_view(ui, &mut act),
             }
         });
 

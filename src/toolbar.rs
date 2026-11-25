@@ -493,7 +493,7 @@ impl App {
                 Tool::new(GAP, Icon::Back, "", ""),
                 Tool::new("map_me", Icon::Pin, crate::i18n::tr("This person"), crate::i18n::tr("Show only the selected person's places")).enabled(has),
             ]),
-            View::Dna | View::Research => return,
+            View::Dna | View::Research | View::Home => return,
         };
         match tool_row(ui, which, &tools, &mut self.settings) {
             Some("fam_father") => *act = Some(Action::Add(Kind::Father)),

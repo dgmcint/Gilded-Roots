@@ -71,7 +71,8 @@ impl App {
                         View::Table => View::Map,
                         View::Map => View::Research,
                         View::Research => View::Dna,
-                        View::Dna => View::Family,
+                        View::Dna => View::Home,
+                        View::Home => View::Family,
                     }
                 }
                 7 => self.check_open = true,
@@ -106,6 +107,7 @@ impl App {
             ("People table (everyone in a list)", Jump::View(View::Table)),
             ("Map of places", Jump::View(View::Map)),
             ("Memories: photos, stories, recordings, documents, notes", Jump::View(View::Memories)),
+            ("Home: home person, on this day, to-do list, backup", Jump::View(View::Home)),
             ("Research: archived emails, scans, recordings, documents", Jump::View(View::Research)),
             ("DNA: ethnicity estimate and matches", Jump::View(View::Dna)),
             ("Write a story", Jump::Window("story")),

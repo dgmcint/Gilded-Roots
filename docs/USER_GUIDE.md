@@ -202,6 +202,18 @@ part of a name, a year, an ID (`#123`) or what you want to do ("add spouse", "pl
 to choose and **Enter** to go; **Esc** closes it. With nothing typed it shows your bookmarked people and every
 command. A number on its own finds that ID first.
 
+## The Home tab
+The program opens on the **Home** tab (untick **Open on this Home tab when the program starts** at the bottom of it to
+open on the Pedigree instead). It shows:
+- the **home person**, with buttons to their pedigree, family, descendants and page;
+- **recent people** you looked at;
+- **On this day**: who in the family was born, married or died on today's date, and how many years ago;
+- the **research to-do list** (the newest items, and a button for the whole list);
+- **What to look for next**: ancestors of the home person with no parents entered yet (the ends of the line),
+  and people with dates but no sources; click a name to go to them;
+- the **changes** made since the program opened;
+- when the last **backup** was made, with **Back up now**.
+
 ## Pedigree styles
 The **Style** list above the pedigree changes how the chart looks; your choice is remembered.
 - **Classic:** names and dates in boxes, the chosen person on the left and ancestors to the right.

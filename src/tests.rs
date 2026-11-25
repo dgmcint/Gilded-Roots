@@ -1030,7 +1030,7 @@ mod edit_tests {
         egui_extras::install_image_loaders(&ctx);
         for sel in [root, deep] {
             app.sel = Some(sel);
-            for v in [View::Pedigree, View::Family, View::Descendants, View::Person, View::Gallery, View::Charts, View::Table, View::Map, View::Memories, View::Dna, View::Research] {
+            for v in [View::Pedigree, View::Family, View::Descendants, View::Person, View::Gallery, View::Charts, View::Table, View::Map, View::Memories, View::Dna, View::Research, View::Home] {
                 for chart in [ChartKind::Fan, ChartKind::Hourglass, ChartKind::Lifespans] {
                     app.view = v;
                     app.x.chart = chart;
@@ -1049,6 +1049,7 @@ mod edit_tests {
                             View::Memories => app.memories_view(ui, &mut act),
                             View::Dna => app.dna_view(ui, &mut act),
                             View::Research => app.research_view(ui, &mut act),
+                            View::Home => app.home_view(ui, &mut act),
                         });
                         app.jump_window(ctx, &mut act);
                         app.todo_window(ctx, &mut act);

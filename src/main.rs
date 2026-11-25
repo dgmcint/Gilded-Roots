@@ -25,6 +25,7 @@ mod tombstone;
 mod paf;
 mod aq;
 mod pedstyles;
+mod homepage;
 mod gedcom;
 mod review;
 mod sample;
