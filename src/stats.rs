@@ -165,7 +165,7 @@ fn bar(ui: &mut egui::Ui, label: &str, value: f32, max: f32, text: &str) {
         let (r, _) = ui.allocate_exact_size(vec2(260.0, 14.0), Sense::hover());
         ui.painter().rect_filled(r, 3.0_f32, ui.visuals().faint_bg_color);
         let w = if max > 0.0 { (value / max).clamp(0.0, 1.0) * r.width() } else { 0.0 };
-        ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(w, r.height())), 3.0_f32, ui.visuals().selection.bg_fill);
+        ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(w, r.height())), 3.0_f32, ui.visuals().hyperlink_color);
         ui.label(RichText::new(text).small());
     });
 }

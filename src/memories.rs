@@ -180,7 +180,7 @@ impl App {
                     _ if is_pdf(&m.file) => "PDF",
                     _ => "Document",
                 };
-                fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().selection.bg_fill));
+                fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().hyperlink_color));
                 if editing {
                     if let Some(mm) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(*i)) {
                         ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text(m.name.as_str()).desired_width(260.0));

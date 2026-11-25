@@ -1145,7 +1145,7 @@ impl App {
         ui.label(RichText::new(crate::i18n::trf("Research files ({})", &["Research files (", ")"], &[items.len().to_string()])).strong());
         for (rid, t, d, k) in items {
             ui.horizontal(|ui| {
-                fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(RKINDS.get(k as usize).copied().unwrap_or("Other"))).small().color(ui.visuals().selection.bg_fill));
+                fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(RKINDS.get(k as usize).copied().unwrap_or("Other"))).small().color(ui.visuals().hyperlink_color));
                 if ui.link(format!("{t}  {d}")).on_hover_text(crate::i18n::tr("Open in the Research tab")).clicked() {
                     self.x.research_sel = Some(rid);
                     self.x.research_tab = 0;

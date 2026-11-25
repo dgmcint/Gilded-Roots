@@ -235,7 +235,7 @@ impl App {
                             ui.push_id(k, |ui| {
                                 ui.horizontal(|ui| {
                                     ui.add_space(14.0);
-                                    fixed_label(ui, 110.0, RichText::new(part_label(&f.part)).small().color(ui.visuals().selection.bg_fill));
+                                    fixed_label(ui, 110.0, RichText::new(part_label(&f.part)).small().color(ui.visuals().hyperlink_color));
                                     if ui.add(egui::Label::new(f.text.as_str()).truncate().sense(egui::Sense::click())).on_hover_text(tr("Go there")).clicked() {
                                         go = Some(f.at.clone());
                                     }

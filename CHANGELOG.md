@@ -29,6 +29,9 @@ Major work so far, in the order it was done.
 
 **At home on a Mac and on Linux**
 
+- **Easier to read:** selected tabs, buttons, list rows and selected text now always have a strong contrast with
+  their background, in every colour scheme (the selection colour is softened when the accent is too dark or too
+  close to the text colour).
 - **Settings window:** Edit > Settings... (Cmd+, on a Mac, Ctrl+, elsewhere) gathers the choices that were spread
   over the menus: appearance, font, language, names and dates, charts, toolbars, printing and privacy, the tree,
   backups and the microphone.

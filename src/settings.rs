@@ -388,6 +388,48 @@ pub(crate) fn on_accent(c: Color32) -> Color32 {
     if l > 160.0 { Color32::BLACK } else { Color32::WHITE }
 }
 
+/// How light a colour looks (0 black to 1 white), as used for contrast checks.
+fn luminance(c: Color32) -> f32 {
+    let f = |v: u8| {
+        let v = v as f32 / 255.0;
+        if v <= 0.039_28 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) }
+    };
+    0.2126 * f(c.r()) + 0.7152 * f(c.g()) + 0.0722 * f(c.b())
+}
+
+/// The contrast between two colours, from 1 (the same) to 21 (black on white).
+pub(crate) fn contrast(a: Color32, b: Color32) -> f32 {
+    let (x, y) = (luminance(a), luminance(b));
+    (x.max(y) + 0.05) / (x.min(y) + 0.05)
+}
+
+/// `a` mixed with `b`: t = 1 gives `a`, t = 0 gives `b`.
+fn mix(a: Color32, b: Color32, t: f32) -> Color32 {
+    let m = |x: u8, y: u8| (x as f32 * t + y as f32 * (1.0 - t)).round() as u8;
+    Color32::from_rgb(m(a.r(), b.r()), m(a.g(), b.g()), m(a.b(), b.b()))
+}
+
+/// The fill and text colours for selected things: the accent, softened toward the background until
+/// every text colour given reads clearly on it (selected text in a box keeps its own colour). The text
+/// on selected buttons and tabs is the one that stands out most. Gives (fill, text).
+pub(crate) fn readable_selection(accent: Color32, bg: Color32, texts: &[Color32]) -> (Color32, Color32) {
+    let ok = |fill: Color32| texts.iter().all(|c| contrast(*c, fill) >= 4.5);
+    // if even the background is not enough (a mid-tone scheme), go on toward black under light text
+    // or toward white under dark text
+    let light_text = texts.iter().map(|c| luminance(*c)).sum::<f32>() / texts.len().max(1) as f32 > 0.4;
+    let end = if light_text { Color32::BLACK } else { Color32::WHITE };
+    let steps = (0..=20).map(|i| mix(accent, bg, 1.0 - i as f32 * 0.05)).chain((1..=20).map(|i| mix(end, bg, i as f32 * 0.05)));
+    let mut fill = bg;
+    for f in steps {
+        fill = f;
+        if ok(f) {
+            break;
+        }
+    }
+    let best = texts.iter().copied().max_by(|a, b| contrast(*a, fill).total_cmp(&contrast(*b, fill))).unwrap_or(Color32::BLACK);
+    (fill, best)
+}
+
 pub(crate) fn shift(bg: [u8; 3], d: i16) -> Color32 {
     let f = |v: u8| (v as i16 + d).clamp(0, 255) as u8;
     Color32::from_rgb(f(bg[0]), f(bg[1]), f(bg[2]))
@@ -437,7 +479,13 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
             w.fg_stroke.color = ink;
         }
     }
-    v.selection.bg_fill = accent;
+    // What is selected (a tab, a chosen button, a highlighted row, selected text) must stay easy to read:
+    // the fill is the accent, softened toward the background until the text on it has a contrast of
+    // at least 4.5 to 1 (the usual guideline for small text), and the text on it is the theme's ink.
+    let texts = [v.widgets.noninteractive.fg_stroke.color, v.widgets.inactive.fg_stroke.color, v.widgets.active.fg_stroke.color];
+    let (sel_bg, sel_fg) = readable_selection(accent, v.panel_fill, &texts);
+    v.selection.bg_fill = sel_bg;
+    v.selection.stroke = Stroke::new(1.0_f32, sel_fg);
     let r = Rounding::same(6.0);
     v.widgets.noninteractive.rounding = r;
     v.widgets.inactive.rounding = r;
@@ -447,4 +495,36 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     v.menu_rounding = Rounding::same(6.0);
     ctx.set_visuals(v);
     ctx.style_mut(apply_spacing);
+}
+
+#[cfg(test)]
+mod readable_tests {
+    use super::*;
+
+    /// Every colour scheme, and the plain light and dark themes, keep selected things easy to read.
+    #[test]
+    fn selected_things_are_easy_to_read_in_every_scheme() {
+        let mut all: Vec<Settings> = SCHEMES
+            .iter()
+            .map(|sc| {
+                let mut s = Settings::default();
+                s.use_scheme(sc);
+                s
+            })
+            .collect();
+        for dark in [true, false] {
+            for accent in [[59, 111, 212], [90, 94, 100], [67, 82, 106], [200, 200, 60], [30, 30, 30]] {
+                all.push(Settings { dark, accent, ink: None, ..Settings::default() });
+            }
+        }
+        let ctx = egui::Context::default();
+        for s in all {
+            apply_theme(&ctx, &s);
+            let v = ctx.style().visuals.clone();
+            let c = contrast(v.selection.stroke.color, v.selection.bg_fill);
+            assert!(c >= 4.5, "selected text {:?} on {:?} only {c:.1} (dark {}, accent {:?})", v.selection.stroke.color, v.selection.bg_fill, s.dark, s.accent);
+            let t = contrast(v.widgets.noninteractive.fg_stroke.color, v.selection.bg_fill);
+            assert!(t >= 4.5, "text over the selection only {t:.1} (dark {}, accent {:?})", s.dark, s.accent);
+        }
+    }
 }

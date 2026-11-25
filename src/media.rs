@@ -446,7 +446,7 @@ impl App {
                     }
                 }
             }
-            let accent = ui.visuals().selection.bg_fill;
+            let accent = ui.visuals().hyperlink_color;
             let names: Vec<(usize, Rect, String)> = m.faces.iter().enumerate().map(|(k, f)| (k, to_scr(f.r), lc.get(&f.who).cloned().unwrap_or_else(|| "(someone removed from the tree)".into()))).collect();
             let painter = ui.painter_at(ir);
             for (_, r, name) in &names {
@@ -943,7 +943,7 @@ impl App {
                         _ if is_pdf(name) => "PDF",
                         _ => "Document",
                     };
-                    fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().selection.bg_fill));
+                    fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().hyperlink_color));
                     fixed_label(ui, 360.0, name.as_str());
                     fixed_label(ui, 70.0, RichText::new(size_words(*size)).small().weak());
                     if ui.small_button(crate::i18n::tr("Open")).clicked() {
@@ -1214,7 +1214,7 @@ impl App {
                     ui.painter().with_clip_rect(rect.shrink(6.0)).galley(rect.min + vec2(8.0, 8.0), g, ui.visuals().text_color());
                     let key = (*id, NOTE_ITEM);
                     if self.x.gal_sel.contains(&key) {
-                        ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                        ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().hyperlink_color));
                     }
                     if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                         if self.x.gal_pick {
@@ -1255,7 +1255,7 @@ impl App {
                         let uri = img_uri(&mprev(&m.thumb));
                         let r = ui.add(egui::Image::new(uri).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
                         if self.x.gal_sel.contains(&(*id, *i)) {
-                            ui.painter().rect_stroke(r.rect.expand(2.0), 5.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                            ui.painter().rect_stroke(r.rect.expand(2.0), 5.0_f32, Stroke::new(3.0_f32, ui.visuals().hyperlink_color));
                         }
                         if r.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                             if self.x.gal_pick {
@@ -1278,11 +1278,11 @@ impl App {
                         let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
                         let hov = resp.hovered();
                         ui.painter().rect(rect, 6.0_f32, if hov { ui.visuals().widgets.hovered.bg_fill } else { ui.visuals().faint_bg_color }, ui.visuals().widgets.noninteractive.bg_stroke);
-                        ui.painter().text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, badge, FontId::proportional(28.0), ui.visuals().selection.bg_fill);
+                        ui.painter().text(rect.center() - vec2(0.0, 12.0), Align2::CENTER_CENTER, badge, FontId::proportional(28.0), ui.visuals().hyperlink_color);
                         let online = m.file.is_empty() && is_url(&m.path);
                         ui.painter().text(rect.center() + vec2(0.0, 26.0), Align2::CENTER_CENTER, if online { "Open online" } else { hint }, FontId::proportional(12.0), ui.visuals().weak_text_color());
                         if self.x.gal_sel.contains(&(*id, *i)) {
-                            ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().selection.bg_fill));
+                            ui.painter().rect_stroke(rect.expand(2.0), 7.0_f32, Stroke::new(3.0_f32, ui.visuals().hyperlink_color));
                         }
                         if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                             if self.x.gal_pick {
