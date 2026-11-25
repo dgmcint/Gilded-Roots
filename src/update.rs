@@ -2333,7 +2333,12 @@ impl App {
                     }
                 }
                 Action::SetGens(n) => {
-                    self.settings.gens = n.clamp(3, 8);
+                    self.settings.gens = n.clamp(3, 10);
+                    save_settings(&self.settings);
+                }
+                Action::PedStyle(s, c) => {
+                    self.settings.ped_style = s.min(4);
+                    self.settings.ped_colours = c.min(2);
                     save_settings(&self.settings);
                 }
                 Action::SetHand(on) => {

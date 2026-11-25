@@ -383,6 +383,8 @@ pub(crate) enum Action {
     Highlight(u32),
     AddFor(u32, Kind),
     SetGens(usize),
+    /// The pedigree's style and colours
+    PedStyle(u8, u8),
     /// Turn the hand tool on the charts on or off
     SetHand(bool),
     Back,

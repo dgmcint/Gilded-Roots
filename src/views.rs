@@ -606,18 +606,32 @@ impl App {
 
     pub(crate) fn pedigree(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let sel = self.sel.unwrap();
-        let gens = self.settings.gens.clamp(3, 8);
+        // the other styles have layouts of their own; Photo cards and Compact are this chart with other boxes
+        let style = self.settings.ped_style.min(4);
+        match style {
+            2 => return self.couple_pedigree(ui, act),
+            3 => return self.upright_pedigree(ui, act),
+            _ => {}
+        }
+        let (photo_cards, compact) = (style == 1, style == 4);
+        let (bh0, pitch0, gap0, wmin, wmax) = match style {
+            1 => (62.0f32, 72.0f32, 30.0f32, 210.0f32, 360.0f32),
+            4 => (18.0, 21.0, 16.0, 110.0, 230.0),
+            _ => (28.0, 36.0, 28.0, 150.0, 340.0),
+        };
+        let gens = self.settings.gens.clamp(3, crate::pedstyles::ped_max_gens(style));
         let rows = 1usize << (gens - 1);
         let z = self.settings.zoom;
-        let (bh, pitch, gap, top) = (28.0f32 * z, 36.0f32 * z, 28.0f32 * z, 30.0f32 * z);
-        let th = rows as f32 * pitch + top;
-        let bw = ((ui.available_width() - (gens as f32 - 1.0) * gap - 24.0) / gens as f32).clamp(150.0, 340.0) * z;
+        let (bh, pitch, gap, top) = (bh0 * z, pitch0 * z, gap0 * z, 30.0f32 * z);
+        let font = if compact { 12.0 } else { 14.0 };
+        let th = rows as f32 * pitch + top + if photo_cards { 30.0 * z } else { 0.0 };
+        let bw = ((ui.available_width() - (gens as f32 - 1.0) * gap - 24.0) / gens as f32).clamp(wmin, wmax) * z;
         let tw = gens as f32 * bw + (gens as f32 - 1.0) * gap;
         if self.fit_req {
             let av = ui.available_size();
             let bw0 = bw / z;
-            let zw = (av.x - 24.0) / (gens as f32 * bw0 + (gens as f32 - 1.0) * 28.0);
-            let zh = (av.y - 100.0) / (rows as f32 * 36.0 + 36.0);
+            let zw = (av.x - 24.0) / (gens as f32 * bw0 + (gens as f32 - 1.0) * gap0);
+            let zh = (av.y - 100.0) / (rows as f32 * pitch0 + 36.0);
             *act = Some(Action::SetZoom(zw.min(zh).clamp(0.25, 1.8)));
         }
         let ix = self.db.index();
@@ -645,27 +659,7 @@ impl App {
             .flat_map(|f| self.db.fams[f].kids.iter().map(|k| (*k, self.db.label(*k))).collect::<Vec<_>>())
             .collect();
         self.nav_bar(ui, act);
-        ui.horizontal(|ui| {
-            ui.label(crate::i18n::tr("Generations:"));
-            if ui.add_enabled(gens > 3, egui::Button::new("-")).clicked() {
-                *act = Some(Action::SetGens(gens - 1));
-            }
-            ui.label(gens.to_string());
-            if ui.add_enabled(gens < 8, egui::Button::new("+")).clicked() {
-                *act = Some(Action::SetGens(gens + 1));
-            }
-            ui.separator();
-            zoom_controls(ui, z, act);
-            ui.separator();
-            hand_switch(ui, self.settings.hand, act);
-            // the tab toolbar has Print when it is shown
-            if !self.settings.tb_tab {
-                ui.separator();
-                if ui.button(crate::i18n::tr("Print")).clicked() {
-                    *act = Some(Action::PrintPedigree);
-                }
-            }
-        });
+        self.ped_controls(ui, act, gens, z);
         egui::ScrollArea::both().show(ui, |ui| {
             let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th + 6.0), Sense::hover());
             let o = resp.rect.min + vec2(6.0, 0.0);
@@ -718,14 +712,15 @@ impl App {
                             }
                             let is_sel = g == 0;
                             let is_hl = self.hl == Some(id) && !is_sel;
+                            let side = if g == 0 { None } else { Some(i < n / 2) };
                             let fill = if is_sel {
                                 accent
                             } else if is_hl {
                                 accent.gamma_multiply(0.35)
                             } else if r2.hovered() {
-                                hover_c
+                                self.ped_fill(hover_c, &p.sex, side)
                             } else {
-                                box_c
+                                self.ped_fill(box_c, &p.sex, side)
                             };
                             let ink = if is_sel { on_accent(accent) } else { ink_c };
                             painter.rect(rect, 5.0_f32, fill, edge);
@@ -733,37 +728,48 @@ impl App {
                                 painter.rect_stroke(rect.expand(2.5), 7.0_f32, Stroke::new(2.5_f32, ink_c));
                             }
                             let l = life(p);
-                            let mut txt = if l.is_empty() { styled_name(p) } else { format!("{}  {}", styled_name(p), l) };
-                            if self.settings.box_places {
+                            let mut txt = if l.is_empty() || compact { styled_name(p) } else { format!("{}  {}", styled_name(p), l) };
+                            if self.settings.box_places && !compact && !photo_cards {
                                 let pl = if !p.bp.trim().is_empty() { p.bp.trim() } else { p.dp.trim() };
                                 if let Some(first) = pl.split(',').next().filter(|x| !x.trim().is_empty()) {
                                     txt.push_str(&format!("  \u{b7} {}", first.trim()));
                                 }
                             }
-                            if self.settings.box_ids {
+                            if self.settings.box_ids && !compact {
                                 txt.push_str(&format!("  #{}", id));
                             }
                             let ir = Rect::from_min_size(pos2(rect.min.x + 3.0, rect.min.y + 2.0), vec2(bh - 4.0, bh - 4.0));
-                            match self.portrait_src(p).filter(|_| self.settings.box_photos) {
-                                Some((uri, fr)) => put_photo(ui, ir, &uri, fr, 3.0),
-                                None => {
-                                    painter.rect_filled(ir, 3.0_f32, if is_sel { on_accent(accent).gamma_multiply(0.22) } else { hover_c });
-                                    let initial = p.name.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_else(|| "?".into());
-                                    painter.text(ir.center(), Align2::CENTER_CENTER, initial, FontId::proportional(14.0 * z), if is_sel { ink } else { head_c });
+                            if !compact {
+                                match self.portrait_src(p).filter(|_| self.settings.box_photos || photo_cards) {
+                                    Some((uri, fr)) => put_photo(ui, ir, &uri, fr, if photo_cards { 6.0 } else { 3.0 }),
+                                    None => {
+                                        painter.rect_filled(ir, 3.0_f32, if is_sel { on_accent(accent).gamma_multiply(0.22) } else { hover_c });
+                                        let initial = p.name.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_else(|| "?".into());
+                                        painter.text(ir.center(), Align2::CENTER_CENTER, initial, FontId::proportional(if photo_cards { 26.0 } else { 14.0 } * z), if is_sel { ink } else { head_c });
+                                    }
                                 }
                             }
+                            let text_x = if compact { rect.min.x + 6.0 } else { rect.min.x + bh + 4.0 };
                             let (pf0, pm0) = self.db.parents_ix(&ix, id);
                             let has_arrow = (g == gens - 1 && (pf0.is_some() || pm0.is_some())) || (g == 0 && !kids.is_empty());
                             let right_pad = 34.0 + if has_arrow { 24.0 } else { 0.0 };
-                            let clip = Rect::from_min_max(rect.min + vec2(2.0, 2.0), pos2((rect.max.x - right_pad).max(rect.min.x + bh + 20.0), rect.max.y - 2.0));
-                            painter.with_clip_rect(clip).text(
-                                pos2(rect.min.x + bh + 4.0, rect.center().y),
-                                Align2::LEFT_CENTER,
-                                txt,
-                                FontId::proportional(14.0 * z),
-                                ink,
-                            );
-                            let mz = Rect::from_min_size(pos2(rect.max.x - 32.0, rect.min.y + 3.0), vec2(30.0, bh - 6.0));
+                            let right_pad = if compact { 30.0 + if has_arrow { 18.0 } else { 0.0 } } else { right_pad };
+                            let clip = Rect::from_min_max(rect.min + vec2(2.0, 2.0), pos2((rect.max.x - right_pad).max(text_x + 20.0), rect.max.y - 2.0));
+                            if photo_cards {
+                                // name, years and birthplace on three lines
+                                let pc = painter.with_clip_rect(clip);
+                                pc.text(pos2(text_x + 2.0, rect.min.y + 13.0 * z), Align2::LEFT_CENTER, styled_name(p), FontId::proportional(15.0 * z), ink);
+                                pc.text(pos2(text_x + 2.0, rect.min.y + 31.0 * z), Align2::LEFT_CENTER, &l, FontId::proportional(12.5 * z), ink.gamma_multiply(0.85));
+                                let pl = if !p.bp.trim().is_empty() { p.bp.trim() } else { p.dp.trim() };
+                                let mut third = pl.to_string();
+                                if self.settings.box_ids {
+                                    third = if third.is_empty() { format!("#{id}") } else { format!("{third}  #{id}") };
+                                }
+                                pc.text(pos2(text_x + 2.0, rect.min.y + 48.0 * z), Align2::LEFT_CENTER, third, FontId::proportional(11.5 * z), if is_sel { ink } else { head_c });
+                            } else {
+                                painter.with_clip_rect(clip).text(pos2(text_x, rect.center().y), Align2::LEFT_CENTER, txt, FontId::proportional(font * z), ink);
+                            }
+                            let mz = if compact { Rect::from_min_size(pos2(rect.max.x - 26.0, rect.min.y + 1.0), vec2(24.0, bh - 2.0)) } else { Rect::from_min_size(pos2(rect.max.x - 32.0, rect.min.y + 3.0), vec2(30.0, bh - 6.0)) };
                             ui.allocate_new_ui(egui::UiBuilder::new().max_rect(mz), |ui| {
                                 ui.menu_button(RichText::new("...").small(), |ui| self.person_menu(ui, id, act));
                             });
@@ -843,7 +849,7 @@ impl App {
                                 painter.rect(rect, 5.0_f32, fill, edge);
                                 if r2.hovered() {
                                     ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
-                                    let label = if i % 2 == 0 { "+ Add father" } else { "+ Add mother" };
+                                    let label = if i % 2 == 0 { crate::i18n::tr("+ Add father") } else { crate::i18n::tr("+ Add mother") };
                                     painter.text(rect.center(), Align2::CENTER_CENTER, label, FontId::proportional(13.0), head_c);
                                 }
                                 if r2.clicked() {

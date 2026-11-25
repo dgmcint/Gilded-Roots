@@ -2,6 +2,13 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: pedigree styles
+
+- **A Style list above the pedigree:** Classic (as before), **Photo cards** (photo, name, years and birthplace),
+  **Couple cards** (one card per couple with their marriage and a Children list to jump to), **Upright tree**
+  (ancestors rising above the chosen person and spouse, children underneath) and **Compact** (names only, up to
+  10 generations). **Colours:** plain, men and women, or father's and mother's side. Remembered.
+
 ## Coming next: Ancestral Quest files
 
 - **Open Ancestral Quest databases directly** (File > Import tree..., or Import an existing family tree): .aq files

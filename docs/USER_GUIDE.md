@@ -202,6 +202,21 @@ part of a name, a year, an ID (`#123`) or what you want to do ("add spouse", "pl
 to choose and **Enter** to go; **Esc** closes it. With nothing typed it shows your bookmarked people and every
 command. A number on its own finds that ID first.
 
+## Pedigree styles
+The **Style** list above the pedigree changes how the chart looks; your choice is remembered.
+- **Classic:** names and dates in boxes, the chosen person on the left and ancestors to the right.
+- **Photo cards:** bigger cards with each person's photo, name, years and birthplace.
+- **Couple cards:** one card for each couple, with a coloured edge for each person, their marriage, and a
+  **Children** list on every card to jump to one of the couple's children.
+- **Upright tree:** the chosen person (and spouse) near the bottom, parents and grandparents rising above as
+  couple tiles with round photos, and the children in a row underneath with **+ Add child**.
+- **Compact:** names only, in narrow boxes, so up to 10 generations fit.
+
+**Colours** tints the boxes: **Plain**, **Men and women**, or **Father's and mother's side** (the chosen person's
+father's ancestors in one colour and mother's in another). **Generations**, **Zoom**, **Fit** and **Select/Hand**
+work in every style. Click a person to make them the centre, double-click to open their page, and right-click
+for the usual menu. Printing the pedigree prints the classic chart.
+
 ## Pedigree box actions
 Every box on the pedigree has a portrait (or the person's initial) to the left of the name and a **...** button on
 the right; right-clicking a box opens the same menu:

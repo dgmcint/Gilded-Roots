@@ -24,6 +24,7 @@ mod table;
 mod tombstone;
 mod paf;
 mod aq;
+mod pedstyles;
 mod gedcom;
 mod review;
 mod sample;
