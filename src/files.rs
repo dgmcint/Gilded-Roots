@@ -55,7 +55,7 @@ impl App {
 
     pub(crate) fn read_ged(&mut self) -> Option<Db> {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
-        let path = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf), an Ancestral Quest file (.aq or .aqz) or a saved tree (.json)")).set_directory(start_dir()).pick_file()?;
+        let path = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged or .gdz), a PAF file (.paf), an Ancestral Quest file (.aq or .aqz) or a saved tree (.json)")).set_directory(start_dir()).pick_file()?;
         remember_dir(&path);
         match read_ged_file(&path) {
             Ok((db, rep)) => {
@@ -110,6 +110,21 @@ impl App {
         if let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Save GEDCOM file")).set_directory(start_dir()).set_file_name("gilded-roots.ged").save_file() {
             remember_dir(&path);
             self.status = match write_gedcom(&self.db, &path, private) {
+                Ok(s) | Err(s) => s,
+            };
+        }
+    }
+
+    /// Export as GEDCOM 7: a .ged file (photos in a folder beside it) or a GEDZIP (.gdz) file.
+    pub(crate) fn export7(&mut self, private: bool, gedzip: bool) {
+        let dlg = if gedzip {
+            rfd::FileDialog::new().set_title(crate::i18n::tr("Save GEDZIP file")).set_directory(start_dir()).set_file_name("gilded-roots.gdz").add_filter(crate::i18n::tr("GEDZIP (GEDCOM 7 with photos)"), &["gdz"])
+        } else {
+            rfd::FileDialog::new().set_title(crate::i18n::tr("Save GEDCOM 7 file")).set_directory(start_dir()).set_file_name("gilded-roots.ged").add_filter("GEDCOM", &["ged"])
+        };
+        if let Some(path) = dlg.save_file() {
+            remember_dir(&path);
+            self.status = match write_gedcom7(&self.db, &path, private, gedzip) {
                 Ok(s) | Err(s) => s,
             };
         }

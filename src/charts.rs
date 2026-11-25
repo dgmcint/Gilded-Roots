@@ -325,6 +325,7 @@ impl App {
         let n_g = gkids.iter().map(|x| x.1.len().max(1)).sum::<usize>().max(kids.len()).max(1);
         let width = (top_slots.max(n_g) as f32) * (bw + 10.0) + 40.0;
         let height = (up as f32 + 3.0) * (bh + vgap) + 40.0;
+        self.paint_stage(ui);
         egui::ScrollArea::both().auto_shrink([false, false]).show(ui, |ui| {
             let (resp, painter) = ui.allocate_painter(vec2(width.max(ui.available_width()), height), Sense::hover());
             let o = resp.rect.min + vec2(20.0, 20.0);
@@ -392,7 +393,7 @@ impl App {
             for (i, (r, id, is_root)) in boxes.iter().enumerate() {
                 let rr = ui.interact(*r, egui::Id::new(("hg", i, *id)), Sense::click());
                 let fill = if *is_root { accent } else if rr.hovered() { hover_c } else { box_c };
-                painter.rect(*r, 5.0_f32, fill, edge);
+                crate::views::card(&painter, *r, 8.0, fill, edge, ui.visuals().dark_mode);
                 if self.hl == Some(*id) && !*is_root {
                     painter.rect_stroke(*r, 5.0_f32, Stroke::new(3.0_f32, accent));
                 }

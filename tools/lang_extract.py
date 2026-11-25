@@ -20,7 +20,7 @@ from lang_mark import tokenize, code, is_texty  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # files with no on-screen text of their own (file formats, sample data, tests)
-SKIP = {"tests.rs", "bigtree.rs", "i18n.rs", "gedcom.rs", "paf.rs", "sample.rs", "temples.rs", "storage.rs", "archive.rs"}
+SKIP = {"tests.rs", "bigtree.rs", "i18n.rs", "gedcom.rs", "paf.rs", "sample.rs", "temples.rs", "storage.rs", "archive.rs", "ged7.rs"}
 NOT_TEXT_CALLS = {"format", "println", "eprintln", "write", "writeln", "panic", "expect", "assert", "assert_eq",
                   "debug_assert", "unreachable", "todo", "include_str", "include_bytes", "concat", "env", "join",
                   "starts_with", "ends_with", "contains", "find", "split", "replace", "strip_prefix",

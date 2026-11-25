@@ -66,6 +66,26 @@ impl App {
                         self.export(true);
                         ui.close_menu();
                     }
+                    ui.menu_button(crate::i18n::tr("Export GEDCOM 7"), |ui| {
+                        ui.label(RichText::new(crate::i18n::tr("The newer GEDCOM. Some programs can't read it yet; if in doubt, use the export above.")).small().weak());
+                        if ui.button(crate::i18n::tr("GEDCOM 7 file (everything)...")).clicked() {
+                            self.export7(false, false);
+                            ui.close_menu();
+                        }
+                        if ui.button(crate::i18n::tr("GEDCOM 7 file (living people private)...")).clicked() {
+                            self.export7(true, false);
+                            ui.close_menu();
+                        }
+                        ui.separator();
+                        if ui.button(crate::i18n::tr("GEDZIP with photos (everything)...")).on_hover_text(crate::i18n::tr("One .gdz file holding the GEDCOM 7 file and every photo and document")).clicked() {
+                            self.export7(false, true);
+                            ui.close_menu();
+                        }
+                        if ui.button(crate::i18n::tr("GEDZIP with photos (living people private)...")).clicked() {
+                            self.export7(true, true);
+                            ui.close_menu();
+                        }
+                    });
                     {
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
                         if ui.add(menu_item(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }, if MAC { "Ctrl+Cmd+F" } else { "F11" })).clicked() {
@@ -2340,6 +2360,10 @@ impl App {
                 Action::PedStyle(s, c) => {
                     self.settings.ped_style = s.min(4);
                     self.settings.ped_colours = c.min(2);
+                    save_settings(&self.settings);
+                }
+                Action::PedBand(on) => {
+                    self.settings.ped_band = on;
                     save_settings(&self.settings);
                 }
                 Action::SetHand(on) => {

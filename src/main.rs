@@ -27,6 +27,7 @@ mod aq;
 mod pedstyles;
 mod homepage;
 mod gedcom;
+mod ged7;
 mod review;
 mod sample;
 mod temples;

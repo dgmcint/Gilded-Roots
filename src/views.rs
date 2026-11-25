@@ -70,18 +70,44 @@ pub(crate) fn zoom_controls(ui: &mut egui::Ui, z: f32, act: &mut Option<Action>)
     }
 }
 
+/// A person's card on a chart: a soft shadow under it so it lifts off the backdrop, then the card.
+pub(crate) fn card(painter: &egui::Painter, rect: Rect, rounding: f32, fill: Color32, edge: Stroke, dark: bool) {
+    let shadow = egui::epaint::Shadow { offset: vec2(0.0, 2.0), blur: 8.0, spread: 0.0, color: Color32::from_black_alpha(if dark { 110 } else { 48 }) };
+    painter.add(shadow.as_shape(rect, rounding));
+    painter.rect(rect, rounding, fill, edge);
+}
+
 impl App {
     pub(crate) fn chart_colors(&self, ui: &egui::Ui) -> (Stroke, Stroke, Color32, Color32, Color32, Color32, Color32) {
         let dark = ui.visuals().dark_mode;
         let bg = self.settings.bg;
         let rgb = |r: u8, g: u8, b: u8| Color32::from_rgb(r, g, b);
+        // Cards stand out clearly from the chart's backdrop (see chart_stage): on dark, mid-grey
+        // cards on near-black; on light, white cards on a soft warm grey.
         let (line_c, edge_c, box_c, hover_c, ink_c, head_c) = if dark {
-            (shift(bg, 60), shift(bg, 38), shift(bg, 12), shift(bg, 24), rgb(230, 232, 235), shift(bg, 120))
+            (shift(bg, 95), shift(bg, 52), shift(bg, 40), shift(bg, 56), rgb(236, 238, 240), shift(bg, 130))
         } else {
-            (rgb(150, 155, 162), rgb(184, 188, 194), Color32::WHITE, rgb(245, 247, 250), rgb(31, 35, 40), rgb(90, 96, 105))
+            (rgb(158, 158, 158), rgb(226, 224, 220), Color32::WHITE, rgb(250, 250, 248), rgb(31, 35, 40), rgb(96, 100, 108))
         };
         let accent = Color32::from_rgb(self.settings.accent[0], self.settings.accent[1], self.settings.accent[2]);
         (Stroke::new(1.0_f32, line_c), Stroke::new(1.0_f32, edge_c), box_c, hover_c, ink_c, head_c, accent)
+    }
+
+    /// The backdrop behind a tree chart, darker (or on light, greyer) than the cards on it.
+    pub(crate) fn chart_stage(&self, ui: &egui::Ui) -> Color32 {
+        if ui.visuals().dark_mode {
+            let b = self.settings.bg;
+            Color32::from_rgb((b[0] as f32 * 0.35) as u8, (b[1] as f32 * 0.35) as u8, (b[2] as f32 * 0.35) as u8)
+        } else {
+            Color32::from_rgb(232, 230, 225)
+        }
+    }
+
+    /// Fill the rest of the window under a chart with its backdrop. Call just before the chart's
+    /// scroll area, so the backdrop reaches the window's edges whatever the chart's size.
+    pub(crate) fn paint_stage(&self, ui: &egui::Ui) {
+        let r = ui.available_rect_before_wrap().expand2(vec2(8.0, 8.0));
+        ui.painter().rect_filled(r, 0.0, self.chart_stage(ui));
     }
 
     pub(crate) fn descendants(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
@@ -129,6 +155,8 @@ impl App {
         let tw = maxd as f32 * (bw + gap);
         let th = rows * pitch + top + 10.0;
         let (line, edge, box_c, hover_c, ink_c, _head_c, accent) = self.chart_colors(ui);
+        let dark = ui.visuals().dark_mode;
+        self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
             let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
             let o = resp.rect.min + vec2(6.0, 0.0);
@@ -174,9 +202,9 @@ impl App {
                     box_c
                 };
                 let ink = if is_root { on_accent(accent) } else { ink_c };
-                painter.rect(rect, 5.0_f32, fill, edge);
+                card(&painter, rect, 8.0, fill, edge, dark);
                 if is_root {
-                    painter.rect_stroke(rect.expand(2.5), 7.0_f32, Stroke::new(2.5_f32, ink_c));
+                    painter.rect_stroke(rect.expand(2.5), 10.0_f32, Stroke::new(2.5_f32, ink_c));
                 }
                 if is_hl {
                     painter.rect_stroke(rect, 5.0_f32, Stroke::new(3.0_f32, accent));
@@ -660,6 +688,7 @@ impl App {
             .collect();
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
+        self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
             let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th + 6.0), Sense::hover());
             let o = resp.rect.min + vec2(6.0, 0.0);
@@ -669,17 +698,8 @@ impl App {
                     *act = Some(Action::SetZoom((z * zd).clamp(0.25, 1.8)));
                 }
             }
+            let (black, edge, box_c, hover_c, ink_c, head_c, accent) = self.chart_colors(ui);
             let dark = ui.visuals().dark_mode;
-            let bg = self.settings.bg;
-            let rgb = |r: u8, g: u8, b: u8| Color32::from_rgb(r, g, b);
-            let (line_c, edge_c, box_c, hover_c, ink_c, head_c) = if dark {
-                (shift(bg, 60), shift(bg, 38), shift(bg, 12), shift(bg, 24), rgb(230, 232, 235), shift(bg, 120))
-            } else {
-                (rgb(150, 155, 162), rgb(184, 188, 194), Color32::WHITE, rgb(245, 247, 250), rgb(31, 35, 40), rgb(90, 96, 105))
-            };
-            let accent = Color32::from_rgb(self.settings.accent[0], self.settings.accent[1], self.settings.accent[2]);
-            let black = Stroke::new(1.0_f32, line_c);
-            let edge = Stroke::new(1.0_f32, edge_c);
             for g in 0..gens {
                 painter.text(
                     pos2(o.x + g as f32 * (bw + gap), o.y + 4.0),
@@ -723,9 +743,14 @@ impl App {
                                 self.ped_fill(box_c, &p.sex, side)
                             };
                             let ink = if is_sel { on_accent(accent) } else { ink_c };
-                            painter.rect(rect, 5.0_f32, fill, edge);
+                            card(&painter, rect, 8.0, fill, edge, dark);
+                            // the colour band, when it is turned on
+                            if let Some(t) = self.ped_band_colour(&p.sex, side).filter(|_| !is_hl) {
+                                let band = Rect::from_min_size(rect.min, vec2(rect.width(), (4.0 * z).clamp(2.0, 5.0)));
+                                painter.rect_filled(band, egui::Rounding { nw: 8.0, ne: 8.0, sw: 0.0, se: 0.0 }, t);
+                            }
                             if is_sel {
-                                painter.rect_stroke(rect.expand(2.5), 7.0_f32, Stroke::new(2.5_f32, ink_c));
+                                painter.rect_stroke(rect.expand(2.5), 10.0_f32, Stroke::new(2.5_f32, ink_c));
                             }
                             let l = life(p);
                             let mut txt = if l.is_empty() || compact { styled_name(p) } else { format!("{}  {}", styled_name(p), l) };
@@ -846,7 +871,7 @@ impl App {
                             if let Some(child) = child {
                                 let r2 = ui.interact(rect, egui::Id::new(("ped", g, i)), Sense::click());
                                 let fill = if r2.hovered() { hover_c } else { box_c.gamma_multiply(0.45) };
-                                painter.rect(rect, 5.0_f32, fill, edge);
+                                painter.rect(rect, 8.0_f32, fill, edge);
                                 if r2.hovered() {
                                     ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
                                     let label = if i % 2 == 0 { crate::i18n::tr("+ Add father") } else { crate::i18n::tr("+ Add mother") };
@@ -857,7 +882,7 @@ impl App {
                                     *act = Some(Action::AddFor(child, k));
                                 }
                             } else {
-                                painter.rect(rect, 5.0_f32, box_c.gamma_multiply(0.45), edge);
+                                painter.rect(rect, 8.0_f32, box_c.gamma_multiply(0.45), edge);
                             }
                         }
                     }

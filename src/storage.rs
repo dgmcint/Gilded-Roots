@@ -347,6 +347,16 @@ pub(crate) struct ImportSource {
     /// What the file is, when it is not plain GEDCOM (".paf" or a saved tree).
     pub(crate) program: String,
     pub(crate) warnings: Vec<String>,
+    /// A folder a GEDZIP was unpacked into, removed when this is dropped.
+    pub(crate) tmp: Option<PathBuf>,
+}
+
+impl Drop for ImportSource {
+    fn drop(&mut self) {
+        if let Some(d) = self.tmp.take() {
+            let _ = std::fs::remove_dir_all(d);
+        }
+    }
 }
 
 /// Read a GEDCOM file: decode it, parse it, copy in the photos it refers to, and check what an export would lose.
@@ -361,7 +371,7 @@ pub(crate) fn load_import(path: &Path) -> Result<ImportSource, String> {
     if b.is_empty() {
         return Err("That file is empty.".to_string());
     }
-    let mut src = ImportSource { path: path.to_path_buf(), text: None, json: None, charset: String::new(), program: String::new(), warnings: Vec::new() };
+    let mut src = ImportSource { path: path.to_path_buf(), text: None, json: None, charset: String::new(), program: String::new(), warnings: Vec::new(), tmp: None };
     // One of this app's own tree files (tree.json or a backup)?
     let trimmed = b.iter().skip_while(|c| c.is_ascii_whitespace() || **c == 0xEF || **c == 0xBB || **c == 0xBF).next();
     if trimmed == Some(&b'{') {
@@ -414,6 +424,27 @@ pub(crate) fn load_import(path: &Path) -> Result<ImportSource, String> {
         src.text = Some(text);
         return Ok(src);
     }
+    // A GEDZIP (.gdz: a GEDCOM 7 file with its pictures), or another zip with a GEDCOM in it:
+    // unpack it into a folder of its own and read the GEDCOM from there, so its pictures are found.
+    if crate::ged7::ged_in_zip(&b).is_some() {
+        let dir = std::env::temp_dir().join(format!("gilded-roots-gedzip-{}", stamp()));
+        let g = match crate::ged7::unpack(&b, &dir) {
+            Ok(g) => g,
+            Err(e) => {
+                let _ = std::fs::remove_dir_all(&dir);
+                return Err(e);
+            }
+        };
+        let mut inner = match load_import(&g) {
+            Ok(i) => i,
+            Err(e) => {
+                let _ = std::fs::remove_dir_all(&dir);
+                return Err(e);
+            }
+        };
+        inner.tmp = Some(dir);
+        return Ok(inner);
+    }
     // A program's own data file (PAF's .paf, for example) rather than a GEDCOM export?
     let nuls = b.iter().take(4096).filter(|c| **c == 0).count();
     let head: String = b.iter().take(4000).map(|&c| c as char).collect();
@@ -422,7 +453,11 @@ pub(crate) fn load_import(path: &Path) -> Result<ImportSource, String> {
     if !looks_text && !is_utf16 && nuls >= 20 {
         return Err("This is a program's own data file, not a GEDCOM file, so it can't be read directly. Open it in the program that made it (for PAF: File > Export, choose GEDCOM), save the .ged file, then import that here.".to_string());
     }
-    let (text, charset) = decode_ged(&b);
+    let (mut text, charset) = decode_ged(&b);
+    // GEDCOM 7 is read as the 5.5.1 it corresponds to (see ged7.rs)
+    if crate::ged7::is_v7(&text) {
+        text = crate::ged7::to_551(&text);
+    }
     src.charset = charset;
     src.text = Some(text);
     Ok(src)
@@ -510,6 +545,106 @@ pub(crate) fn write_gedcom(db: &Db, path: &Path, private: bool) -> Result<String
             let (back, _) = decode_ged(&b);
             let (db2, _) = parse_ged_report(&back);
             let lost = loss_check(&to_ged_full(&out, &ExportOpts { prune: private, media_dir: None }).text, &back);
+            if db2.people.len() != out.people.len() || db2.fams.len() != out.families_count() || !lost.is_empty() {
+                s.push_str(&format!(". WARNING: reading the saved file back found {} people and {} families (your tree has {} and {}){}.", db2.people.len(), db2.fams.len(), out.people.len(), out.families_count(), if lost.is_empty() { String::new() } else { format!(", and {} piece(s) differ", lost.len()) }));
+                problem = true;
+            }
+        }
+        Err(e) => {
+            s.push_str(&format!(". WARNING: could not read the file back to check it: {}", e));
+            problem = true;
+        }
+    }
+    if problem { Err(s) } else { Ok(s) }
+}
+
+/// Write the tree as GEDCOM 7: a .ged file with the photos and documents in a folder next to it,
+/// or (`gedzip`) one GEDZIP file holding the GEDCOM file and every photo and document.
+/// The file is read back and checked. Ok and Err both carry the message to show.
+pub(crate) fn write_gedcom7(db: &Db, path: &Path, private: bool, gedzip: bool) -> Result<String, String> {
+    let out = if private { db.sanitized() } else { db.clone() };
+    let stem = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "gilded-roots".to_string());
+    let has_media = out.people.values().any(|p| p.media.iter().any(|m| !m.file.is_empty())) || out.fams.values().any(|f| f.media.iter().any(|m| !m.file.is_empty()));
+    let folder = if gedzip { "media".to_string() } else { format!("{}-media", sanitize(&stem)) };
+    let ex = to_ged_full(&out, &ExportOpts { prune: private, media_dir: if has_media { Some(folder.clone()) } else { None } });
+    let text = crate::ged7::to_v7(&ex.text);
+    let (mut copied, mut missing) = (0usize, 0usize);
+    let mut failed: Option<String> = None;
+    if gedzip {
+        use std::io::Write as _;
+        let tmp = with_suffix(path, ".partial");
+        let r = (|| -> Result<(), String> {
+            let f = std::fs::File::create(&tmp).map_err(|e| io_msg(&e))?;
+            let mut z = zip::ZipWriter::new(std::io::BufWriter::new(f));
+            let packed = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated).large_file(true);
+            let stored = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored).large_file(true);
+            z.start_file("gedcom.ged", packed).map_err(|e| e.to_string())?;
+            z.write_all(text.as_bytes()).map_err(|e| io_msg(&e))?;
+            let mut done: HashSet<String> = HashSet::new();
+            for (file, rel) in &ex.media {
+                if !done.insert(rel.clone()) {
+                    continue;
+                }
+                match std::fs::read(mfile(file)) {
+                    Ok(data) => {
+                        // pictures are already packed; packing them again only takes time
+                        let opt = if is_image(rel) || is_audio(rel) { stored } else { packed };
+                        z.start_file(rel.as_str(), opt).map_err(|e| e.to_string())?;
+                        z.write_all(&data).map_err(|e| io_msg(&e))?;
+                        copied += 1;
+                    }
+                    Err(_) => missing += 1,
+                }
+            }
+            let w = z.finish().map_err(|e| e.to_string())?;
+            w.into_inner().map_err(|e| io_msg(e.error()))?.sync_all().map_err(|e| io_msg(&e))?;
+            Ok(())
+        })();
+        if let Err(e) = r {
+            let _ = std::fs::remove_file(&tmp);
+            return Err(format!("Could not save: {}", e));
+        }
+        std::fs::rename(&tmp, path).map_err(|e| format!("Could not save: {}", io_msg(&e)))?;
+    } else {
+        let dir = path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+        if has_media {
+            let _ = std::fs::create_dir_all(dir.join(&folder));
+            for (file, rel) in &ex.media {
+                let src = mfile(file);
+                if !src.exists() {
+                    missing += 1;
+                } else if let Err(e) = std::fs::copy(&src, dir.join(rel)) {
+                    failed = Some(io_msg(&e));
+                } else {
+                    copied += 1;
+                }
+            }
+        }
+        atomic_write(path, text.as_bytes()).map_err(|e| format!("Could not save: {}", e))?;
+    }
+    let mut s = format!("Saved {} (GEDCOM 7)", path.display());
+    let mut problem = false;
+    if has_media {
+        if gedzip {
+            s.push_str(&format!(" with {} photo/document file(s) inside it", copied));
+        } else {
+            s.push_str(&format!(" with {} photo/document file(s) in the folder {}", copied, folder));
+        }
+        if missing > 0 {
+            s.push_str(&format!(" ({} file(s) were missing and could not be copied)", missing));
+            problem = true;
+        }
+        if let Some(e) = failed {
+            s.push_str(&format!(" (some files could not be copied: {})", e));
+            problem = true;
+        }
+    }
+    // read it back the way an import would
+    match load_import(path) {
+        Ok(src) => {
+            let back = src.text.clone().unwrap_or_default();
+            let (db2, _) = parse_ged_report(&back);
+            let lost = loss_check(&crate::ged7::to_551(&text), &back);
             if db2.people.len() != out.people.len() || db2.fams.len() != out.families_count() || !lost.is_empty() {
                 s.push_str(&format!(". WARNING: reading the saved file back found {} people and {} families (your tree has {} and {}){}.", db2.people.len(), db2.fams.len(), out.people.len(), out.families_count(), if lost.is_empty() { String::new() } else { format!(", and {} piece(s) differ", lost.len()) }));
                 problem = true;

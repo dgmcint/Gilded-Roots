@@ -144,7 +144,8 @@ repositories and addresses can't be read from an .aq file yet; for those, in Anc
 Export**, save a GEDCOM file and import that here.
 
 **From anything else.** Export a GEDCOM (.ged) file from the other program or website (Ancestry, FamilySearch,
-MyHeritage, RootsMagic, Legacy, Gramps and others all can), then import it here.
+MyHeritage, RootsMagic, Legacy, Gramps and others all can), then import it here. GEDCOM 5.5, 5.5.1 and 7 files all work, and so do
+GEDZIP files (.gdz, a GEDCOM 7 file packed with its photos).
 
 **Import options.** Gilded Roots reads the file and shows what is in it (people, families, sources, citations,
 notes, events, photos and documents, links to photos on websites, LDS ordinances, living people, research tasks and
@@ -225,7 +226,10 @@ The **Style** list above the pedigree changes how the chart looks; your choice i
 - **Compact:** names only, in narrow boxes, so up to 10 generations fit.
 
 **Colours** tints the boxes: **Plain**, **Men and women**, or **Father's and mother's side** (the chosen person's
-father's ancestors in one colour and mother's in another). **Generations**, **Zoom**, **Fit** and **Select/Hand**
+father's ancestors in one colour and mother's in another). Tick **Colour band** for a thin coloured band across the
+top of each card instead: blue for men and pink for women, or the two sides when Colours is set to them. Every chart
+sits on its own backdrop (darker than the cards in dark mode, a soft grey behind white cards in light mode) so the
+people stand out. **Generations**, **Zoom**, **Fit** and **Select/Hand**
 work in every style. Click a person to make them the centre, double-click to open their page, and right-click
 for the usual menu. Printing the pedigree prints the classic chart.
 
@@ -765,6 +769,12 @@ day** replaces everything; your current tree is kept as a backup first.
 ## Exporting
 **File → Export GEDCOM (everything)** or **(living people private)**. Photos go in a `<file>-media` folder
 next to the `.ged` file; keep the two together. Every export is read back and checked.
+
+**File → Export GEDCOM 7** writes the newer GEDCOM 7 instead: a **GEDCOM 7 file** (photos in a folder next to it,
+as above) or a **GEDZIP with photos**, one `.gdz` file holding the GEDCOM 7 file and every photo and document. Each
+comes as everything or with living people private. Not every program reads GEDCOM 7 yet; if the program you are
+sending to is older, use the ordinary export. GEDCOM 7 files and GEDZIP files can also be brought in with
+**File → Import tree...**, photos and all.
 
 ## Separate family trees
 **File → Family trees** keeps unrelated research apart: your own family, your spouse's, a client's or a one-name study.

@@ -47,6 +47,22 @@ impl App {
         }
     }
 
+    /// The colour of the band across the top of a card, when the band is turned on: the two sides
+    /// when Colours is set to them, otherwise men and women.
+    pub(crate) fn ped_band_colour(&self, sex: &str, side: Option<bool>) -> Option<Color32> {
+        if !self.settings.ped_band {
+            return None;
+        }
+        if self.settings.ped_colours == 2 {
+            return side.map(|f| if f { FATHER_SIDE } else { MOTHER_SIDE });
+        }
+        match sex {
+            "M" => Some(MAN),
+            "F" => Some(WOMAN),
+            _ => None,
+        }
+    }
+
     /// A box's fill with its tint, if any.
     pub(crate) fn ped_fill(&self, base: Color32, sex: &str, side: Option<bool>) -> Color32 {
         match self.ped_tint(sex, side) {
@@ -77,6 +93,10 @@ impl App {
                     }
                 }
             });
+            let mut band = self.settings.ped_band;
+            if ui.checkbox(&mut band, crate::i18n::tr("Colour band")).on_hover_text(crate::i18n::tr("A thin coloured band across the top of each card: blue for men and pink for women, or the father's and mother's sides when Colours is set to them")).changed() {
+                *act = Some(Action::PedBand(band));
+            }
             ui.separator();
             ui.label(crate::i18n::tr("Generations:"));
             if ui.add_enabled(gens > 3, egui::Button::new("-")).clicked() {
@@ -172,6 +192,7 @@ impl App {
         }
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
+        self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
             let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
             let o = resp.rect.min + vec2(6.0, 0.0);
@@ -195,7 +216,7 @@ impl App {
             let p = &self.db.people[&sel];
             let cy0 = centre_y(0, 0);
             let r0 = Rect::from_min_size(pos2(o.x, cy0 - 26.0 * z), vec2(cw, 52.0 * z));
-            painter.rect(r0, 6.0, accent, Stroke::new(2.0_f32, ink));
+            crate::views::card(&painter, r0, 8.0, accent, Stroke::new(2.0_f32, ink), ui.visuals().dark_mode);
             self.ped_face(ui, Rect::from_min_size(r0.min + vec2(5.0, 5.0) * z, vec2(42.0, 42.0) * z), p, false, on_accent(accent).gamma_multiply(0.22), on_accent(accent));
             painter.with_clip_rect(r0.shrink(2.0)).text(pos2(r0.min.x + 54.0 * z, r0.center().y - 8.0 * z), Align2::LEFT_CENTER, styled_name(p), FontId::proportional(15.0 * z), on_accent(accent));
             painter.text(pos2(r0.min.x + 54.0 * z, r0.center().y + 10.0 * z), Align2::LEFT_CENTER, life(p), FontId::proportional(12.5 * z), on_accent(accent));
@@ -236,7 +257,7 @@ impl App {
                         }
                         continue;
                     }
-                    painter.rect(r, 6.0, box_c, edge);
+                    crate::views::card(&painter, r, 8.0, box_c, edge, ui.visuals().dark_mode);
                     let half = ch * 0.34;
                     for (k, who) in [(0usize, f), (1usize, m)] {
                         let lr = Rect::from_min_size(pos2(r.min.x, r.min.y + 2.0 + k as f32 * half), vec2(cw, half));
@@ -332,6 +353,7 @@ impl App {
         }
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
+        self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
             let (resp, painter) = ui.allocate_painter(vec2(width, height), Sense::hover());
             let o = resp.rect.min;
@@ -382,7 +404,7 @@ impl App {
                         continue;
                     }
                     let is_sel = k == 0;
-                    painter.rect(r, 10.0, if is_sel { blend(accent, box_c, 0.25) } else { box_c }, if is_sel { Stroke::new(2.0_f32, accent) } else { edge });
+                    crate::views::card(&painter, r, 10.0, if is_sel { blend(accent, box_c, 0.25) } else { box_c }, if is_sel { Stroke::new(2.0_f32, accent) } else { edge }, ui.visuals().dark_mode);
                     for (h, who) in [(0usize, a), (1usize, b)] {
                         let half = Rect::from_min_size(pos2(r.min.x + h as f32 * tw / 2.0, r.min.y), vec2(tw / 2.0, th));
                         let side = if k == 0 { None } else if k == 1 { Some(h == 0) } else { Some(i < n / 2) };
@@ -445,7 +467,7 @@ impl App {
                 let r = Rect::from_min_size(pos2(x0 + j as f32 * (kid_w + 10.0), y0), vec2(kid_w, 46.0 * z));
                 painter.add(egui::Shape::line_segment([pos2(r.center().x, y0 - gy * 0.4), pos2(r.center().x, y0)], line));
                 let hit = self.ped_person_hit(ui, r, *k, ("upk", j), act);
-                painter.rect(r, 8.0, self.ped_fill(if hit.hovered() { hover_c } else { box_c }, &p.sex, None), edge);
+                crate::views::card(&painter, r, 8.0, self.ped_fill(if hit.hovered() { hover_c } else { box_c }, &p.sex, None), edge, ui.visuals().dark_mode);
                 let face = Rect::from_min_size(r.min + vec2(5.0, 5.0) * z, vec2(36.0, 36.0) * z);
                 self.ped_face(ui, face, p, true, hover_c, head);
                 let pc = painter.with_clip_rect(r.shrink(2.0));
@@ -479,16 +501,34 @@ mod tests {
         for style in 0..5u8 {
             for colours in 0..3u8 {
                 for gens in [3usize, 5, 10] {
+                    app.settings.ped_band = gens == 5;
+                    app.settings.dark = gens != 10;
                     app.settings.ped_style = style;
                     app.settings.ped_colours = colours;
                     app.settings.gens = gens;
                     let input = egui::RawInput { screen_rect: Some(Rect::from_min_size(egui::Pos2::ZERO, vec2(1400.0, 900.0))), ..Default::default() };
+                    ctx.set_visuals(if app.settings.dark { egui::Visuals::dark() } else { egui::Visuals::light() });
                     let _ = ctx.run(input, |ctx| {
                         let mut act = None;
                         egui::CentralPanel::default().show(ctx, |ui| app.pedigree(ui, &mut act));
                     });
                 }
             }
+        }
+        // the backdrop and the cards are clearly different, in both modes
+        for dark in [true, false] {
+            let ui_ctx = egui::Context::default();
+            ui_ctx.set_visuals(if dark { egui::Visuals::dark() } else { egui::Visuals::light() });
+            let input = egui::RawInput { screen_rect: Some(Rect::from_min_size(egui::Pos2::ZERO, vec2(800.0, 600.0))), ..Default::default() };
+            let _ = ui_ctx.run(input, |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    let (_, _, card, _, ink, _, _) = app.chart_colors(ui);
+                    let stage = app.chart_stage(ui);
+                    let lum = |c: Color32| 0.2126 * c.r() as f32 + 0.7152 * c.g() as f32 + 0.0722 * c.b() as f32;
+                    assert!((lum(card) - lum(stage)).abs() > 18.0, "cards stand out from the backdrop (dark {})", dark);
+                    assert!((lum(ink) - lum(card)).abs() > 120.0, "names are easy to read on the cards (dark {})", dark);
+                });
+            });
         }
     }
 }

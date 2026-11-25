@@ -32,9 +32,9 @@ and photos came across, and anything that could not be carried over. Your origin
 - **Safe by design.** Atomic saves with read-back verification, a kept previous version, daily
   checksummed backups for 14 days, automatic recovery from damaged files, and a visible
   `Documents/Gilded Roots` data folder that you can relocate.
-- **GEDCOM in and out.** Opens PAF 5 `.paf` and Ancestral Quest `.aq` files directly. Reads GEDCOM 5.5 / 5.5.1 (UTF-8, UTF-16, ANSEL, Windows ANSI) from PAF, Ancestry,
+- **GEDCOM in and out.** Opens PAF 5 `.paf` and Ancestral Quest `.aq` files directly. Reads GEDCOM 5.5 / 5.5.1 (UTF-8, UTF-16, ANSEL, Windows ANSI) and GEDCOM 7 / GEDZIP from PAF, Ancestry,
   FamilySearch, MyHeritage, RootsMagic, Gramps and others. Anything the app has no field for is preserved and
-  written back. Every import and export is checked and reported.
+  written back. Exports GEDCOM 5.5.1, GEDCOM 7 and GEDZIP (with photos). Every import and export is checked and reported.
 - **Real sources and citations.** Reusable source records, repositories, page/entry references, URLs, access
   dates, transcriptions and quality ratings, attached to people, events and families.
 - **Safer merging.** Name and birth year are only clues. Merges happen on a side-by-side review screen that

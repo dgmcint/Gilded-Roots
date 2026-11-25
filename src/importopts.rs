@@ -232,7 +232,7 @@ impl App {
     /// File > Import: choose a file, read it, and open the options window.
     pub(crate) fn start_import(&mut self) {
         // No file-type filter: some programs and drives give GEDCOM files odd or missing extensions, and a filter greys them out.
-        let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged), a PAF file (.paf), an Ancestral Quest file (.aq or .aqz) or a saved tree (.json)")).set_directory(start_dir()).pick_file() else { return };
+        let Some(path) = rfd::FileDialog::new().set_title(crate::i18n::tr("Choose a GEDCOM file (.ged or .gdz), a PAF file (.paf), an Ancestral Quest file (.aq or .aqz) or a saved tree (.json)")).set_directory(start_dir()).pick_file() else { return };
         remember_dir(&path);
         self.open_import(&path);
     }
@@ -483,7 +483,7 @@ mod tests {
     const GED: &str = "0 HEAD\n1 SOUR PAF\n0 @I1@ INDI\n1 NAME Ann /Lee/\n1 BIRT\n2 DATE 1900\n2 SOUR @S1@\n1 NOTE Kind and funny\n2 CONT second line\n1 BAPL\n2 DATE 1910\n2 TEMP SLAKE\n1 ADDR 1 Main St\n1 _TODO Find census\n1 _ODD something\n1 OBJE\n2 FILE https://example.com/a.jpg\n2 FORM jpg\n1 FAMS @F1@\n0 @I2@ INDI\n1 NAME Bob /Lee/\n1 FAMS @F1@\n0 @I3@ INDI\n1 NAME Cal /Lee/\n1 BIRT\n2 DATE 1990\n1 FAMC @F1@\n0 @F1@ FAM\n1 HUSB @I2@\n1 WIFE @I1@\n1 CHIL @I3@\n0 @S1@ SOUR\n1 TITL Parish register\n0 @N1@ NOTE A shared note\n0 TRLR\n";
 
     fn src() -> ImportSource {
-        ImportSource { path: PathBuf::from("/nowhere/test.ged"), text: Some(GED.to_string()), json: None, charset: "UTF-8".into(), program: String::new(), warnings: vec![] }
+        ImportSource { path: PathBuf::from("/nowhere/test.ged"), text: Some(GED.to_string()), json: None, charset: "UTF-8".into(), program: String::new(), warnings: vec![], tmp: None }
     }
 
     #[test]

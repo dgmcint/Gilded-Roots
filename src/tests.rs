@@ -131,6 +131,59 @@ mod tests {
         assert!(to_ged(&db3).contains("2 FILE tree-media/grandpa.jpg"));
     }
 
+    /// GEDCOM 7: a .ged with a photo folder, and a GEDZIP holding everything, both read back whole.
+    #[test]
+    fn gedcom7_and_gedzip_with_photos_end_to_end() {
+        let _home = crate::home_lock();
+        let home = tdir("home7");
+        std::env::set_var("HOME", &home);
+        std::env::set_var("APPDATA", &home);
+        let mut db = Db::default();
+        let a = db.alloc();
+        let b = db.alloc();
+        let photo = media_dir().join("222-old farm.jpg");
+        std::fs::write(&photo, b"farm photo bytes").unwrap();
+        db.people.insert(a, Person { name: "Grand Pa".into(), given: "Grand".into(), surname: "Pa".into(), bd: "about 1850".into(), media: vec![Media { file: "222-old farm.jpg".into(), name: "old farm.jpg".into(), caption: "On the farm".into(), ..Default::default() }], ..Default::default() });
+        db.people.insert(b, Person { name: "Kid Pa".into(), given: "Kid".into(), surname: "Pa".into(), living: true, bd: "2001".into(), ..Default::default() });
+        let f = db.alloc();
+        db.fams.insert(f, Family { h: Some(a), kids: vec![b], ..Default::default() });
+
+        let out = tdir("out7");
+        let ged = out.join("tree7.ged");
+        let msg = write_gedcom7(&db, &ged, false, false).expect("GEDCOM 7 export ok");
+        assert!(msg.contains("1 photo/document file"), "{}", msg);
+        let text = std::fs::read_to_string(&ged).unwrap();
+        assert!(text.contains("2 VERS 7.0") && text.contains("FILE tree7-media/old_farm.jpg") && text.contains("FORM image/jpeg"), "{}", text);
+        assert!(out.join("tree7-media").join("old_farm.jpg").is_file());
+
+        let gdz = out.join("tree7.gdz");
+        let msg = write_gedcom7(&db, &gdz, true, true).expect("GEDZIP export ok");
+        assert!(msg.contains("inside it") || !msg.contains("photo"), "{}", msg);
+        let mut z = zip::ZipArchive::new(std::fs::File::open(&gdz).unwrap()).unwrap();
+        assert!(z.by_name("gedcom.ged").is_ok());
+        let inside = { let mut s = String::new(); std::io::Read::read_to_string(&mut z.by_name("gedcom.ged").unwrap(), &mut s).unwrap(); s };
+        assert!(!inside.contains("2001") && !inside.contains("Kid Pa"), "living people left out");
+        assert!(z.by_name("media/old_farm.jpg").is_ok());
+
+        // another computer
+        let home2 = tdir("home7b");
+        std::env::set_var("HOME", &home2);
+        std::env::set_var("APPDATA", &home2);
+        for p in [&ged, &gdz] {
+            let (db2, rep) = read_ged_file(p).expect("import ok");
+            assert_eq!(db2.people.len(), 2);
+            assert_eq!(rep.gedcom_version, "7.0");
+            assert!(rep.lost.is_empty(), "{:?}", rep.lost);
+            assert_eq!((rep.media_found, rep.media_missing), (1, 0), "{}", p.display());
+            let g = db2.people.values().find(|x| x.given == "Grand").unwrap();
+            assert_eq!(g.media[0].caption, "On the farm");
+            assert_eq!(std::fs::read(mfile(&g.media[0].file)).unwrap(), b"farm photo bytes");
+        }
+        // the GEDZIP's unpacked copy is cleaned up afterwards
+        let left = std::fs::read_dir(std::env::temp_dir()).unwrap().filter_map(|e| e.ok()).filter(|e| e.file_name().to_string_lossy().starts_with("gilded-roots-gedzip-")).count();
+        assert_eq!(left, 0);
+    }
+
     #[test]
     fn saved_tree_json_round_trips_every_new_field() {
         let text = "0 HEAD\n0 @S1@ SOUR\n1 TITL T\n0 @N1@ NOTE n\n0 @I1@ INDI\n1 NAME A /B/\n1 NAME C /D/\n2 TYPE aka\n1 BIRT\n2 DATE ABT 1900\n2 SOUR @S1@\n3 PAGE 4\n2 CAUS x\n1 NOTE @N1@\n1 _X y\n1 OBJE\n2 FILE a.jpg\n0 @F1@ FAM\n1 HUSB @I1@\n1 MARR\n2 TYPE civil\n1 DIV\n0 TRLR\n";

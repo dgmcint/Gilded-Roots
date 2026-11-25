@@ -82,6 +82,9 @@ pub(crate) struct Settings {
     pub(crate) ped_style: u8,
     #[serde(default)]
     pub(crate) ped_colours: u8,
+    /// A thin coloured band across the top of each pedigree card (men and women, or the two sides).
+    #[serde(default)]
+    pub(crate) ped_band: bool,
     /// Open on the Home tab when the program starts.
     #[serde(default = "default_true")]
     pub(crate) start_home: bool,
@@ -202,7 +205,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, start_home: true }
+        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, start_home: true }
     }
 }
 

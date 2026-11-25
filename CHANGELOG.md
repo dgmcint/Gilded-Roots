@@ -2,6 +2,17 @@
 
 Major work so far, in the order it was done.
 
+## Coming next: GEDCOM 7, GEDZIP and charts that stand out
+
+- **GEDCOM 7 and GEDZIP.** File > Export GEDCOM 7 writes a GEDCOM 7 file (photos in a folder beside it) or a GEDZIP
+  (.gdz: one file with the GEDCOM 7 file and every photo and document), each with everything or with living
+  people private. GEDCOM 7 files and GEDZIP files can be imported, photos and all. Everything a 5.5.1 export
+  keeps survives the trip to GEDCOM 7 and back.
+- **Charts that stand out.** Every tree chart now sits on its own backdrop, with the people on solid cards with
+  rounded corners and a soft shadow: mid-grey cards on near-black in dark mode, white cards on a soft grey in
+  light mode. A new **Colour band** switch puts a thin blue or pink band (or the two sides' colours) across the
+  top of each card.
+
 ## Coming next: the Home tab
 
 - **A Home tab the program opens on** (can be turned off): the home person, recent people, "On this day" in the

@@ -388,6 +388,8 @@ pub(crate) enum Action {
     SetGens(usize),
     /// The pedigree's style and colours
     PedStyle(u8, u8),
+    /// Turn the coloured band on pedigree cards on or off.
+    PedBand(bool),
     /// Turn the hand tool on the charts on or off
     SetHand(bool),
     Back,
