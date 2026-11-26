@@ -8,6 +8,8 @@ APP="target/release/bundle/osx/Gilded Roots.app"
 PLIST="$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Delete :NSMicrophoneUsageDescription" "$PLIST" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string Gilded Roots records the family stories you choose to save." "$PLIST"
+# Finder and iCloud can leave extra data on the files, which codesign refuses ("detritus")
+xattr -cr "$APP"
 codesign --force --deep -s - "$APP"
 tccutil reset Microphone local.gildedroots 2>/dev/null || true
 echo ""
