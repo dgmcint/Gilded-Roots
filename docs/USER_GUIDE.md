@@ -78,15 +78,16 @@ practice mode. Try anything: nothing is saved, and your own tree is not touched.
 ![The main window](images/guide/screen.png)
 
 1. **Menus:** File, Edit, Add, View, Search, Reports, Tools and Help. Everything the program does is in a menu.
-2. **Main toolbar:** Back, Forward, Home, Add person, Edit, Find, Quick jump, Undo, Redo, Print and Back up now.
-   It is the same on every tab.
-3. **Tabs:** Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map and DNA. Each shows your tree
-   a different way (Ctrl+1 to Ctrl+9; Cmd on a Mac).
+2. **Main toolbar:** Back, Forward, Home, Add person, Edit, Find, Quick jump, Notepad, Undo, Redo, Print and Back up
+   now. It is the same on every tab.
+3. **Tabs:** Home, Family, Pedigree, Descendants, Individual, Memories, People, Map, Research and DNA. Each shows your
+   tree a different way (Ctrl+1 to Ctrl+9; Cmd on a Mac).
 4. **Tab toolbar:** buttons for the tab that is open, such as **Add father** on the Family tab.
-5. **Getting around:** the trail of people you have visited, Recent, Bookmarks, and buttons listing the selected
-   person's parents, brothers and sisters, partners and children.
-6. **The chart or page itself.** Click a person to highlight them; double-click to open their page.
+5. **Getting around:** the trail of people you have visited (on the Pedigree tab), **Recent** and **Bookmarks**.
+6. **The chart or page itself.** Click a person to highlight them; double-click to open their page. Drag an empty
+   part of a chart, or scroll, to move it.
 7. **Status bar:** what just happened, and whether your changes are saved.
+8. **Floating toolbar** beside the charts: Select or Hand, Centre, the home person, zoom, fit and print.
 
 Hover over any button to see what it does and its keyboard shortcut.
 

@@ -13,7 +13,7 @@ impl App {
         // A value laid out at a set width (wrapping only text longer than that), so inside a grid
         // it keeps its width; a plain wrapping label there shrinks to one word per line.
         let val = |ui: &mut egui::Ui, t: &str| {
-            let w = (box_w - 200.0).clamp(160.0, 720.0);
+            let w = (box_w - 250.0).clamp(140.0, 720.0);
             let g = ui.fonts(|f| f.layout(t.to_string(), FontId::proportional(15.0), ui.visuals().text_color(), w));
             ui.add(egui::Label::new(g));
         };
