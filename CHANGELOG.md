@@ -2,7 +2,32 @@
 
 Major work so far, in the order it was done.
 
-## Coming next: GEDCOM 7, GEDZIP, locked archives, a family website and charts that stand out
+## 1.0.8 (25 November 2026)
+
+**Ancestral Quest**
+
+- **Open Ancestral Quest databases directly** (File > Import tree..., or Import an existing family tree): .aq files
+  and Ancestral Quest's .aqz backups, without needing Ancestral Quest. Names, births, christenings, deaths and
+  burials with places, "abt", "bef", "aft" and "between" dates, occupations, immigration and the other events,
+  notes, sources with the page cited, photo links, marriages, divorces and children in their order all come
+  across, through the usual Import options window and report. LDS ordinances, repositories and addresses are not
+  read yet; export a GEDCOM from Ancestral Quest for those.
+
+**Pedigree styles**
+
+- **A Style list above the pedigree:** Classic (as before), **Photo cards** (photo, name, years and birthplace),
+  **Couple cards** (one card per couple with their marriage and a Children list to jump to), **Upright tree**
+  (ancestors rising above the chosen person and spouse, children underneath) and **Compact** (names only, up to
+  10 generations). **Colours:** plain, men and women, or father's and mother's side. Remembered.
+
+**The Home tab**
+
+- **A Home tab the program opens on** (can be turned off): the home person, recent people, "On this day" in the
+  family (births, marriages and deaths, with how many years ago), the research to-do list, what to look for next
+  (ends of the line and people with no sources), the changes made since opening, and the last backup with a
+  Back up now button.
+
+**Files, sharing and the look**
 
 - **GEDCOM 7 and GEDZIP.** File > Export GEDCOM 7 writes a GEDCOM 7 file (photos in a folder beside it) or a GEDZIP
   (.gdz: one file with the GEDCOM 7 file and every photo and document), each with everything or with living
@@ -24,29 +49,6 @@ Major work so far, in the order it was done.
   rounded corners and a soft shadow: mid-grey cards on near-black in dark mode, white cards on a soft grey in
   light mode. A new **Colour band** switch puts a thin blue or pink band (or the two sides' colours) across the
   top of each card.
-
-## Coming next: the Home tab
-
-- **A Home tab the program opens on** (can be turned off): the home person, recent people, "On this day" in the
-  family (births, marriages and deaths, with how many years ago), the research to-do list, what to look for next
-  (ends of the line and people with no sources), the changes made since opening, and the last backup with a
-  Back up now button.
-
-## Coming next: pedigree styles
-
-- **A Style list above the pedigree:** Classic (as before), **Photo cards** (photo, name, years and birthplace),
-  **Couple cards** (one card per couple with their marriage and a Children list to jump to), **Upright tree**
-  (ancestors rising above the chosen person and spouse, children underneath) and **Compact** (names only, up to
-  10 generations). **Colours:** plain, men and women, or father's and mother's side. Remembered.
-
-## Coming next: Ancestral Quest files
-
-- **Open Ancestral Quest databases directly** (File > Import tree..., or Import an existing family tree): .aq files
-  and Ancestral Quest's .aqz backups, without needing Ancestral Quest. Names, births, christenings, deaths and
-  burials with places, "abt", "bef", "aft" and "between" dates, occupations, immigration and the other events,
-  notes, sources with the page cited, photo links, marriages, divorces and children in their order all come
-  across, through the usual Import options window and report. LDS ordinances, repositories and addresses are not
-  read yet; export a GEDCOM from Ancestral Quest for those.
 
 ## 1.0.7 (24 November 2026)
 
