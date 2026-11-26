@@ -4,6 +4,11 @@ Major work so far, in the order it was done.
 
 ## Next version (not released yet)
 
+- **Tabs on the Individual page**: Facts, Timeline, Memories, Sources, Notes, Research and Merge and delete, each
+  in a box. Facts has the vital facts, other names, events (and contact details for the living, and LDS ordinances
+  when chosen) on the left and the timeline on the right. Relationships stay on the right. (The panels and layouts
+  this replaces are gone.)
+- **Click the photo by the name** to add or change a person's picture.
 - **Charts on a canvas, as on the genealogy websites**: the pedigree, descendants, fan and hourglass charts fill the
   window; drag any empty part (or anywhere with the Hand) or scroll to move them. They start at the left, centred top
   to bottom.

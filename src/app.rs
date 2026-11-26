@@ -326,7 +326,6 @@ pub(crate) struct Extra {
     pub(crate) table_col: table::Col,
     pub(crate) table_desc: bool,
     pub(crate) table_only: table::Only,
-    pub(crate) layout_name: String,
     pub(crate) ver_open: bool,
     pub(crate) ver: Option<(String, Db, (Vec<u32>, Vec<u32>, Vec<u32>))>,
     /// Tools > Tombstone calculator.

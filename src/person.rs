@@ -8,10 +8,12 @@ impl App {
     pub(crate) fn person_read(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str) {
         let Some(p) = self.db.people.get(&id).cloned() else { return };
         let mut pdf_req: Option<(PathBuf, String)> = None;
+        // the width of the box this is shown in (the Facts tab has two side by side)
+        let box_w = ui.available_width();
         // A value laid out at a set width (wrapping only text longer than that), so inside a grid
         // it keeps its width; a plain wrapping label there shrinks to one word per line.
         let val = |ui: &mut egui::Ui, t: &str| {
-            let w = (ui.ctx().screen_rect().width() * 0.42).clamp(260.0, 720.0);
+            let w = (box_w - 200.0).clamp(160.0, 720.0);
             let g = ui.fonts(|f| f.layout(t.to_string(), FontId::proportional(15.0), ui.visuals().text_color(), w));
             ui.add(egui::Label::new(g));
         };
@@ -31,67 +33,6 @@ impl App {
         };
         match sec {
             "facts" => {
-                ui.horizontal(|ui| {
-                    let k = match self.settings.photo_size { 0 => 0.75, 2 => 1.45, 3 => 2.0, _ => 1.0 };
-                    let sz = vec2(110.0 * k, 130.0 * k);
-                    match self.portrait_src(&p) {
-                        Some((uri, fr)) => {
-                            let (r, _) = ui.allocate_exact_size(sz, Sense::hover());
-                            put_photo(ui, r, &uri, fr, 6.0);
-                        }
-                        None => {
-                            let (r, _) = ui.allocate_exact_size(sz, Sense::hover());
-                            ui.painter().rect_filled(r, 6.0, ui.visuals().faint_bg_color);
-                            ui.painter().rect_stroke(r, 6.0, ui.visuals().widgets.noninteractive.bg_stroke);
-                            let ini = p.name.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_else(|| "?".into());
-                            ui.painter().text(r.center(), Align2::CENTER_CENTER, ini, FontId::proportional(48.0), ui.visuals().weak_text_color());
-                        }
-                    }
-                    ui.add_space(10.0);
-                    ui.vertical(|ui| {
-                        let mut full = String::new();
-                        for part in [p.prefix.trim(), p.name.trim(), p.suffix.trim()] {
-                            if !part.is_empty() {
-                                if !full.is_empty() {
-                                    full.push(' ');
-                                }
-                                full.push_str(part);
-                            }
-                        }
-                        if full.is_empty() {
-                            full = "(no name)".into();
-                        }
-                        ui.label(RichText::new(full).size(26.0).strong());
-                        let l = life(&p);
-                        let sex = match p.sex.as_str() {
-                            "M" => "Male",
-                            "F" => "Female",
-                            _ => "Sex not recorded",
-                        };
-                        let mut sub = sex.to_string();
-                        if !l.is_empty() {
-                            sub = format!("{}   |   {}", l, sub);
-                        }
-                        if p.living {
-                            sub.push_str("   |   Living");
-                        }
-                        ui.label(RichText::new(sub).size(16.0));
-                        if !p.nick.trim().is_empty() {
-                            ui.label(RichText::new(crate::i18n::trf("Known as \"{}\"", &["Known as \"", "\""], &[(p.nick.trim()).to_string()])).size(15.0).italics());
-                        }
-                        ui.add_space(4.0);
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new(crate::i18n::trf("Person ID #{}", &["Person ID #", ""], &[(id).to_string()])).small().weak());
-                            if let Some(old) = old_id(&self.db.people[&id]) {
-                                ui.label(RichText::new(crate::i18n::trf("(Old ID #{})", &["(Old ID #", ")"], &[(old).to_string()])).small().weak()).on_hover_text(crate::i18n::tr("This person's number before the tree was renumbered (Tools > Renumber people)"));
-                            }
-                            if self.db.home == Some(id) {
-                                ui.label(RichText::new(crate::i18n::tr("Home person")).small().weak());
-                            }
-                        });
-                    });
-                });
-                ui.add_space(10.0);
                 ui.label(RichText::new(crate::i18n::tr("Vital facts")).size(17.0).strong());
                 ui.separator();
                 let cf = |t: &str| p.fx.get(t).map(|e| e.conf.clone()).unwrap_or_default();
@@ -118,7 +59,6 @@ impl App {
             }
             "timeline" => {
                 let tl = self.db.timeline(id);
-                ui.add_space(12.0);
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(crate::i18n::tr("Timeline")).size(17.0).strong());
                     if ui.checkbox(&mut self.settings.show_history, crate::i18n::tr("with historical events")).changed() {
@@ -373,6 +313,134 @@ impl App {
         if pdf_req.is_some() {
             self.x.pdf_req = pdf_req;
         }
+    }
+
+    /// The top of the Individual page: the photo (click it to add or change the picture), the
+    /// name, years and ID. It stays in place above the tabs.
+    pub(crate) fn person_header(&mut self, ui: &mut egui::Ui, id: u32) {
+        let Some(p) = self.db.people.get(&id).cloned() else { return };
+        let mut pick = false;
+        let mut to_memories = false;
+                ui.horizontal(|ui| {
+                    let k = match self.settings.photo_size { 0 => 0.75, 2 => 1.45, 3 => 2.0, _ => 1.0 };
+                    let sz = vec2(110.0 * k, 130.0 * k);
+                    // the photo: click to add one, or to change it
+                    let (r, resp) = ui.allocate_exact_size(sz, Sense::click());
+                    let has = match self.portrait_src(&p) {
+                        Some((uri, fr)) => {
+                            put_photo(ui, r, &uri, fr, 6.0);
+                            true
+                        }
+                        None => {
+                            ui.painter().rect_filled(r, 6.0, ui.visuals().faint_bg_color);
+                            ui.painter().rect_stroke(r, 6.0, ui.visuals().widgets.noninteractive.bg_stroke);
+                            let ini = p.name.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_else(|| "?".into());
+                            ui.painter().text(r.center() - vec2(0.0, 10.0), Align2::CENTER_CENTER, ini, FontId::proportional(42.0), ui.visuals().weak_text_color());
+                            ui.painter().text(pos2(r.center().x, r.max.y - 14.0), Align2::CENTER_CENTER, crate::i18n::tr("+ Add a picture"), FontId::proportional(12.0), ui.visuals().hyperlink_color);
+                            false
+                        }
+                    };
+                    if resp.hovered() {
+                        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+                        if has {
+                            let band = Rect::from_min_max(pos2(r.min.x, r.max.y - 24.0), r.max);
+                            ui.painter().rect_filled(band, egui::Rounding { nw: 0.0, ne: 0.0, sw: 6.0, se: 6.0 }, Color32::from_black_alpha(150));
+                            ui.painter().text(band.center(), Align2::CENTER_CENTER, crate::i18n::tr("Change picture"), FontId::proportional(12.0), Color32::WHITE);
+                        }
+                    }
+                    let resp = resp.on_hover_text(if has { crate::i18n::tr("Choose a different picture for this person") } else { crate::i18n::tr("Choose a picture of this person from your computer") });
+                    if resp.clicked() {
+                        pick = true;
+                    }
+                    resp.context_menu(|ui| {
+                        if ui.button(crate::i18n::tr("Choose a picture from the computer...")).clicked() {
+                            pick = true;
+                            ui.close_menu();
+                        }
+                        if ui.button(crate::i18n::tr("Choose from their memories")).clicked() {
+                            to_memories = true;
+                            ui.close_menu();
+                        }
+                    });
+                    ui.add_space(10.0);
+                    ui.vertical(|ui| {
+                        let mut full = String::new();
+                        for part in [p.prefix.trim(), p.name.trim(), p.suffix.trim()] {
+                            if !part.is_empty() {
+                                if !full.is_empty() {
+                                    full.push(' ');
+                                }
+                                full.push_str(part);
+                            }
+                        }
+                        if full.is_empty() {
+                            full = "(no name)".into();
+                        }
+                        ui.label(RichText::new(full).size(26.0).strong());
+                        let l = life(&p);
+                        let sex = match p.sex.as_str() {
+                            "M" => "Male",
+                            "F" => "Female",
+                            _ => "Sex not recorded",
+                        };
+                        let mut sub = sex.to_string();
+                        if !l.is_empty() {
+                            sub = format!("{}   |   {}", l, sub);
+                        }
+                        if p.living {
+                            sub.push_str("   |   Living");
+                        }
+                        ui.label(RichText::new(sub).size(16.0));
+                        if !p.nick.trim().is_empty() {
+                            ui.label(RichText::new(crate::i18n::trf("Known as \"{}\"", &["Known as \"", "\""], &[(p.nick.trim()).to_string()])).size(15.0).italics());
+                        }
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new(crate::i18n::trf("Person ID #{}", &["Person ID #", ""], &[(id).to_string()])).small().weak());
+                            if let Some(old) = old_id(&self.db.people[&id]) {
+                                ui.label(RichText::new(crate::i18n::trf("(Old ID #{})", &["(Old ID #", ")"], &[(old).to_string()])).small().weak()).on_hover_text(crate::i18n::tr("This person's number before the tree was renumbered (Tools > Renumber people)"));
+                            }
+                            if self.db.home == Some(id) {
+                                ui.label(RichText::new(crate::i18n::tr("Home person")).small().weak());
+                            }
+                        });
+                    });
+                });
+        if pick {
+            self.pick_portrait(id);
+        }
+        if to_memories {
+            self.settings.person_tab = "media".to_string();
+            save_settings(&self.settings);
+        }
+    }
+
+    /// Choose a picture from the computer, keep it with the person's memories, and make it their
+    /// profile photo.
+    pub(crate) fn pick_portrait(&mut self, id: u32) {
+        let Some(path) = rfd::FileDialog::new()
+            .set_title(crate::i18n::tr("Choose a picture"))
+            .add_filter(crate::i18n::tr("Pictures"), &["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff"])
+            .pick_file()
+        else {
+            return;
+        };
+        let name = path.file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
+        let Some((file, shown)) = import_one(&path, &name) else {
+            self.status = crate::i18n::tr("That picture could not be added.").to_string();
+            return;
+        };
+        if let Some(p) = self.db.people.get_mut(&id) {
+            if !p.media.iter().any(|m| m.file == file) {
+                p.media.push(Media { file: file.clone(), name: shown, ..Default::default() });
+            }
+            p.portrait = file;
+            p.portrait_crop = None;
+            p.face_portrait = None;
+        }
+        self.ensure_previews(id);
+        self.dirty = true;
+        self.status = crate::i18n::tr("Profile photo set. It now shows in the pedigree boxes.").to_string();
     }
 
     pub(crate) fn person_section(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, sec: &str) {
@@ -1017,51 +1085,6 @@ impl App {
         }
     }
 
-    /// The panels that are shown and docked, one after another, each with its own title bar.
-    pub(crate) fn dock_panels(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, id: u32, editing: bool) {
-        let items = self.settings.dock.clone();
-        let mut cmd: Option<(usize, u8)> = None; // 0 up, 1 down, 2 pop out, 3 hide
-        for (i, it) in items.iter().enumerate() {
-            if !it.on || it.float {
-                continue;
-            }
-            let cid = ui.make_persistent_id(("dock", it.sec.as_str()));
-            egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), cid, true)
-                .show_header(ui, |ui| {
-                    ui.label(RichText::new(crate::i18n::trv(dock_title(&it.sec))).strong());
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.small_button("x").on_hover_text(crate::i18n::tr("Hide this panel")).clicked() {
-                            cmd = Some((i, 3));
-                        }
-                        if ui.small_button(crate::i18n::tr("Float")).on_hover_text(crate::i18n::tr("Pop this panel out into its own window")).clicked() {
-                            cmd = Some((i, 2));
-                        }
-                        if ui.small_button("v").on_hover_text(crate::i18n::tr("Move down")).clicked() {
-                            cmd = Some((i, 1));
-                        }
-                        if ui.small_button("^").on_hover_text(crate::i18n::tr("Move up")).clicked() {
-                            cmd = Some((i, 0));
-                        }
-                    });
-                })
-                .body(|ui| {
-                    if editing { self.person_section(ui, act, id, &it.sec) } else { self.person_read(ui, act, id, &it.sec) }
-                });
-            ui.add_space(4.0);
-        }
-        if let Some((i, c)) = cmd {
-            let d = &mut self.settings.dock;
-            match c {
-                0 if i > 0 => d.swap(i, i - 1),
-                1 if i + 1 < d.len() => d.swap(i, i + 1),
-                2 => d[i].float = true,
-                3 => d[i].on = false,
-                _ => {}
-            }
-            save_settings(&self.settings);
-        }
-    }
-
     pub(crate) fn person_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let id = self.sel.unwrap();
         let editing = matches!(&self.editing, Some(e) if e.id == id);
@@ -1093,145 +1116,111 @@ impl App {
         }
         self.problem_flags(ui, id);
         ui.add_space(4.0);
-        self.dock_bar(ui);
-        ui.add_space(4.0);
-        let docked = self.settings.dock.iter().any(|d| d.on && !d.float);
+        // Relationships stay on the right; everything else is a tab
         let wide = ui.available_width() > 820.0;
-        if wide && docked {
+        if wide {
             egui::SidePanel::right("person_dock").resizable(true).default_width(self.settings.dock_w).width_range(280.0..=720.0).show_inside(ui, |ui| {
+                ui.label(RichText::new(crate::i18n::tr("Relationships")).size(17.0).strong());
+                ui.separator();
                 egui::ScrollArea::vertical().id_salt("person_dock_scroll").auto_shrink([false, false]).show(ui, |ui| {
-                    self.dock_panels(ui, act, id, editing);
+                    if editing { self.person_section(ui, act, id, "relationships") } else { self.person_read(ui, act, id, "relationships") }
                 });
             });
         }
         egui::CentralPanel::default().show_inside(ui, |ui| {
-            egui::ScrollArea::vertical().id_salt("person_main").auto_shrink([false, false]).show(ui, |ui| {
-                if editing {
-                    self.person_section(ui, act, id, "facts");
-                    self.person_section(ui, act, id, "timeline");
-                } else {
-                    self.person_read(ui, act, id, "facts");
-                    self.person_read(ui, act, id, "timeline");
+            self.person_header(ui, id);
+            ui.add_space(8.0);
+            let mut tabs: Vec<&str> = PERSON_TABS.to_vec();
+            if !wide {
+                tabs.insert(1, "relationships");
+            }
+            let mut tab = self.settings.person_tab.clone();
+            if !tabs.contains(&tab.as_str()) {
+                tab = "facts".to_string();
+            }
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().button_padding = vec2(10.0, 5.0);
+                for t in &tabs {
+                    if ui.selectable_label(tab == *t, RichText::new(crate::i18n::trv(person_tab_title(t))).size(14.5)).clicked() {
+                        tab = t.to_string();
+                    }
                 }
-                if !wide && docked {
-                    ui.add_space(10.0);
-                    self.dock_panels(ui, act, id, editing);
+            });
+            if tab != self.settings.person_tab {
+                self.settings.person_tab = tab.clone();
+                save_settings(&self.settings);
+            }
+            ui.separator();
+            // each tab's contents in a titled box, as in a desktop program's panels
+            let boxed = |ui: &mut egui::Ui, add: &mut dyn FnMut(&mut egui::Ui)| {
+                egui::Frame::group(ui.style()).rounding(6.0).inner_margin(egui::Margin::symmetric(14.0, 10.0)).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    add(ui);
+                });
+            };
+            // the boxes under Facts: other names and events always; contact details for the living
+            // (or when some are kept); LDS ordinances when chosen (or when some are recorded)
+            let mut extra: Vec<(&str, &'static str)> = vec![("names", "Other names"), ("events", "Events")];
+            if let Some(p) = self.db.people.get(&id) {
+                if p.living || !p.contact.is_empty() {
+                    extra.push(("contact", "Contact details"));
                 }
+            }
+            let has_lds = self.lds_rows(id).iter().any(|r| r.event.is_some());
+            if self.settings.show_lds || has_lds {
+                extra.push(("lds", "LDS ordinances"));
+            }
+            let titled = |ui: &mut egui::Ui, title: &'static str, add: &mut dyn FnMut(&mut egui::Ui)| {
+                egui::Frame::group(ui.style()).rounding(6.0).inner_margin(egui::Margin::symmetric(14.0, 10.0)).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    ui.label(RichText::new(crate::i18n::trv(title)).size(17.0).strong());
+                    ui.separator();
+                    add(ui);
+                });
+                ui.add_space(6.0);
+            };
+            egui::ScrollArea::vertical().id_salt(("person_tab", tab.as_str())).auto_shrink([false, false]).show(ui, |ui| match tab.as_str() {
+                // Facts: the facts in boxes on the left and the timeline on the right, side by side
+                "facts" if !editing && ui.available_width() > 900.0 => {
+                    ui.columns(2, |c| {
+                        boxed(&mut c[0], &mut |ui| self.person_read(ui, act, id, "facts"));
+                        c[0].add_space(6.0);
+                        for (sec, title) in &extra {
+                            titled(&mut c[0], title, &mut |ui| self.person_read(ui, act, id, sec));
+                        }
+                        boxed(&mut c[1], &mut |ui| self.person_read(ui, act, id, "timeline"));
+                    });
+                    if ui.checkbox(&mut self.settings.show_lds, crate::i18n::tr("Show LDS ordinances")).changed() {
+                        save_settings(&self.settings);
+                    }
+                }
+                "facts" => {
+                    boxed(ui, &mut |ui| if editing { self.person_section(ui, act, id, "facts") } else { self.person_read(ui, act, id, "facts") });
+                    ui.add_space(6.0);
+                    for (sec, title) in &extra {
+                        titled(ui, title, &mut |ui| if editing { self.person_section(ui, act, id, sec) } else { self.person_read(ui, act, id, sec) });
+                    }
+                    if !editing {
+                        boxed(ui, &mut |ui| self.person_read(ui, act, id, "timeline"));
+                    }
+                    if ui.checkbox(&mut self.settings.show_lds, crate::i18n::tr("Show LDS ordinances")).changed() {
+                        save_settings(&self.settings);
+                    }
+                }
+                "research" => {
+                    self.todo_panel(ui, id);
+                    ui.add_space(12.0);
+                    ui.label(RichText::new(crate::i18n::tr("Research journal")).size(17.0).strong());
+                    ui.separator();
+                    self.journal_panel(ui, id);
+                }
+                t => boxed(ui, &mut |ui| {
+                    if editing { self.person_section(ui, act, id, t) } else { self.person_read(ui, act, id, t) }
+                }),
             });
         });
-        // panels popped out into their own windows
-        let ctx = ui.ctx().clone();
-        let items = self.settings.dock.clone();
-        for (i, it) in items.iter().enumerate() {
-            if !(it.on && it.float) {
-                continue;
-            }
-            let mut open = true;
-            let mut dock_back = false;
-            crate::look::window(crate::look::wtitle(crate::i18n::trv(dock_title(&it.sec)))).id(egui::Id::new(("float", it.sec.as_str()))).open(&mut open).default_size([420.0, 420.0]).show(&ctx, |ui| {
-                if ui.small_button(crate::i18n::tr("Dock back on the right")).clicked() {
-                    dock_back = true;
-                }
-                egui::ScrollArea::vertical().id_salt(("float_scroll", it.sec.as_str())).show(ui, |ui| {
-                    if editing { self.person_section(ui, act, id, &it.sec) } else { self.person_read(ui, act, id, &it.sec) }
-                });
-            });
-            if dock_back {
-                self.settings.dock[i].float = false;
-                save_settings(&self.settings);
-            } else if !open {
-                self.settings.dock[i].on = false;
-                self.settings.dock[i].float = false;
-                save_settings(&self.settings);
-            }
-        }
     }
 
-    /// Row of buttons that show or hide each panel.
-    pub(crate) fn dock_bar(&mut self, ui: &mut egui::Ui) {
-        let mut changed = false;
-        let mut reset = false;
-        ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new(crate::i18n::tr("Panels")).small().weak());
-            for it in self.settings.dock.iter_mut() {
-                if ui.selectable_label(it.on, crate::i18n::trv(dock_title(&it.sec))).on_hover_text(crate::i18n::tr("Show or hide this panel on the right")).clicked() {
-                    it.on = !it.on;
-                    if it.on {
-                        it.float = false;
-                    }
-                    changed = true;
-                }
-            }
-            let mut apply: Option<Vec<DockItem>> = None;
-            let mut apply_w: Option<f32> = None;
-            ui.menu_button(crate::i18n::tr("Layouts"), |ui| {
-                ui.label(RichText::new(crate::i18n::tr("Ready-made")).small().weak());
-                for (name, secs) in LAYOUT_PRESETS {
-                    if ui.button(crate::i18n::trv(*name)).clicked() {
-                        let mut d: Vec<DockItem> = secs.iter().map(|s| DockItem { sec: s.to_string(), on: true, float: false }).collect();
-                        for x in default_dock() {
-                            if !d.iter().any(|y| y.sec == x.sec) {
-                                d.push(DockItem { on: false, ..x });
-                            }
-                        }
-                        apply = Some(d);
-                        ui.close_menu();
-                    }
-                }
-                let mut del: Option<usize> = None;
-                if !self.settings.layouts.is_empty() {
-                    ui.separator();
-                    ui.label(RichText::new(crate::i18n::tr("Yours")).small().weak());
-                    for (i, l) in self.settings.layouts.iter().enumerate() {
-                        ui.horizontal(|ui| {
-                            if ui.button(l.name.as_str()).clicked() {
-                                apply = Some(l.dock.clone());
-                                apply_w = Some(l.width);
-                                ui.close_menu();
-                            }
-                            if ui.small_button("x").on_hover_text(crate::i18n::tr("Forget this layout")).clicked() {
-                                del = Some(i);
-                            }
-                        });
-                    }
-                }
-                ui.separator();
-                ui.horizontal(|ui| {
-                    ui.add(egui::TextEdit::singleline(&mut self.x.layout_name).hint_text(crate::i18n::tr("Name for this layout")).desired_width(150.0));
-                    if ui.add_enabled(!self.x.layout_name.trim().is_empty(), egui::Button::new(crate::i18n::tr("Save current"))).clicked() {
-                        let name = self.x.layout_name.trim().to_string();
-                        self.settings.layouts.retain(|l| l.name != name);
-                        self.settings.layouts.push(Layout { name, dock: self.settings.dock.clone(), width: self.settings.dock_w });
-                        self.x.layout_name.clear();
-                        changed = true;
-                        ui.close_menu();
-                    }
-                });
-                if let Some(i) = del {
-                    self.settings.layouts.remove(i);
-                    changed = true;
-                }
-            });
-            if let Some(d) = apply {
-                self.settings.dock = d;
-                if let Some(w) = apply_w {
-                    self.settings.dock_w = w;
-                }
-                changed = true;
-            }
-            if ui.small_button(crate::i18n::tr("Reset layout")).clicked() {
-                reset = true;
-            }
-        });
-        if reset {
-            self.settings.dock = default_dock();
-            self.settings.dock_w = 380.0;
-            changed = true;
-        }
-        if changed {
-            save_settings(&self.settings);
-        }
-    }
 }
 
 /// One line of the LDS ordinances panel: which ordinance, and where its event is kept.

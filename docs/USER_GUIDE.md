@@ -110,7 +110,7 @@ This chapter starts a tree from nothing. It takes about half an hour, and every 
 6. **Fill in the details.** Double-click anyone to open their **Individual** page. It is locked, so nothing changes
    by accident: press **Edit**, add dates, places, occupation and notes, then press **Save**. Dates can be written
    the way you know them: "12 Mar 1921", "about 1850", "before 1900".
-7. **Say where it came from.** Turn on **Sources** in the Panels row above the Individual page. While editing,
+7. **Say where it came from.** Open the **Sources** tab on the Individual page. While editing,
    press **Add source**, pick a source you have used before or add a new one (the census, the certificate, the
    family Bible), choose which fact it backs up, and type the page. See [Sources and citations](#sources-and-citations).
 8. **Add a photo or document.** On the Individual page press **Add files** and choose a photo, a scan or a PDF. It
@@ -285,25 +285,27 @@ can be pasted elsewhere. Tick **Capitals** for capital letters.
 **Undo and redo.** **Undo** (Ctrl+Z; Cmd+Z on a Mac) takes back the last change and **Redo** (Ctrl+Y) puts it back.
 See [History of changes (F12)](#history-of-changes-f12) to go back further.
 
-## Panels on the Individual page
-The left side of the Individual page holds the core facts and a timeline. Everything else is in panels on the right:
-**Relationships, Events, Sources, Notes, Other names, Photos and recordings, LDS ordinances, Contact details, Merge
-and delete**. Use the **Panels** row above the page to show or hide each one. Each panel's title bar has **^ / v** to
-move it, **Float** to pop it out into its own window, and **x** to hide it; click the title to fold it up, and drag
-the dock's edge to resize it. Your layout is remembered, and **Reset layout** restores the defaults. In a narrow
-window the panels move below.
+## Tabs on the Individual page
+At the top of the Individual page are the person's photo, name, years and ID. **Click the photo** (or the empty box
+with **+ Add a picture**) to choose a picture from your computer; it is kept with their memories and becomes their
+profile photo in the charts. Right-click the photo to choose one of their memories instead.
 
-**Layouts** (next to the Panels row) switches the whole set at once. Ready-made layouts are **Research** (relatives,
-to-do, sources, notes), **Photos and stories**, **Family** and **Everything**. To keep your own, arrange the panels,
-type a name under Layouts and press **Save current**.
+Below that are the tabs: **Facts**, **Timeline**, **Memories**, **Sources**, **Notes**, **Research** (the to-do list
+and the research journal) and **Merge and delete**. Each shows its part in a box. **Facts**, the tab the page opens
+on, has the vital facts, **Other names** and **Events** in boxes on the left and the timeline on the right, side by
+side. **Contact details** are there too for living people (or whenever some are kept), and **LDS ordinances** when
+**Show LDS ordinances** (under the boxes) is ticked, or when some are recorded. The tab you used last is remembered.
 
-**LDS ordinances** (turn it on in the Panels row) lists baptism, confirmation, initiatory, endowment, the sealing
+**Relationships** (parents, spouses and children, brothers and sisters) stay in the panel on the right; drag its edge
+to make it wider. In a narrow window Relationships becomes a tab too.
+
+**LDS ordinances** (under Facts) lists baptism, confirmation, initiatory, endowment, the sealing
 to each set of parents and the sealing to each spouse. Press **Edit**, then **Add** on a line to enter its date,
 temple and status. Choose the temple from the list (type part of the place or its code, such as "logan" or
 "SLAKE"); older two-letter codes from PAF files are shown by name too. Ordinances are kept in GEDCOM files the way
 PAF and FamilySearch write them.
 
-**Contact details** (also in the Panels row) holds an address, phone, email and web page for living relatives.
+**Contact details** (under Facts) holds an address, phone, email and web page for living relatives.
 They go out in GEDCOM files (ADDR, PHON, EMAIL, WWW) but never in a private copy, which leaves living people out.
 
 ## The Family tab
@@ -378,7 +380,7 @@ See also: [Checking your data](#checking-your-data)
 Memories are everything you keep about the family besides the facts: **photos**, **documents and PDFs**, **stories**,
 **recordings** and **notes**.
 
-**On a person's page:** the **Memories** section (turn it on in the Panels row) shows that person's own memories,
+**On a person's page:** the **Memories** tab shows that person's own memories,
 with a filter for **All, Photos, Documents, Stories** and **Recordings** (each with how many there are). Photos are
 shown as pictures and everything else as a list. **+ Add** takes any kind of file (photos, PDFs, letters,
 certificates, sound or video) and works out what it is, or lets you **write a story** or **record a spoken story**.

@@ -839,16 +839,12 @@ impl App {
                     if ui.button(crate::i18n::tr("Record a spoken story")).clicked() {
                         *act = Some(Action::StartRec);
                         self.view = View::Person;
-                        if let Some(d) = self.settings.dock.iter_mut().find(|d| d.sec == "media") {
-                            d.on = true;
-                        }
+                        self.settings.person_tab = "media".to_string();
                         ui.close_menu();
                     }
                     if ui.button(crate::i18n::tr("Write a note...")).clicked() {
                         self.view = View::Person;
-                        if let Some(d) = self.settings.dock.iter_mut().find(|d| d.sec == "notes") {
-                            d.on = true;
-                        }
+                        self.settings.person_tab = "notes".to_string();
                         *act = Some(Action::EditStart);
                         ui.close_menu();
                     }

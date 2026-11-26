@@ -115,6 +115,12 @@ pub(crate) struct Settings {
     /// The floating toolbar down the left of the charts.
     #[serde(default = "default_true")]
     pub(crate) float_tb: bool,
+    /// The tab open on the Individual page.
+    #[serde(default = "default_person_tab")]
+    pub(crate) person_tab: String,
+    /// LDS ordinances shown under Facts on the Individual page (they show anyway when recorded).
+    #[serde(default)]
+    pub(crate) show_lds: bool,
     /// The last choices in the Import options window.
     #[serde(default)]
     pub(crate) import: ImportChoices,
@@ -166,12 +172,21 @@ pub(crate) struct Layout {
 }
 
 /// Ready-made layouts: (name, panels to show).
-pub(crate) const LAYOUT_PRESETS: &[(&str, &[&str])] = &[
-    ("Research", &["relationships", "todo", "sources", "notes"]),
-    ("Photos and stories", &["media", "relationships", "notes"]),
-    ("Family", &["relationships", "events", "names"]),
-    ("Everything", &["relationships", "todo", "events", "sources", "notes", "names", "media", "more"]),
-];
+/// The tabs of the Individual page, in order (Relationships stay on the right).
+pub(crate) const PERSON_TABS: [&str; 7] = ["facts", "timeline", "media", "sources", "notes", "research", "more"];
+
+pub(crate) fn person_tab_title(sec: &str) -> &'static str {
+    match sec {
+        "facts" => "Facts",
+        "timeline" => "Timeline",
+        "research" => "Research",
+        other => dock_title(other),
+    }
+}
+
+pub(crate) fn default_person_tab() -> String {
+    "facts".to_string()
+}
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct DockItem {
@@ -232,7 +247,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 1, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false, glass_splash: false, see_through: false, float_tb: true }
+        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 1, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false, glass_splash: false, see_through: false, float_tb: true, person_tab: default_person_tab(), show_lds: false }
     }
 }
 

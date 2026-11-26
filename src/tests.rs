@@ -1642,13 +1642,10 @@ mod edit_tests {
     }
 
     #[test]
-    fn dock_panels_draw_wide_narrow_and_floating() {
+    fn individual_tabs_draw_wide_narrow_and_editing() {
         let mut app = App::for_test(tiny());
         let ctx = egui::Context::default();
         egui_extras::install_image_loaders(&ctx);
-        for d in app.settings.dock.iter_mut() {
-            d.on = true;
-        }
         let run = |app: &mut App, w: f32| {
             let mut input = egui::RawInput::default();
             input.screen_rect = Some(egui::Rect::from_min_size(egui::pos2(0.0, 0.0), egui::vec2(w, 900.0)));
@@ -1657,13 +1654,19 @@ mod edit_tests {
                 egui::CentralPanel::default().show(ctx, |ui| app.person_view(ui, &mut act));
             });
         };
-        run(&mut app, 1400.0);
-        run(&mut app, 600.0);
-        app.settings.dock[0].float = true; // pop the first panel out
-        run(&mut app, 1400.0);
+        let mut tabs: Vec<&str> = PERSON_TABS.to_vec();
+        tabs.push("relationships");
+        for t in &tabs {
+            app.settings.person_tab = t.to_string();
+            run(&mut app, 1400.0);
+            run(&mut app, 600.0);
+        }
         let id = app.sel.unwrap();
         app.editing = Some(EditSession { id, snapshot: String::new() });
-        run(&mut app, 1400.0);
+        for t in &tabs {
+            app.settings.person_tab = t.to_string();
+            run(&mut app, 1400.0);
+        }
     }
 
     #[test]
