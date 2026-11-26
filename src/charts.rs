@@ -58,17 +58,10 @@ fn years(p: &Person) -> (Option<i32>, Option<i32>) {
 impl App {
     pub(crate) fn charts_view(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         self.nav_bar(ui, act);
-        ui.horizontal(|ui| {
-            for (k, l) in [(ChartKind::Fan, "Fan chart"), (ChartKind::Hourglass, "Hourglass"), (ChartKind::Lifespans, "Lifespans")] {
-                let r = ui.selectable_label(self.x.chart == k, RichText::new(crate::i18n::trv(l)).size(15.0));
-                if k == ChartKind::Lifespans {
-                    crate::tour::mark("chart:Lifespans", r.rect);
-                }
-                if r.clicked() {
-                    self.x.chart = k;
-                }
-            }
-            ui.separator();
+        // the fan chart and the hourglass are views of the Pedigree tab
+        self.x.chart = if self.settings.ped_mode == 2 { ChartKind::Hourglass } else { ChartKind::Fan };
+        ui.horizontal_wrapped(|ui| {
+            self.ped_mode_switch(ui, act);
             if self.x.chart != ChartKind::Lifespans {
                 ui.label(crate::i18n::tr("Generations:"));
                 let g = self.x.fan_gens.clamp(3, 8);
@@ -431,7 +424,7 @@ impl App {
     }
 
     /// The person's close family as bars along a line of years.
-    fn lifespans(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+    pub(crate) fn lifespans(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let Some(root) = self.sel else { return };
         let mut rows: Vec<(u32, &'static str)> = Vec::new();
         let (f, m) = self.db.parents(root);

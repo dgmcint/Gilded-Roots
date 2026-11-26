@@ -146,7 +146,7 @@ impl App {
                             });
                         }
                         None => {
-                            ui.label(RichText::new(tr("No home person yet. Right-click anyone and choose Make this the home person.")).weak());
+                            ui.label(RichText::new(tr("No home person yet. Choose one with File > Home person...")).weak());
                         }
                     });
                     // recent people

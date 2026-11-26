@@ -2,6 +2,19 @@
 
 Major work so far, in the order it was done.
 
+## Next version (not released yet)
+
+- **The Charts tab is folded into Pedigree**: the Pedigree tab has Pedigree, Fan chart and Hourglass views, as on
+  FamilySearch; Family lifespans moved to a person's Timeline tab.
+- **Facts and Timeline apart**, as on FamilySearch and Ancestry: Facts has the vital facts and other names on the
+  left and events on the right; the Timeline tab shows their life or the family's lifespans.
+- **Merge and delete** moved from a tab to a **More...** menu next to Edit.
+- **Home person** is chosen from **File → Home person...** (and Tools), no longer from a toolbar button or a right-click.
+- The **Parents, Siblings, Partners and Children** buttons above the charts are gone (the panel under the main card
+  and the Relationships panel list them).
+- **Show all** in the panel under the main card lets a long list of siblings run to its full length.
+- **Frosting** for the glass looks: from clear glass to milky, nearly solid panels.
+
 ## 1.0.9 (26 November 2026)
 
 - **A new icon**: a gold and silver GR with a tree, on green, for the app, the Dock, the taskbar and the installers.

@@ -98,11 +98,25 @@ impl App {
         }
     }
 
+    /// Pedigree, Fan chart or Hourglass: the views of the Pedigree tab (as on the genealogy websites).
+    pub(crate) fn ped_mode_switch(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
+        let m = self.settings.ped_mode;
+        for (k, l) in [(0u8, crate::i18n::tr("Pedigree")), (1, crate::i18n::tr("Fan chart")), (2, crate::i18n::tr("Hourglass"))] {
+            let r = ui.selectable_label(m == k, RichText::new(l).size(15.0).strong());
+            crate::tour::mark(["ped:Pedigree", "ped:Fan", "ped:Hourglass"][k as usize], r.rect);
+            if r.clicked() && m != k {
+                *act = Some(Action::PedMode(k));
+            }
+        }
+        ui.separator();
+    }
+
     /// The row above every pedigree style: style, colours, generations, zoom, select/hand, print.
     pub(crate) fn ped_controls(&self, ui: &mut egui::Ui, act: &mut Option<Action>, gens: usize, z: f32) {
         let style = self.settings.ped_style.min(4);
         let gmax = ped_max_gens(style);
         ui.horizontal_wrapped(|ui| {
+            self.ped_mode_switch(ui, act);
             ui.label(crate::i18n::tr("Style:"));
             egui::ComboBox::from_id_salt("ped_style").selected_text(crate::i18n::trv(PED_STYLES[style as usize])).show_ui(ui, |ui| {
                 for (i, s) in PED_STYLES.iter().enumerate() {

@@ -389,8 +389,6 @@ pub(crate) enum Action {
     EditStart,
     EditSave,
     EditCancel,
-    SetHome(u32),
-    ShowParents(u32),
     ShowParentsFor(u32, u32),
     GoHome,
     Add(Kind),
@@ -402,6 +400,8 @@ pub(crate) enum Action {
     SetGens(usize),
     /// The pedigree's style and colours
     PedStyle(u8, u8),
+    /// The Pedigree tab shows the pedigree (0), the fan chart (1) or the hourglass (2).
+    PedMode(u8),
     /// Turn the coloured band on pedigree cards on or off.
     PedBand(bool),
     /// Turn the hand tool on the charts on or off

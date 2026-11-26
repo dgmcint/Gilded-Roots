@@ -355,6 +355,12 @@ impl App {
                     if !self.settings.glass.is_empty() {
                         ui.add_space(4.0);
                         changed |= ui.checkbox(&mut self.settings.glass_splash, tr("A splash of colour behind the glass")).on_hover_text(tr("Soft glows of the accent colour (Colours page) behind the see-through panels")).changed();
+                        ui.horizontal(|ui| {
+                            ui.label(tr("Frosting"));
+                            ui.label(RichText::new(tr("Clear")).small().weak());
+                            changed |= ui.add(egui::Slider::new(&mut self.settings.glass_frost, 0.0..=1.0).show_value(false)).on_hover_text(tr("How see-through the glass is: clear glass at the left, milky and nearly solid at the right")).changed();
+                            ui.label(RichText::new(tr("Frosted")).small().weak());
+                        });
                         changed |= ui.checkbox(&mut self.settings.see_through, tr("Transparent window: your desktop shows behind the glass")).on_hover_text(tr("Takes effect the next time Gilded Roots starts")).changed();
                     }
                 });

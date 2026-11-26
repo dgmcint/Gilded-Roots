@@ -182,14 +182,15 @@ standard form.
 ## Moving around the tree
 - **Click** a person in any chart to highlight them; **double-click** to open their Individual page.
 - **Home person:** the **Home** button (or the Home key) goes back to the home person, the one the charts start
-  from. To choose another, use **Tools → Home person...**, or right-click a person and choose **Make this the home
-  person**. Each tree keeps its own home person; an imported tree brings its home person with it.
+  from. To choose another, use **File → Home person...** (also in Tools); it is kept out of the way of everyday
+  clicks on purpose. Each tree keeps its own home person; an imported tree brings its home person with it.
 - **Back and Forward** on the main toolbar step through the people you have looked at.
 - **Trail:** the line above the chart lists people you have visited. Click a name to return to it.
 - **Recent** (above the chart) lists the last 15 people you looked at.
 - **Bookmarks:** mark people you come back to often (**Bookmarks → Bookmark this person**, or right-click a box).
   They are listed under Bookmarks, first in Quick jump, and in the People table's Show filter.
-- **Parents / Siblings / Partners / Children:** buttons above the chart list the selected person's relatives.
+- **Relatives:** the panel under the main card on the pedigree lists spouses, children, brothers and sisters, and
+  the Relationships panel on a person's page lists everyone close; right-click a box for its parents.
   Adoptive, step and foster parents and half-siblings are listed too.
 - **Keyboard:** Right arrow = father (Shift = mother), Left arrow = a child (the one you came from, if any),
   Up/Down = previous/next brother or sister, Home = home person. Arrow keys are ignored while you type.
@@ -241,7 +242,7 @@ the right; right-clicking a box opens the same menu:
 - **Quick edit...**: a small window for name, sex, birth, death and living, with Save and Cancel
 - **Add a relative**: father, mother, another set of parents, brother or sister, spouse, or child
 - **Show which parents** (when someone has more than one set, such as birth and adoptive parents)
-- **Centre chart on this person**, **Make this the home person** and **Bookmark this person**
+- **Centre chart on this person** and **Bookmark this person**
 
 **Moving around a chart:** the pedigree, descendants, fan and hourglass charts sit on a canvas that fills the
 window, as on the genealogy websites. The chart starts at the left, centred from top to bottom. Drag any empty part
@@ -291,10 +292,15 @@ with **+ Add a picture**) to choose a picture from your computer; it is kept wit
 profile photo in the charts. Right-click the photo to choose one of their memories instead.
 
 Below that are the tabs: **Facts**, **Timeline**, **Memories**, **Sources**, **Notes**, **Research** (the to-do list
-and the research journal) and **Merge and delete**. Each shows its part in a box. **Facts**, the tab the page opens
-on, has the vital facts, **Other names** and **Events** in boxes on the left and the timeline on the right, side by
-side. **Contact details** are there too for living people (or whenever some are kept), and **LDS ordinances** when
-**Show LDS ordinances** (under the boxes) is ticked, or when some are recorded. The tab you used last is remembered.
+and the research journal and files). Each shows its part in a box. **Facts**, the tab the page opens on, has the vital
+facts and **Other names** on the left and **Events** on the right, side by side. **Contact details** are there too
+for living people (or whenever some are kept), and **LDS ordinances** when **Show LDS ordinances** (under the boxes)
+is ticked, or when some are recorded. **Timeline** shows **Their life** (with historical events) or **Family
+lifespans**: grandparents, parents, the person, brothers and sisters, partners and children as bars along a line of
+years, so you can see who was alive at the same time. The tab you used last is remembered.
+
+**More...** (next to Edit) has **Merge with another person...** and **Delete person...** (click twice to delete;
+Undo brings them back). They are kept in a menu because they are rarely needed and change a lot.
 
 **Relationships** (parents, spouses and children, brothers and sisters) stay in the panel on the right; drag its edge
 to make it wider. In a narrow window Relationships becomes a tab too.
@@ -445,15 +451,16 @@ Undo, backups and archives keep working. **Stop keeping them sorted** in the sam
 
 # Charts, printing and reports
 
-## The Charts tab
+## Fan chart and hourglass
+The **Pedigree** tab has three views, chosen at the start of its toolbar row: **Pedigree**, **Fan chart** and
+**Hourglass**.
 - **Fan chart:** the person in the centre, their father's side in blue and mother's side in rose, each ring one
   generation further back. Choose **Half**, **240°** or **Full circle**, and 3 to 8 generations. Empty slots show the
   gaps in your research: click one to add that father or mother. The top-left corner counts how many ancestors are found.
 - **Hourglass:** ancestors above, the person in the middle, children and grandchildren below.
-- **Lifespans:** grandparents, parents, the person, brothers and sisters, partners and children as bars along a line
-  of years, so you can see who was alive at the same time. Faded bars mean a birth or death date is missing.
+- **Family lifespans** are on a person's page, under **Timeline**.
 - In every chart: click to highlight, double-click to open a person, right-click for the full menu.
-- **Print chart** opens a printable copy in your browser.
+- **Print** opens a printable copy in your browser.
 
 ## The People tab (table)
 Everyone in one table, like a spreadsheet: ID, name, sex, birth and death dates and places, and how many sources,
@@ -854,7 +861,7 @@ The **main toolbar** under the menus is the same on every tab: Back, Forward, Ho
 jump, Undo, Redo, Print (prints what the tab shows) and Back up now. Under the tab names, each tab has its own
 **tab toolbar**:
 - **Family:** add father, mother, spouse, child or brother or sister; sort the children by birth; family group sheet.
-- **Pedigree** and **Descendants:** smaller, bigger, fit to the window, make the home person, print the chart.
+- **Pedigree** and **Descendants:** smaller, bigger, fit to the window, print the chart.
 - **Individual:** Edit (or Done), add files, write a story, record a story, print a family book.
 - **Memories:** add files, write a story, record a story, select several items.
 - **Charts:** print. **People:** find, save as a spreadsheet. **Map:** fit to pins, world, this person's places.

@@ -96,12 +96,25 @@ impl App {
                 ui.set_max_width(w - 16.0);
                 ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Truncate);
                 ui.spacing_mut().item_spacing.y = 3.0;
+                // "Show all" lets a long list run to its full length (and back)
+                let all_id = egui::Id::new("ped_list_all");
+                let mut all = ui.ctx().data(|d| d.get_temp::<bool>(all_id)).unwrap_or(false);
+                let (h_sc, h_sib) = if all { (f32::INFINITY, f32::INFINITY) } else { (190.0, 150.0) };
+                let mut long = false;
                 egui::CollapsingHeader::new(RichText::new(label_sc).strong()).id_salt("ped_sc").default_open(true).show(ui, |ui| {
-                    egui::ScrollArea::vertical().id_salt("ped_sc_list").max_height(190.0).show(ui, |ui| self.spouse_children_menu(ui, id, act));
+                    let o = egui::ScrollArea::vertical().id_salt("ped_sc_list").max_height(h_sc).show(ui, |ui| self.spouse_children_menu(ui, id, act));
+                    long |= o.content_size.y > 190.0;
                 });
                 egui::CollapsingHeader::new(RichText::new(label_sib).strong()).id_salt("ped_sib").default_open(true).show(ui, |ui| {
-                    egui::ScrollArea::vertical().id_salt("ped_sib_list").max_height(150.0).show(ui, |ui| self.siblings_menu(ui, id, act));
+                    let o = egui::ScrollArea::vertical().id_salt("ped_sib_list").max_height(h_sib).show(ui, |ui| self.siblings_menu(ui, id, act));
+                    long |= o.content_size.y > 150.0;
                 });
+                if long || all {
+                    if ui.link(RichText::new(if all { crate::i18n::tr("Show fewer") } else { crate::i18n::tr("Show all") }).small()).clicked() {
+                        all = !all;
+                        ui.ctx().data_mut(|d| d.insert_temp(all_id, all));
+                    }
+                }
             });
         });
     }
@@ -253,8 +266,9 @@ impl App {
         if !self.settings.glass.is_empty() && !self.settings.high_contrast {
             // glass cards: frosted, with a light edge
             let ink = Color32::from_rgb(self.settings.ink.map_or(if dark { 255 } else { 20 }, |c| c[0]), self.settings.ink.map_or(if dark { 255 } else { 30 }, |c| c[1]), self.settings.ink.map_or(if dark { 255 } else { 40 }, |c| c[2]));
+            let up = |lo: u8, hi: u8| frost_between(&self.settings, lo, hi);
             let (card, hover, edge, line) = if dark {
-                (glass_rgba(255, 255, 255, 34), glass_rgba(255, 255, 255, 58), glass_rgba(255, 255, 255, 90), glass_rgba(255, 255, 255, 140))
+                (glass_rgba(255, 255, 255, up(34, 70)), glass_rgba(255, 255, 255, up(58, 100)), glass_rgba(255, 255, 255, 90), glass_rgba(255, 255, 255, 140))
             } else {
                 (glass_rgba(255, 255, 255, 190), glass_rgba(255, 255, 255, 235), glass_rgba(255, 255, 255, 255), glass_rgba(20, 40, 70, 120))
             };
@@ -272,7 +286,8 @@ impl App {
     pub(crate) fn chart_stage(&self, ui: &egui::Ui) -> Color32 {
         if !self.settings.glass.is_empty() {
             // glass: the backdrop shows through, only a little deeper behind the cards
-            return if ui.visuals().dark_mode { glass_rgba(0, 0, 0, 50) } else { glass_rgba(255, 255, 255, 30) };
+            let up = |lo: u8, hi: u8| frost_between(&self.settings, lo, hi);
+            return if ui.visuals().dark_mode { glass_rgba(10, 11, 14, up(50, 190)) } else { glass_rgba(255, 255, 255, up(30, 200)) };
         }
         if ui.visuals().dark_mode {
             let b = self.settings.bg;
@@ -514,10 +529,6 @@ impl App {
             *act = Some(Action::Select(id));
             ui.close_menu();
         }
-        if ui.button(crate::i18n::tr("Make this the home person")).clicked() {
-            *act = Some(Action::SetHome(id));
-            ui.close_menu();
-        }
         let marked = self.db.bookmarks.contains(&id);
         if ui.button(if marked { crate::i18n::tr("Remove bookmark") } else { crate::i18n::tr("Bookmark this person") }).clicked() {
             *act = Some(Action::Bookmark(id));
@@ -706,16 +717,9 @@ impl App {
                 if ui.add_enabled(!self.fwd.is_empty(), egui::Button::new(crate::i18n::tr("Forward >"))).clicked() {
                     *act = Some(Action::Forward);
                 }
-                let hb = ui.button(crate::i18n::tr("Home")).on_hover_text(crate::i18n::tr("Go to the home person. Right-click to make the current person the home person."));
-                if hb.clicked() {
+                if ui.button(crate::i18n::tr("Home")).on_hover_text(crate::i18n::tr("Go to the home person")).clicked() {
                     *act = Some(Action::GoHome);
                 }
-                hb.context_menu(|ui| {
-                    if ui.button(crate::i18n::tr("Make the current person the home person")).clicked() {
-                        *act = Some(Action::SetHome(sel));
-                        ui.close_menu();
-                    }
-                });
             }
             let mut recent: Vec<u32> = Vec::new();
             for k in self.back.iter().rev() {
@@ -740,47 +744,6 @@ impl App {
                     ui.separator();
                     pick(ui, act, &list);
                 }
-            });
-            ui.separator();
-            let sets = self.db.parent_families(sel);
-            ui.add_enabled_ui(!sets.is_empty(), |ui| {
-                ui.menu_button(crate::i18n::tr("Parents"), |ui| {
-                    for f in &sets {
-                        let fm = &self.db.fams[f];
-                        let mut ids: Vec<u32> = Vec::new();
-                        for p in fm.h.iter().chain(fm.w.iter()) {
-                            if self.db.people.contains_key(p) {
-                                ids.push(*p);
-                            }
-                        }
-                        if sets.len() > 1 {
-                            let shown = self.db.famc(sel) == Some(*f);
-                            let bio = rel_is_bio(&fm.rel_to(sel, true)) && rel_is_bio(&fm.rel_to(sel, false));
-                            ui.horizontal(|ui| {
-                                ui.label(RichText::new(if bio { crate::i18n::tr("Biological parents") } else { crate::i18n::tr("Other parents") }).small().weak());
-                                if shown {
-                                    ui.label(RichText::new(crate::i18n::tr("shown on chart")).small().weak());
-                                } else if ui.small_button(crate::i18n::tr("Show on chart")).clicked() {
-                                    *act = Some(Action::ShowParents(*f));
-                                    ui.close_menu();
-                                }
-                            });
-                        }
-                        pick(ui, act, &ids);
-                    }
-                });
-            });
-            let sibs = self.db.siblings(sel);
-            ui.add_enabled_ui(!sibs.is_empty(), |ui| {
-                ui.menu_button(crate::i18n::tr("Siblings"), |ui| pick(ui, act, &sibs));
-            });
-            let pt = self.db.partners(sel);
-            ui.add_enabled_ui(!pt.is_empty(), |ui| {
-                ui.menu_button(crate::i18n::tr("Partners"), |ui| pick(ui, act, &pt));
-            });
-            let kids = self.db.children_of(sel);
-            ui.add_enabled_ui(!kids.is_empty(), |ui| {
-                ui.menu_button(crate::i18n::tr("Children"), |ui| pick(ui, act, &kids));
             });
         });
     }

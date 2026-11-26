@@ -1109,6 +1109,26 @@ impl App {
                 if r.clicked() {
                     *act = Some(Action::EditStart);
                 }
+                // merging and deleting are rare and cannot be taken lightly, so they are kept in a
+                // menu rather than on the page
+                ui.menu_button(crate::i18n::tr("More..."), |ui| {
+                    if ui.button(crate::i18n::tr("Merge with another person...")).on_hover_text(crate::i18n::tr("Use this when the same person is in your tree twice")).clicked() {
+                        self.merge_open = true;
+                        self.merge_other = None;
+                        self.merge_id.clear();
+                        ui.close_menu();
+                    }
+                    ui.separator();
+                    let label = if self.confirm { crate::i18n::tr("Click again to delete this person") } else { crate::i18n::tr("Delete person...") };
+                    if ui.button(RichText::new(label).color(ui.visuals().error_fg_color)).on_hover_text(crate::i18n::tr("Takes them out of the tree. Undo (Ctrl+Z) brings them back.")).clicked() {
+                        if self.confirm {
+                            *act = Some(Action::Delete);
+                            ui.close_menu();
+                        } else {
+                            self.confirm = true;
+                        }
+                    }
+                });
                 ui.label(RichText::new(crate::i18n::tr("Locked. Press Edit to change anything.")).weak());
             });
         }
@@ -1177,21 +1197,41 @@ impl App {
                 });
                 ui.add_space(6.0);
             };
+            // Timeline: the person's life, or the family's lifespans side by side
+            if tab == "timeline" && !editing {
+                ui.horizontal(|ui| {
+                    for (k, l) in [(0u8, crate::i18n::tr("Their life")), (1, crate::i18n::tr("Family lifespans"))] {
+                        let r = ui.selectable_label(self.settings.tl_mode == k, l);
+                        if k == 1 {
+                            crate::tour::mark("tl:Lifespans", r.rect);
+                        }
+                        if r.clicked() {
+                            self.settings.tl_mode = k;
+                            save_settings(&self.settings);
+                        }
+                    }
+                });
+                if self.settings.tl_mode == 1 {
+                    self.lifespans(ui, act);
+                    return;
+                }
+            }
             // Memories: the cards scroll by themselves (only the rows in view are drawn)
             if tab == "media" {
                 if editing { self.person_section(ui, act, id, "media") } else { self.person_read(ui, act, id, "media") }
                 return;
             }
             egui::ScrollArea::vertical().id_salt(("person_tab", tab.as_str())).auto_shrink([false, false]).show(ui, |ui| match tab.as_str() {
-                // Facts: the facts in boxes on the left and the timeline on the right, side by side
+                // Facts: the vital facts and other names on the left, events (and contact details,
+                // LDS ordinances) on the right; the timeline has its own tab, as on FamilySearch
                 "facts" if !editing && ui.available_width() > 900.0 => {
                     ui.columns(2, |c| {
                         boxed(&mut c[0], &mut |ui| self.person_read(ui, act, id, "facts"));
                         c[0].add_space(6.0);
-                        for (sec, title) in &extra {
-                            titled(&mut c[0], title, &mut |ui| self.person_read(ui, act, id, sec));
+                        for (k, (sec, title)) in extra.iter().enumerate() {
+                            let col = if k == 0 { 0 } else { 1 };
+                            titled(&mut c[col], title, &mut |ui| self.person_read(ui, act, id, sec));
                         }
-                        boxed(&mut c[1], &mut |ui| self.person_read(ui, act, id, "timeline"));
                     });
                     if ui.checkbox(&mut self.settings.show_lds, crate::i18n::tr("Show LDS ordinances")).changed() {
                         save_settings(&self.settings);
@@ -1202,9 +1242,6 @@ impl App {
                     ui.add_space(6.0);
                     for (sec, title) in &extra {
                         titled(ui, title, &mut |ui| if editing { self.person_section(ui, act, id, sec) } else { self.person_read(ui, act, id, sec) });
-                    }
-                    if !editing {
-                        boxed(ui, &mut |ui| self.person_read(ui, act, id, "timeline"));
                     }
                     if ui.checkbox(&mut self.settings.show_lds, crate::i18n::tr("Show LDS ordinances")).changed() {
                         save_settings(&self.settings);

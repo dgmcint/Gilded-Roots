@@ -210,14 +210,14 @@ pub(crate) const LESSONS: &[Lesson] = &[
         about: "See the family as a fan or a timeline, and print a chart.",
         steps: &[
             Step {
-                text: "Open the Charts tab. The fan chart puts the selected person in the middle; each ring is one generation further back.",
-                targets: &["tab:Charts"],
-                check: Some(|a, _| a.view == View::Charts),
+                text: "On the Pedigree tab, choose Fan chart. It puts the selected person in the middle; each ring is one generation further back.",
+                targets: &["tab:Pedigree", "ped:Fan"],
+                check: Some(|a, _| a.view == View::Pedigree && a.settings.ped_mode == 1),
             },
             Step {
-                text: "Choose Lifespans to see who was alive at the same time.",
-                targets: &["chart:Lifespans"],
-                check: Some(|a, _| a.x.chart == ChartKind::Lifespans),
+                text: "On a person's page, the Timeline tab has Family lifespans: who was alive at the same time.",
+                targets: &["tab:Individual", "tl:Lifespans"],
+                check: Some(|a, _| a.view == View::Person && a.settings.tl_mode == 1),
             },
             Step {
                 text: "Press Print chart. The printout opens in your web browser, where you can print it or save it as a PDF.",

@@ -61,14 +61,13 @@ pub(crate) fn run_command(app: &mut App, ctx: &egui::Context, id: &str, act: &mu
 
 /// The tabs, as the View menu lists them.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
-const TABS: [(&str, View); 11] = [
+const TABS: [(&str, View); 10] = [
     ("Home", View::Home),
     ("Family", View::Family),
     ("Pedigree", View::Pedigree),
     ("Descendants", View::Descendants),
     ("Individual", View::Person),
     ("Memories", View::Memories),
-    ("Charts", View::Charts),
     ("People", View::Table),
     ("Map", View::Map),
     ("Research", View::Research),

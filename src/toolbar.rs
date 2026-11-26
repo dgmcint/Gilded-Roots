@@ -26,6 +26,7 @@ pub(crate) enum Icon {
     Child,
     Sibling,
     Sort,
+    #[allow(dead_code)]
     Star,
     ZoomIn,
     ZoomOut,
@@ -453,7 +454,6 @@ impl App {
     pub(crate) fn tab_toolbar(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let sel = self.sel.filter(|s| self.db.people.contains_key(s));
         let has = sel.is_some();
-        let is_home = sel.is_some() && self.db.home == sel;
         let z = self.settings.zoom;
         let (which, tools): (&str, Vec<Tool>) = match self.view {
             View::Family => {
@@ -477,8 +477,6 @@ impl App {
                     Tool::new("ch_out", Icon::ZoomOut, crate::i18n::tr("Smaller"), crate::i18n::tr("Zoom out (Ctrl/Cmd -)")).enabled(z > 0.3),
                     Tool::new("ch_in", Icon::ZoomIn, crate::i18n::tr("Bigger"), crate::i18n::tr("Zoom in (Ctrl/Cmd +)")).enabled(z < 1.75),
                     Tool::new("ch_fit", Icon::Fit, crate::i18n::tr("Fit"), crate::i18n::tr("Fit the chart to the window (F5)")),
-                    Tool::new(GAP, Icon::Back, "", ""),
-                    Tool::new("ch_home", Icon::Star, crate::i18n::tr("Make home person"), crate::i18n::tr("Make the selected person the home person")).enabled(has && !is_home),
                 ];
                 v.push(Tool::new(GAP, Icon::Back, "", ""));
                 v.push(if ped { Tool::new("ch_print_ped", Icon::Print, crate::i18n::tr("Print pedigree"), crate::i18n::tr("Print the pedigree chart")) } else { Tool::new("ch_print_desc", Icon::Print, crate::i18n::tr("Print descendants"), crate::i18n::tr("Print the descendant chart")) }.enabled(has));
@@ -531,11 +529,6 @@ impl App {
             Some("ch_out") => *act = Some(Action::SetZoom(z - 0.1)),
             Some("ch_in") => *act = Some(Action::SetZoom(z + 0.1)),
             Some("ch_fit") => *act = Some(Action::Fit),
-            Some("ch_home") => {
-                if let Some(s) = sel {
-                    *act = Some(Action::SetHome(s));
-                }
-            }
             Some("ch_print_ped") => *act = Some(Action::PrintPedigree),
             Some("ch_print_desc") => *act = Some(Action::PrintDescendants),
             Some("ind_edit") => *act = Some(Action::EditStart),

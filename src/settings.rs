@@ -112,6 +112,9 @@ pub(crate) struct Settings {
     /// A see-through window: the desktop shows behind the glass looks (from the next start).
     #[serde(default)]
     pub(crate) see_through: bool,
+    /// How frosted the glass looks are: 0 clear, 1 milky and nearly solid.
+    #[serde(default = "default_frost")]
+    pub(crate) glass_frost: f32,
     /// The floating toolbar down the left of the charts.
     #[serde(default = "default_true")]
     pub(crate) float_tb: bool,
@@ -121,6 +124,12 @@ pub(crate) struct Settings {
     /// LDS ordinances shown under Facts on the Individual page (they show anyway when recorded).
     #[serde(default)]
     pub(crate) show_lds: bool,
+    /// What the Pedigree tab shows: 0 the pedigree, 1 the fan chart, 2 the hourglass.
+    #[serde(default)]
+    pub(crate) ped_mode: u8,
+    /// The Timeline tab of the Individual page: 0 the person's life, 1 the family's lifespans.
+    #[serde(default)]
+    pub(crate) tl_mode: u8,
     /// The last choices in the Import options window.
     #[serde(default)]
     pub(crate) import: ImportChoices,
@@ -173,7 +182,7 @@ pub(crate) struct Layout {
 
 /// Ready-made layouts: (name, panels to show).
 /// The tabs of the Individual page, in order (Relationships stay on the right).
-pub(crate) const PERSON_TABS: [&str; 7] = ["facts", "timeline", "media", "sources", "notes", "research", "more"];
+pub(crate) const PERSON_TABS: [&str; 6] = ["facts", "timeline", "media", "sources", "notes", "research"];
 
 pub(crate) fn person_tab_title(sec: &str) -> &'static str {
     match sec {
@@ -247,7 +256,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 1, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false, glass_splash: false, see_through: false, float_tb: true, person_tab: default_person_tab(), show_lds: false }
+        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 1, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false, glass_splash: false, see_through: false, glass_frost: default_frost(), float_tb: true, person_tab: default_person_tab(), show_lds: false, ped_mode: 0, tl_mode: 0 }
     }
 }
 
@@ -630,10 +639,12 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     let glass = !settings.glass.is_empty();
     if glass {
         let a = glass_rgba;
+        // Frosting (Settings > Appearance): from clear glass to milky, nearly solid panels
+        let up = |lo: u8, hi: u8| frost_between(settings, lo, hi);
         if dark {
-            v.panel_fill = a(255, 255, 255, 12);
-            v.window_fill = a(24, 26, 34, 220);
-            v.extreme_bg_color = a(0, 0, 0, 90);
+            v.panel_fill = a(30, 32, 38, up(12, 215));
+            v.window_fill = a(24, 26, 34, up(220, 245));
+            v.extreme_bg_color = a(0, 0, 0, up(90, 200));
             v.faint_bg_color = a(255, 255, 255, 10);
             v.widgets.noninteractive.bg_fill = a(255, 255, 255, 16);
             v.widgets.noninteractive.weak_bg_fill = a(255, 255, 255, 16);
@@ -645,12 +656,12 @@ pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
             }
             v.window_stroke = Stroke::new(1.0_f32, a(255, 255, 255, 80));
         } else {
-            v.panel_fill = a(255, 255, 255, 70);
-            v.window_fill = a(250, 251, 253, 228);
-            v.extreme_bg_color = a(255, 255, 255, 200);
-            v.faint_bg_color = a(255, 255, 255, 60);
-            v.widgets.noninteractive.bg_fill = a(255, 255, 255, 110);
-            v.widgets.noninteractive.weak_bg_fill = a(255, 255, 255, 110);
+            v.panel_fill = a(255, 255, 255, up(70, 235));
+            v.window_fill = a(250, 251, 253, up(228, 250));
+            v.extreme_bg_color = a(255, 255, 255, up(200, 245));
+            v.faint_bg_color = a(255, 255, 255, up(60, 150));
+            v.widgets.noninteractive.bg_fill = a(255, 255, 255, up(110, 210));
+            v.widgets.noninteractive.weak_bg_fill = a(255, 255, 255, up(110, 210));
             v.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, a(20, 40, 70, 40));
             for (w, al) in [(&mut v.widgets.inactive, 150u8), (&mut v.widgets.hovered, 200), (&mut v.widgets.active, 235), (&mut v.widgets.open, 200)] {
                 w.bg_fill = a(255, 255, 255, al);
@@ -795,6 +806,16 @@ pub(crate) fn glass_rgba(r: u8, g: u8, b: u8, al: u8) -> Color32 {
 
 /// Paint a glass look's backdrop behind everything: a soft four-colour gradient with glows.
 /// Called at the start of each frame, before the panels (which are see-through with glass).
+/// A glass look's opacity between `lo` (clear glass) and `hi` (fully frosted), by the Frosting slider.
+pub(crate) fn frost_between(settings: &Settings, lo: u8, hi: u8) -> u8 {
+    let f = settings.glass_frost.clamp(0.0, 1.0);
+    (lo as f32 + (hi as f32 - lo as f32) * f).round() as u8
+}
+
+pub(crate) fn default_frost() -> f32 {
+    0.35
+}
+
 /// Whether this run's window was made see-through (it can only be chosen when the window opens).
 pub(crate) static WINDOW_SEE_THROUGH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -808,7 +829,7 @@ pub(crate) fn paint_glass_backdrop(ctx: &egui::Context, settings: &Settings) {
         return;
     }
     // see-through: only a faint wash of the backdrop, so the desktop shows behind
-    let wash = if see_through_now(settings) { 0.3f32 } else { 1.0 };
+    let wash = if see_through_now(settings) { 0.3f32 + 0.65 * settings.glass_frost.clamp(0.0, 1.0) } else { 1.0 };
     let g = glass_backdrop(&settings.glass);
     let r = ctx.screen_rect();
     let painter = ctx.layer_painter(egui::LayerId::background());

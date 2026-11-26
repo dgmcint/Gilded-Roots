@@ -76,6 +76,10 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
+                    if ui.button(crate::i18n::tr("Home person...")).on_hover_text(crate::i18n::tr("Choose who the Home button and Home key go back to")).clicked() {
+                        self.home_pick = Some(String::new());
+                        ui.close_menu();
+                    }
                     if ui.button(crate::i18n::tr("GEDCOM: import and export...")).on_hover_text(crate::i18n::tr("Bring in a tree from another program or website, or send yours out in every GEDCOM form")).clicked() {
                         self.x.ged_open = true;
                         ui.close_menu();
@@ -172,7 +176,7 @@ impl App {
                         ui.close_menu();
                     }
                     ui.menu_button(crate::i18n::tr("Go to tab"), |ui| {
-                        for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                        for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                             if ui.selectable_label(self.view == v, crate::i18n::trv(l)).clicked() {
                                 self.view = v;
                                 ui.close_menu();
@@ -574,7 +578,7 @@ impl App {
         }
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                     let mut t = RichText::new(crate::i18n::trv(l)).size(16.0);
                     if self.view == v {
                         t = t.strong();
@@ -651,7 +655,22 @@ impl App {
             if self.sel.is_some() && self.view == View::Pedigree {
                 self.trail_bar(ui, &mut act);
             }
+            // the old Charts tab: the fan chart and hourglass are on the Pedigree tab now, and the
+            // lifespans on a person's Timeline tab
+            if self.view == View::Charts {
+                if self.x.chart == ChartKind::Lifespans {
+                    self.view = View::Person;
+                    self.settings.person_tab = "timeline".to_string();
+                    self.settings.tl_mode = 1;
+                } else {
+                    self.view = View::Pedigree;
+                    if self.settings.ped_mode == 0 {
+                        self.settings.ped_mode = 1;
+                    }
+                }
+            }
             match self.view {
+                View::Pedigree if self.settings.ped_mode != 0 => self.charts_view(ui, &mut act),
                 View::Pedigree => self.pedigree(ui, &mut act),
                 View::Family => self.family_view(ui, &mut act),
                 View::Descendants => self.descendants(ui, &mut act),
@@ -2095,24 +2114,11 @@ impl App {
                         self.dirty = true;
                     }
                 }
-                Action::SetHome(i) => {
-                    self.db.home = Some(i);
-                    self.dirty = true;
-                    let who = self.db.people.get(&i).map(display_name).unwrap_or_default();
-                    self.status = crate::i18n::trf("{} is now the home person. Use the Home button, View > Go to home person, or the Home key to return.", &["", " is now the home person. Use the Home button, View > Go to home person, or the Home key to return."], &[(who).to_string()]);
-                }
                 Action::ShowParentsFor(who, f) => {
                     if let Some(p) = self.db.people.get_mut(&who) {
                         p.pref_parents = Some(f);
                     }
                     self.dirty = true;
-                }
-                Action::ShowParents(f) => {
-                    if let Some(sid) = self.sel {
-                        if let Some(p) = self.db.people.get_mut(&sid) {
-                            p.pref_parents = Some(f);
-                        }
-                    }
                 }
                 Action::GoHome => {
                     if let Some(h) = self.db.home.filter(|h| self.db.people.contains_key(h)) {
@@ -2120,7 +2126,7 @@ impl App {
                         self.hl = None;
                         self.fx = 0;
                     } else {
-                        self.status = crate::i18n::tr("No home person set yet. Right-click a person and choose \"Make this the home person\".").to_string();
+                        self.status = crate::i18n::tr("No home person set yet. Choose one with File > Home person...").to_string();
                     }
                 }
                 Action::PrintDescendants => {
@@ -2198,6 +2204,10 @@ impl App {
                 Action::PedStyle(s, c) => {
                     self.settings.ped_style = s.min(4);
                     self.settings.ped_colours = c.min(2);
+                    save_settings(&self.settings);
+                }
+                Action::PedMode(m) => {
+                    self.settings.ped_mode = m.min(2);
                     save_settings(&self.settings);
                 }
                 Action::PedBand(on) => {
