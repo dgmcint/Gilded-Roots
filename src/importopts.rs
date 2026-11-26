@@ -267,7 +267,7 @@ impl App {
         let c = &mut self.x.import_choices;
         let json = pend.src.json.is_some();
         let empty_here = self.db.people.is_empty() || self.db.sample;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Import options"))).id(egui::Id::new("import_opts")).open(&mut open).collapsible(false).default_width(600.0).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Import options"))).id(egui::Id::new("import_opts")).open(&mut open).collapsible(false).default_width(600.0).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
             let r = &pend.rep;
             let n = &pend.counts;
             ui.label(RichText::new(&r.file).strong().size(16.0));

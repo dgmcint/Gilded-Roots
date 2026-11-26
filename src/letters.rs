@@ -46,7 +46,7 @@ impl App {
             return;
         }
         let mut open = true;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Special letters"))).open(&mut open).default_width(330.0).resizable(false).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Special letters"))).open(&mut open).default_width(330.0).resizable(false).show(ctx, |ui| {
             let target = self.x.last_text_focus;
             ui.label(
                 RichText::new(if target.is_some() {

@@ -205,6 +205,22 @@ pub(crate) fn light_dark_choice(ui: &mut egui::Ui, ctx: &egui::Context, settings
     changed
 }
 
+/// The middle of the program's window, kept each frame so new windows can open there.
+static SCREEN_MIDDLE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+pub(crate) fn note_screen(ctx: &egui::Context) {
+    let c = ctx.screen_rect().center();
+    SCREEN_MIDDLE.store(((c.x.to_bits() as u64) << 32) | c.y.to_bits() as u64, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// A Gilded Roots window: it opens in the middle of the program's window (and can then be moved).
+pub(crate) fn window(title: impl Into<egui::WidgetText>) -> egui::Window<'static> {
+    let v = SCREEN_MIDDLE.load(std::sync::atomic::Ordering::Relaxed);
+    let mid = egui::pos2(f32::from_bits((v >> 32) as u32), f32::from_bits(v as u32));
+    let w = egui::Window::new(title);
+    if v == 0 { w } else { w.pivot(egui::Align2::CENTER_CENTER).default_pos(mid) }
+}
+
 /// A window's title, at the size a Mac or desktop window's title bar uses, so the bar stays slim.
 pub(crate) fn wtitle(t: impl Into<String>) -> egui::RichText {
     egui::RichText::new(t).size(13.5)
@@ -228,7 +244,7 @@ pub(crate) fn apply_spacing(style: &mut egui::Style) {
 // ---------------------------------------------------------------------------------------------
 // The Settings window
 
-pub(crate) const SETTINGS_PAGES: [&str; 7] = ["Appearance", "Language", "Names and dates", "Charts", "Toolbars", "Printing and privacy", "Tree, backups and microphone"];
+pub(crate) const SETTINGS_PAGES: [&str; 9] = ["Appearance", "Colours", "Text and readability", "Language", "Names and dates", "Charts", "Toolbars", "Printing and privacy", "Tree, backups and microphone"];
 
 impl App {
     /// A clear outline around whatever the keyboard is on. It shows once Tab is pressed (so people
@@ -254,32 +270,56 @@ impl App {
         painter.rect_stroke(r.rect.expand(3.0), 6.0_f32, Stroke::new(2.5_f32, col));
     }
 
+    /// Settings, laid out like a desktop program's preferences: the pages down the left, and each
+    /// page in titled panels that fit without scrolling.
     pub(crate) fn settings_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
         if !self.x.settings_open {
             return;
         }
         let mut open = true;
         let mut changed = false;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Settings"))).id(egui::Id::new("settings_window")).open(&mut open).collapsible(false).default_size([720.0, 520.0]).show(ctx, |ui| {
-            ui.horizontal_top(|ui| {
-                // the pages, down the left
-                ui.allocate_ui_with_layout(vec2(190.0, 470.0), egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-                    ui.set_width(190.0);
-                    ui.spacing_mut().button_padding = vec2(10.0, 6.0);
-                    for (i, p) in SETTINGS_PAGES.iter().enumerate() {
-                        if ui.selectable_label(self.x.settings_page == i, crate::i18n::trv(p)).clicked() {
-                            self.x.settings_page = i;
-                        }
-                    }
-                });
-                ui.separator();
-                ui.vertical(|ui| {
-                    egui::ScrollArea::vertical().max_height(470.0).auto_shrink([false, true]).show(ui, |ui| {
-                        changed |= self.settings_page(ui, ctx, act);
+        let (w, h) = (860.0, 540.0);
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Settings")))
+            .id(egui::Id::new("settings_window"))
+            .open(&mut open)
+            .collapsible(false)
+            .resizable(false)
+            .fixed_size([w, h])
+            .show(ctx, |ui| {
+                ui.horizontal_top(|ui| {
+                    // the pages, down the left, on a slightly darker strip
+                    egui::Frame::none().fill(ui.visuals().faint_bg_color).rounding(6.0).inner_margin(6.0).show(ui, |ui| {
+                        ui.allocate_ui_with_layout(vec2(196.0, h - 12.0), egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+                            ui.set_width(196.0);
+                            ui.set_min_height(h - 12.0);
+                            ui.spacing_mut().button_padding = vec2(10.0, 6.0);
+                            ui.spacing_mut().item_spacing.y = 2.0;
+                            for (i, p) in SETTINGS_PAGES.iter().enumerate() {
+                                if ui.selectable_label(self.x.settings_page == i, crate::i18n::trv(p)).clicked() {
+                                    self.x.settings_page = i;
+                                }
+                            }
+                        });
+                    });
+                    ui.add_space(8.0);
+                    ui.vertical(|ui| {
+                        ui.set_width(w - 222.0);
+                        ui.set_height(h);
+                        let page = SETTINGS_PAGES.get(self.x.settings_page).copied().unwrap_or("");
+                        ui.label(RichText::new(crate::i18n::trv(page)).size(17.0).strong());
+                        ui.add_space(6.0);
+                        // only when the text is made very large does a page ever need to scroll
+                        egui::ScrollArea::vertical().max_height(h - 70.0).auto_shrink([false, true]).show(ui, |ui| {
+                            changed |= self.settings_page(ui, ctx, act);
+                        });
+                        ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
+                            if ui.button(RichText::new(crate::i18n::tr("Done")).strong()).clicked() {
+                                self.x.settings_open = false;
+                            }
+                        });
                     });
                 });
             });
-        });
         if changed {
             save_settings(&self.settings);
             apply_theme(ctx, &self.settings);
@@ -293,190 +333,234 @@ impl App {
     fn settings_page(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, act: &mut Option<Action>) -> bool {
         let tr = crate::i18n::tr;
         let mut changed = false;
-        let heading = |ui: &mut egui::Ui, t: &str| {
-            ui.add_space(4.0);
-            ui.label(RichText::new(t).strong());
+        // a titled panel, as in a desktop program's preferences
+        let section = |ui: &mut egui::Ui, t: &str, add: &mut dyn FnMut(&mut egui::Ui)| {
+            egui::Frame::group(ui.style()).rounding(6.0).inner_margin(egui::Margin::symmetric(12.0, 8.0)).show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.label(RichText::new(t).strong());
+                ui.add_space(2.0);
+                add(ui);
+            });
+            ui.add_space(6.0);
         };
         match self.x.settings_page {
             0 => {
-                heading(ui, tr("Light or dark"));
-                ui.horizontal(|ui| {
-                    changed |= light_dark_choice(ui, ctx, &mut self.settings);
-                });
-                heading(ui, tr("Colour scheme"));
-                changed |= scheme_list(ui, &mut self.settings);
-                heading(ui, tr("Accent colour"));
-                changed |= swatch_grid(ui, &PRESETS, &mut self.settings.accent, false);
-                ui.horizontal(|ui| {
-                    ui.label(tr("Custom"));
-                    changed |= ui.color_edit_button_srgb(&mut self.settings.accent).changed();
-                });
-                if self.settings.dark {
-                    heading(ui, tr("Dark background"));
-                    changed |= swatch_grid(ui, &BG_PRESETS, &mut self.settings.bg, true);
+                section(ui, tr("Light or dark"), &mut |ui| {
                     ui.horizontal(|ui| {
-                        ui.label(tr("Custom"));
-                        changed |= ui.color_edit_button_srgb(&mut self.settings.bg).changed();
+                        changed |= light_dark_choice(ui, ctx, &mut self.settings);
                     });
-                }
-                ui.add_space(4.0);
-                if ui.button(tr("Reset colours to the defaults")).clicked() {
+                });
+                section(ui, tr("Colour scheme"), &mut |ui| {
+                    changed |= scheme_list(ui, &mut self.settings);
+                    if !self.settings.glass.is_empty() {
+                        ui.add_space(4.0);
+                        changed |= ui.checkbox(&mut self.settings.glass_splash, tr("A splash of colour behind the glass")).on_hover_text(tr("Soft glows of the accent colour (Colours page) behind the see-through panels")).changed();
+                        changed |= ui.checkbox(&mut self.settings.see_through, tr("Transparent window: your desktop shows behind the glass")).on_hover_text(tr("Takes effect the next time Gilded Roots starts")).changed();
+                    }
+                });
+                if ui.button(tr("Back to the Gilded Roots look")).on_hover_text(tr("The colours Gilded Roots comes with, light or dark as now")).clicked() {
                     let d = Settings::default();
-                    self.settings.auto_dark = d.auto_dark;
-                    self.settings.dark = d.dark;
+                    let dark = self.settings.dark;
                     self.settings.accent = d.accent;
                     self.settings.bg = d.bg;
                     self.settings.light_bg = d.light_bg;
                     self.settings.ink = d.ink;
                     self.settings.glass = d.glass;
+                    self.settings.dark = dark;
                     changed = true;
                 }
-                heading(ui, tr("Text size"));
-                ui.horizontal_wrapped(|ui| {
-                    for (v, l) in [(0.85f32, "Small"), (1.0, "Normal"), (1.15, "Large"), (1.3, "Larger"), (1.5, "Largest")] {
-                        if ui.selectable_label((self.settings.ui_scale - v).abs() < 0.01, crate::i18n::trv(l)).clicked() {
-                            self.settings.ui_scale = v;
-                            changed = true;
-                        }
-                    }
-                });
-                heading(ui, tr("Font"));
-                let own = system_font_name();
-                let mut sys = self.settings.system_font;
-                ui.add_enabled_ui(own.is_some(), |ui| {
-                    if ui.radio_value(&mut sys, true, match &own {
-                        Some(n) => crate::i18n::trf("The computer's own font ({})", &["The computer's own font (", ")"], &[n.clone()]),
-                        None => tr("The computer's own font (not found on this computer)").to_string(),
-                    }).changed() {
-                        changed = true;
-                    }
-                });
-                if ui.radio_value(&mut sys, false, tr("The font built into Gilded Roots")).changed() {
-                    changed = true;
-                }
-                if sys != self.settings.system_font {
-                    self.settings.system_font = sys;
-                    set_use_system_font(sys);
-                    install_fonts(ctx);
-                }
-                heading(ui, tr("Easier to see"));
-                if ui.checkbox(&mut self.settings.high_contrast, tr("High contrast: clear outlines on every button, box and chart")).changed() {
-                    changed = true;
-                }
-                if ui.checkbox(&mut self.settings.cb_colours, tr("Colour-blind friendly chart colours (blue and orange)")).on_hover_text(tr("Men and women, and the father's and mother's sides, in colours people with red-green colour blindness can tell apart")).changed() {
-                    changed = true;
-                }
-                if ui.checkbox(&mut self.settings.focus_ring, tr("Show where the keyboard is (an outline after pressing Tab)")).changed() {
-                    changed = true;
-                }
-                ui.label(RichText::new(tr("The \"Easy to see\" and \"Heritage\" colour schemes above include high-contrast and sepia looks. Larger text: Text size above.")).small().weak());
             }
             1 => {
+                section(ui, tr("Accent colour"), &mut |ui| {
+                    changed |= swatch_grid(ui, &PRESETS, &mut self.settings.accent, false);
+                    ui.horizontal(|ui| {
+                        ui.label(tr("Custom"));
+                        changed |= ui.color_edit_button_srgb(&mut self.settings.accent).changed();
+                    });
+                });
+                if self.settings.dark {
+                    section(ui, tr("Dark background"), &mut |ui| {
+                        changed |= swatch_grid(ui, &BG_PRESETS, &mut self.settings.bg, true);
+                        ui.horizontal(|ui| {
+                            ui.label(tr("Custom"));
+                            changed |= ui.color_edit_button_srgb(&mut self.settings.bg).changed();
+                        });
+                    });
+                } else {
+                    ui.label(RichText::new(tr("The background colours are for the dark look.")).small().weak());
+                }
+            }
+            2 => {
+                section(ui, tr("Text size"), &mut |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        for (v, l) in [(0.85f32, "Small"), (1.0, "Normal"), (1.15, "Large"), (1.3, "Larger"), (1.5, "Largest")] {
+                            if ui.selectable_label((self.settings.ui_scale - v).abs() < 0.01, crate::i18n::trv(l)).clicked() {
+                                self.settings.ui_scale = v;
+                                changed = true;
+                            }
+                        }
+                    });
+                });
+                section(ui, tr("Font"), &mut |ui| {
+                    let own = system_font_name();
+                    let mut sys = self.settings.system_font;
+                    ui.add_enabled_ui(own.is_some(), |ui| {
+                        if ui.radio_value(&mut sys, true, match &own {
+                            Some(n) => crate::i18n::trf("The computer's own font ({})", &["The computer's own font (", ")"], &[n.clone()]),
+                            None => tr("The computer's own font (not found on this computer)").to_string(),
+                        }).changed() {
+                            changed = true;
+                        }
+                    });
+                    if ui.radio_value(&mut sys, false, tr("The font built into Gilded Roots")).changed() {
+                        changed = true;
+                    }
+                    if sys != self.settings.system_font {
+                        self.settings.system_font = sys;
+                        set_use_system_font(sys);
+                        install_fonts(ctx);
+                    }
+                });
+                section(ui, tr("Easier to see"), &mut |ui| {
+                    if ui.checkbox(&mut self.settings.high_contrast, tr("High contrast: clear outlines on every button, box and chart")).changed() {
+                        changed = true;
+                    }
+                    if ui.checkbox(&mut self.settings.cb_colours, tr("Colour-blind friendly chart colours (blue and orange)")).on_hover_text(tr("Men and women, and the father's and mother's sides, in colours people with red-green colour blindness can tell apart")).changed() {
+                        changed = true;
+                    }
+                    if ui.checkbox(&mut self.settings.focus_ring, tr("Show where the keyboard is (an outline after pressing Tab)")).changed() {
+                        changed = true;
+                    }
+                    ui.label(RichText::new(tr("The \"Easy to see\" and \"Heritage\" colour schemes (Appearance) include high-contrast and sepia looks.")).small().weak());
+                });
+            }
+            3 => {
                 if crate::i18n::offered().any(|l| matches!(l.0, "ja" | "zh" | "ko")) {
                     crate::i18n::add_asian_fonts(ctx);
                 }
                 let cur = if self.settings.language.is_empty() { "en" } else { self.settings.language.as_str() };
                 let mut pick = None;
-                for &(code, own, english, _) in crate::i18n::offered() {
-                    let text = if own == english { own.to_string() } else { format!("{own}  ({english})") };
-                    if ui.selectable_label(cur == code, text).clicked() {
-                        pick = Some(code);
-                    }
-                }
-                ui.label(RichText::new(tr("Anything not translated yet stays in English.")).small().weak());
+                section(ui, tr("Language"), &mut |ui| {
+                    egui::Grid::new("lang_grid").num_columns(3).spacing([16.0, 4.0]).min_col_width(170.0).show(ui, |ui| {
+                        for (i, &(code, own, english, _)) in crate::i18n::offered().enumerate() {
+                            let text = if own == english { own.to_string() } else { format!("{own}  ({english})") };
+                            if ui.selectable_label(cur == code, text).clicked() {
+                                pick = Some(code);
+                            }
+                            if i % 3 == 2 {
+                                ui.end_row();
+                            }
+                        }
+                    });
+                    ui.label(RichText::new(tr("Anything not translated yet stays in English.")).small().weak());
+                });
                 if let Some(code) = pick {
                     self.settings.language = if code == "en" { String::new() } else { code.to_string() };
                     crate::i18n::set_language(&self.settings.language);
                     changed = true;
                 }
             }
-            2 => {
-                heading(ui, tr("Names"));
-                for (v, l) in [(0u8, "John Henry Smith"), (1, "SMITH, John Henry"), (2, "Smith, John Henry")] {
-                    if ui.radio(self.settings.name_style == v, crate::i18n::trv(l)).clicked() {
-                        self.settings.name_style = v;
-                        changed = true;
-                    }
-                }
-                heading(ui, tr("Dates"));
-                for (v, l) in [(0u8, "As typed"), (1, "12 Mar 1921"), (2, "March 12, 1921"), (3, "1921-03-12")] {
-                    if ui.radio(self.settings.date_style == v, crate::i18n::trv(l)).clicked() {
-                        self.settings.date_style = v;
-                        changed = true;
-                    }
-                }
-                ui.label(RichText::new(tr("Only changes how dates look. What you typed is kept.")).small().weak());
-            }
-            3 => {
-                heading(ui, tr("Generations"));
-                ui.horizontal_wrapped(|ui| {
-                    for n in 3..=8usize {
-                        if ui.selectable_label(self.settings.gens == n, n.to_string()).clicked() {
-                            *act = Some(Action::SetGens(n));
-                        }
-                    }
-                });
-                heading(ui, tr("Chart boxes"));
-                changed |= ui.checkbox(&mut self.settings.box_photos, tr("Show photos")).changed();
-                changed |= ui.checkbox(&mut self.settings.box_places, tr("Show birthplace")).changed();
-                changed |= ui.checkbox(&mut self.settings.box_ids, tr("Show person ID")).changed();
-                heading(ui, tr("Profile photo size"));
-                ui.horizontal_wrapped(|ui| {
-                    for (v, l) in [(0u8, "Small"), (1, "Normal"), (2, "Large"), (3, "Extra large")] {
-                        if ui.selectable_label(self.settings.photo_size == v, crate::i18n::trv(l)).clicked() {
-                            self.settings.photo_size = v;
+            4 => {
+                section(ui, tr("Names"), &mut |ui| {
+                    for (v, l) in [(0u8, "John Henry Smith"), (1, "SMITH, John Henry"), (2, "Smith, John Henry")] {
+                        if ui.radio(self.settings.name_style == v, crate::i18n::trv(l)).clicked() {
+                            self.settings.name_style = v;
                             changed = true;
                         }
                     }
                 });
-                ui.label(RichText::new(tr("The photo at the top of the Individual page.")).small().weak());
-            }
-            4 => {
-                changed |= ui.checkbox(&mut self.settings.tb_main, tr("Show main toolbar")).changed();
-                changed |= ui.checkbox(&mut self.settings.tb_tab, tr("Show tab toolbars")).changed();
-                changed |= ui.checkbox(&mut self.settings.tb_words, tr("Toolbar words beside the pictures")).changed();
-                changed |= ui.checkbox(&mut self.settings.tb_large, tr("Large toolbar buttons")).changed();
-                if !self.settings.tb_hidden.is_empty() && ui.button(tr("Show every toolbar button again")).clicked() {
-                    self.settings.tb_hidden.clear();
-                    changed = true;
-                }
-                ui.label(RichText::new(tr("Right-click a toolbar to choose its buttons.")).small().weak());
+                section(ui, tr("Dates"), &mut |ui| {
+                    for (v, l) in [(0u8, "As typed"), (1, "12 Mar 1921"), (2, "March 12, 1921"), (3, "1921-03-12")] {
+                        if ui.radio(self.settings.date_style == v, crate::i18n::trv(l)).clicked() {
+                            self.settings.date_style = v;
+                            changed = true;
+                        }
+                    }
+                    ui.label(RichText::new(tr("Only changes how dates look. What you typed is kept.")).small().weak());
+                });
             }
             5 => {
-                changed |= ui.checkbox(&mut self.settings.hide_living, tr("Keep living people private")).on_hover_text(tr("Printed charts, sheets and reports show living people as \"Living\" with no dates or places")).changed();
-                heading(ui, tr("Paper"));
-                for (v, l) in [(false, "US Letter (8.5 x 11 in)"), (true, "A4 (210 x 297 mm)")] {
-                    if ui.radio(self.settings.paper_a4 == v, crate::i18n::trv(l)).clicked() {
-                        self.settings.paper_a4 = v;
-                        PAPER_A4.store(v, Ordering::Relaxed);
-                        changed = true;
-                    }
-                }
+                section(ui, tr("Generations"), &mut |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        for n in 3..=8usize {
+                            if ui.selectable_label(self.settings.gens == n, n.to_string()).clicked() {
+                                *act = Some(Action::SetGens(n));
+                            }
+                        }
+                    });
+                });
+                section(ui, tr("Chart boxes"), &mut |ui| {
+                    changed |= ui.checkbox(&mut self.settings.box_photos, tr("Show photos")).changed();
+                    changed |= ui.checkbox(&mut self.settings.box_places, tr("Show birthplace")).changed();
+                    changed |= ui.checkbox(&mut self.settings.box_ids, tr("Show person ID")).changed();
+                });
+                section(ui, tr("Profile photo size"), &mut |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        for (v, l) in [(0u8, "Small"), (1, "Normal"), (2, "Large"), (3, "Extra large")] {
+                            if ui.selectable_label(self.settings.photo_size == v, crate::i18n::trv(l)).clicked() {
+                                self.settings.photo_size = v;
+                                changed = true;
+                            }
+                        }
+                    });
+                    ui.label(RichText::new(tr("The photo at the top of the Individual page.")).small().weak());
+                });
             }
-            _ => {
-                heading(ui, tr("Your tree and its backups"));
-                ui.label(RichText::new(tr("Where your tree is kept, how often it is backed up, how many backups to keep, and a second backup folder (a USB drive, say).")).small());
-                if ui.button(tr("Where my tree is kept...")).clicked() {
-                    self.show_loc = true;
-                }
-                heading(ui, tr("Research journal"));
-                changed |= ui.checkbox(&mut self.settings.auto_log, tr("Note what I do in the research journal")).changed();
-                ui.label(RichText::new(tr("Adding research files is written in the journal by itself, with the day and the person.")).small().weak());
-                heading(ui, tr("Microphone"));
-                let cur = if self.settings.mic.is_empty() { tr("System default").to_string() } else { self.settings.mic.clone() };
-                egui::ComboBox::from_id_salt("settings_mic").selected_text(cur).width(300.0).show_ui(ui, |ui| {
-                    if ui.selectable_label(self.settings.mic.is_empty(), tr("System default")).clicked() {
-                        self.settings.mic.clear();
+            6 => {
+                section(ui, tr("Toolbars"), &mut |ui| {
+                    changed |= ui.checkbox(&mut self.settings.tb_main, tr("Show main toolbar")).changed();
+                    changed |= ui.checkbox(&mut self.settings.tb_tab, tr("Show tab toolbars")).changed();
+                    changed |= ui.checkbox(&mut self.settings.tb_words, tr("Toolbar words beside the pictures")).changed();
+                    changed |= ui.checkbox(&mut self.settings.tb_large, tr("Large toolbar buttons")).changed();
+                    changed |= ui.checkbox(&mut self.settings.float_tb, tr("Floating toolbar beside the charts")).on_hover_text(tr("Select or hand, centre, home person, zoom and print, down the left side of the pedigree and descendant charts")).changed();
+                    if !self.settings.tb_hidden.is_empty() && ui.button(tr("Show every toolbar button again")).clicked() {
+                        self.settings.tb_hidden.clear();
                         changed = true;
                     }
-                    for n in input_device_names() {
-                        if ui.selectable_label(self.settings.mic == n, n.as_str()).clicked() {
-                            self.settings.mic = n.clone();
+                    ui.label(RichText::new(tr("Right-click a toolbar to choose its buttons.")).small().weak());
+                });
+            }
+            7 => {
+                section(ui, tr("Privacy"), &mut |ui| {
+                    changed |= ui.checkbox(&mut self.settings.hide_living, tr("Keep living people private")).on_hover_text(tr("Printed charts, sheets and reports show living people as \"Living\" with no dates or places")).changed();
+                });
+                section(ui, tr("Paper"), &mut |ui| {
+                    for (v, l) in [(false, "US Letter (8.5 x 11 in)"), (true, "A4 (210 x 297 mm)")] {
+                        if ui.radio(self.settings.paper_a4 == v, crate::i18n::trv(l)).clicked() {
+                            self.settings.paper_a4 = v;
+                            PAPER_A4.store(v, Ordering::Relaxed);
                             changed = true;
                         }
                     }
                 });
-                ui.label(RichText::new(tr("Used for recording spoken stories.")).small().weak());
+            }
+            _ => {
+                section(ui, tr("Your tree and its backups"), &mut |ui| {
+                    ui.label(RichText::new(tr("Where your tree is kept, how often it is backed up, how many backups to keep, and a second backup folder (a USB drive, say).")).small());
+                    if ui.button(tr("Where my tree is kept...")).clicked() {
+                        self.show_loc = true;
+                    }
+                });
+                section(ui, tr("Research journal"), &mut |ui| {
+                    changed |= ui.checkbox(&mut self.settings.auto_log, tr("Note what I do in the research journal")).changed();
+                    ui.label(RichText::new(tr("Adding research files is written in the journal by itself, with the day and the person.")).small().weak());
+                });
+                section(ui, tr("Microphone"), &mut |ui| {
+                    let cur = if self.settings.mic.is_empty() { tr("System default").to_string() } else { self.settings.mic.clone() };
+                    egui::ComboBox::from_id_salt("settings_mic").selected_text(cur).width(300.0).show_ui(ui, |ui| {
+                        if ui.selectable_label(self.settings.mic.is_empty(), tr("System default")).clicked() {
+                            self.settings.mic.clear();
+                            changed = true;
+                        }
+                        for n in input_device_names() {
+                            if ui.selectable_label(self.settings.mic == n, n.as_str()).clicked() {
+                                self.settings.mic = n.clone();
+                                changed = true;
+                            }
+                        }
+                    });
+                    ui.label(RichText::new(tr("Used for recording spoken stories.")).small().weak());
+                });
             }
         }
         changed

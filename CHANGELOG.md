@@ -4,6 +4,23 @@ Major work so far, in the order it was done.
 
 ## Next version (not released yet)
 
+- **Charts on a canvas, as on the genealogy websites**: the pedigree, descendants, fan and hourglass charts fill the
+  window; drag any empty part (or anywhere with the Hand) or scroll to move them. They start at the left, centred top
+  to bottom.
+- **A floating toolbar** down the left of the charts (Select, Hand, Centre, home person, zoom, fit, print); on or off
+  in View or Settings → Toolbars.
+- **Spouse & children and Siblings** are a panel fastened under the main person's card, both open at first.
+- **Photo cards is the starting style**, and its last generation is a slim card, so the chart is compact.
+- **File → GEDCOM: import and export...**: one window with every way in and out.
+- **A tidier View menu**: Go to tab, the floating toolbar, the Settings pages, **Fill the screen (keep the menu
+  bar)** and Full screen.
+- **Settings like a desktop program's preferences**: titled panels that fit without scrolling, new Colours and Text
+  and readability pages, a Done button, and **Back to the Gilded Roots look**; the **Gilded Roots** scheme group holds
+  the look it comes with.
+- **Glass is plain and neutral** now, with **A splash of colour** (the accent colour) and a **Transparent window** to
+  choose. Scheme groups renamed: Greens, Retro screens and Traditional.
+- The trail of people visited shows on the Pedigree tab only.
+- Windows open in the middle of the program, and can then be moved.
 - **The Mac menu bar**: on a Mac, Gilded Roots now fills the menu bar at the top of the screen like any Mac
   program, with Gilded Roots, File, Edit, View, Window and Help menus (About, Settings ⌘, Print ⌘P, Close
   Window ⌘W, Hide, Quit, each tab, full screen and the user guide). The menus inside the window stay as they are.

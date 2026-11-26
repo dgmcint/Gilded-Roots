@@ -106,6 +106,15 @@ pub(crate) struct Settings {
     /// Light or dark following the computer's own setting (Automatic on a Mac).
     #[serde(default)]
     pub(crate) auto_dark: bool,
+    /// A splash of the accent colour in the glass looks' backdrop (they are neutral otherwise).
+    #[serde(default)]
+    pub(crate) glass_splash: bool,
+    /// A see-through window: the desktop shows behind the glass looks (from the next start).
+    #[serde(default)]
+    pub(crate) see_through: bool,
+    /// The floating toolbar down the left of the charts.
+    #[serde(default = "default_true")]
+    pub(crate) float_tb: bool,
     /// The last choices in the Import options window.
     #[serde(default)]
     pub(crate) import: ImportChoices,
@@ -223,7 +232,7 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false }
+        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 1, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false, glass_splash: false, see_through: false, float_tb: true }
     }
 }
 
@@ -283,15 +292,20 @@ pub(crate) struct Scheme {
     pub(crate) glass: bool,
 }
 
+/// The group holding Gilded Roots' own look, as it comes (the computer's text colour, no glass).
+pub(crate) const DEFAULT_GROUP: &str = "Gilded Roots";
+
 pub(crate) const SCHEMES: &[Scheme] = &[
+    Scheme { name: "Gilded Roots dark", group: DEFAULT_GROUP, dark: true, bg: [30, 31, 34], accent: DEFAULT_ACCENT, ink: [0, 0, 0], glass: false },
+    Scheme { name: "Gilded Roots light", group: DEFAULT_GROUP, dark: false, bg: [233, 234, 236], accent: DEFAULT_ACCENT, ink: [0, 0, 0], glass: false },
     Scheme { name: "Slate Blue", group: "Tree pictures", dark: true, bg: [67, 82, 106], accent: [135, 141, 151], ink: [246, 238, 226], glass: false },
     Scheme { name: "Navy", group: "Tree pictures", dark: true, bg: [30, 52, 99], accent: [115, 129, 158], ink: [255, 255, 255], glass: false },
     Scheme { name: "Parchment", group: "Tree pictures", dark: false, bg: [226, 201, 162], accent: [140, 88, 42], ink: [66, 40, 18], glass: false },
     Scheme { name: "Blue Linen", group: "Tree pictures", dark: true, bg: [88, 110, 142], accent: [144, 155, 171], ink: [236, 231, 220], glass: false },
     Scheme { name: "Leather", group: "Tree pictures", dark: true, bg: [104, 52, 24], accent: [156, 117, 86], ink: [242, 224, 188], glass: false },
-    Scheme { name: "Leaf Green", group: "Genealogy sites", dark: false, bg: [243, 240, 232], accent: [104, 134, 28], ink: [52, 48, 44], glass: false },
-    Scheme { name: "Fresh Green", group: "Genealogy sites", dark: false, bg: [242, 243, 240], accent: [80, 132, 34], ink: [51, 51, 51], glass: false },
-    Scheme { name: "Deep Green", group: "Genealogy sites", dark: true, bg: [48, 88, 38], accent: [124, 150, 117], ink: [250, 252, 246], glass: false },
+    Scheme { name: "Leaf Green", group: "Greens", dark: false, bg: [243, 240, 232], accent: [104, 134, 28], ink: [52, 48, 44], glass: false },
+    Scheme { name: "Fresh Green", group: "Greens", dark: false, bg: [242, 243, 240], accent: [80, 132, 34], ink: [51, 51, 51], glass: false },
+    Scheme { name: "Deep Green", group: "Greens", dark: true, bg: [48, 88, 38], accent: [124, 150, 117], ink: [250, 252, 246], glass: false },
     Scheme { name: "Sage", group: "Earth tones", dark: false, bg: [199, 208, 184], accent: [88, 110, 74], ink: [40, 52, 36], glass: false },
     Scheme { name: "Olive", group: "Earth tones", dark: true, bg: [85, 90, 52], accent: [143, 145, 113], ink: [240, 236, 214], glass: false },
     Scheme { name: "Moss", group: "Earth tones", dark: true, bg: [66, 82, 50], accent: [131, 142, 114], ink: [238, 240, 220], glass: false },
@@ -319,13 +333,13 @@ pub(crate) const SCHEMES: &[Scheme] = &[
     Scheme { name: "Ocean Glass", group: "Glass", dark: true, bg: [7, 26, 69], accent: [25, 230, 255], ink: [242, 251, 255], glass: true },
     Scheme { name: "Steel Glass", group: "Glass", dark: true, bg: [11, 26, 42], accent: [143, 216, 255], ink: [238, 248, 255], glass: true },
     // From Ship's Log's other skins
-    Scheme { name: "Console", group: "From Ship's Log", dark: true, bg: [14, 14, 20], accent: [247, 181, 56], ink: [246, 231, 200], glass: false },
-    Scheme { name: "Archive", group: "From Ship's Log", dark: true, bg: [13, 28, 63], accent: [232, 196, 106], ink: [230, 238, 255], glass: false },
-    Scheme { name: "Amber Screen", group: "From Ship's Log", dark: true, bg: [14, 11, 7], accent: [255, 176, 0], ink: [255, 233, 199], glass: false },
-    Scheme { name: "Pioneer", group: "From Ship's Log", dark: true, bg: [26, 35, 46], accent: [111, 183, 232], ink: [223, 232, 240], glass: false },
+    Scheme { name: "Console", group: "Retro screens", dark: true, bg: [14, 14, 20], accent: [247, 181, 56], ink: [246, 231, 200], glass: false },
+    Scheme { name: "Archive", group: "Retro screens", dark: true, bg: [13, 28, 63], accent: [232, 196, 106], ink: [230, 238, 255], glass: false },
+    Scheme { name: "Amber Screen", group: "Retro screens", dark: true, bg: [14, 11, 7], accent: [255, 176, 0], ink: [255, 233, 199], glass: false },
+    Scheme { name: "Pioneer", group: "Retro screens", dark: true, bg: [26, 35, 46], accent: [111, 183, 232], ink: [223, 232, 240], glass: false },
     // The originals of Family Keeper and PAF Classic
-    Scheme { name: "Paper", group: "From Family Keeper and PAF Classic", dark: false, bg: [245, 240, 230], accent: [47, 107, 87], ink: [42, 38, 32], glass: false },
-    Scheme { name: "Classic", group: "From Family Keeper and PAF Classic", dark: false, bg: [236, 233, 216], accent: [81, 85, 120], ink: [0, 0, 0], glass: false },
+    Scheme { name: "Paper", group: "Traditional", dark: false, bg: [245, 240, 230], accent: [47, 107, 87], ink: [42, 38, 32], glass: false },
+    Scheme { name: "Classic", group: "Traditional", dark: false, bg: [236, 233, 216], accent: [81, 85, 120], ink: [0, 0, 0], glass: false },
 ];
 
 /// The soft coloured backdrop behind a glass look: the four corners, then soft glows
@@ -337,11 +351,12 @@ pub(crate) struct GlassBackdrop {
 
 pub(crate) fn glass_backdrop(name: &str) -> GlassBackdrop {
     match name {
-        "Dark Glass" => GlassBackdrop { corners: [[44, 22, 20], [20, 12, 30], [10, 26, 32], [34, 14, 10]], glows: &[([0.78, 0.22], 0.45, [79, 163, 184, 110]), ([0.18, 0.82], 0.4, [224, 164, 140, 80])] },
-        "Ocean Glass" => GlassBackdrop { corners: [[12, 44, 108], [7, 26, 69], [4, 18, 52], [24, 12, 66]], glows: &[([0.8, 0.2], 0.42, [25, 230, 255, 90]), ([0.2, 0.75], 0.38, [255, 90, 209, 70]), ([0.55, 0.95], 0.3, [141, 255, 106, 45])] },
+        // neutral, as glass over a plain desk: no colour of its own beyond a faint cool tint
+        "Dark Glass" => GlassBackdrop { corners: [[38, 40, 45], [26, 28, 32], [20, 22, 25], [32, 34, 39]], glows: &[([0.75, 0.25], 0.45, [255, 255, 255, 16]), ([0.2, 0.8], 0.4, [150, 170, 200, 14])] },
+        "Ocean Glass" => GlassBackdrop { corners: [[12, 44, 108], [7, 26, 69], [4, 18, 52], [10, 30, 80]], glows: &[([0.8, 0.2], 0.42, [25, 230, 255, 70]), ([0.2, 0.75], 0.38, [60, 140, 255, 50])] },
         "Steel Glass" => GlassBackdrop { corners: [[22, 44, 68], [11, 26, 42], [8, 20, 32], [18, 38, 56]], glows: &[([0.7, 0.3], 0.5, [143, 216, 255, 70]), ([0.15, 0.85], 0.35, [233, 246, 255, 30])] },
-        // "Glass": light, like a bright window over a pale sky
-        _ => GlassBackdrop { corners: [[178, 204, 244], [214, 196, 240], [244, 208, 190], [184, 224, 216]], glows: &[([0.22, 0.25], 0.38, [120, 170, 250, 120]), ([0.82, 0.72], 0.42, [250, 160, 195, 110]), ([0.6, 0.1], 0.3, [252, 226, 170, 90])] },
+        // "Glass": light and neutral, a bright window over a pale grey
+        _ => GlassBackdrop { corners: [[226, 229, 235], [238, 239, 243], [232, 234, 238], [222, 226, 233]], glows: &[([0.25, 0.25], 0.45, [255, 255, 255, 110]), ([0.8, 0.75], 0.4, [205, 214, 228, 70])] },
     }
 }
 
@@ -355,7 +370,7 @@ impl Settings {
         self.glass = if s.glass { s.name.to_string() } else { String::new() };
         self.dark = s.dark;
         self.accent = s.accent;
-        self.ink = Some(s.ink);
+        self.ink = if s.group == DEFAULT_GROUP { None } else { Some(s.ink) };
         if s.dark {
             self.bg = s.bg;
         } else {
@@ -364,7 +379,7 @@ impl Settings {
     }
 
     pub(crate) fn is_scheme(&self, s: &Scheme) -> bool {
-        (self.glass == if s.glass { s.name } else { "" }) && self.dark == s.dark && self.accent == s.accent && self.ink == Some(s.ink) && (if s.dark { self.bg } else { self.light_bg }) == s.bg
+        (self.glass == if s.glass { s.name } else { "" }) && self.dark == s.dark && self.accent == s.accent && self.ink == (if s.group == DEFAULT_GROUP { None } else { Some(s.ink) }) && (if s.dark { self.bg } else { self.light_bg }) == s.bg
     }
 }
 
@@ -390,7 +405,9 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
         }
     });
     ui.add_space(4.0);
-    for s in SCHEMES.iter().filter(|s| s.group == group) {
+    let list: Vec<&Scheme> = SCHEMES.iter().filter(|s| s.group == group).collect();
+    egui::Grid::new("scheme_grid").num_columns(2).spacing([24.0, 6.0]).min_col_width(200.0).show(ui, |ui| {
+    for (i, s) in list.iter().enumerate() {
         ui.horizontal(|ui| {
             let (rect, _) = ui.allocate_exact_size(vec2(28.0, 16.0), Sense::hover());
             let bg = Color32::from_rgb(s.bg[0], s.bg[1], s.bg[2]);
@@ -403,7 +420,11 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
                 picked = true;
             }
         });
+        if i % 2 == 1 {
+            ui.end_row();
+        }
     }
+    });
     picked
 }
 
@@ -413,16 +434,16 @@ pub(crate) fn swatch_grid(ui: &mut egui::Ui, list: &[(&str, [u8; 3])], cur: &mut
     egui::Grid::new(ui.next_auto_id()).spacing([8.0, 8.0]).show(ui, |ui| {
         for (i, (name, c)) in list.iter().enumerate() {
             ui.vertical(|ui| {
-                ui.set_width(64.0);
-                let (rect, resp) = ui.allocate_exact_size(vec2(64.0, 40.0), Sense::click());
+                ui.set_width(52.0);
+                let (rect, resp) = ui.allocate_exact_size(vec2(52.0, 26.0), Sense::click());
                 let col = Color32::from_rgb(c[0], c[1], c[2]);
-                ui.painter().rect_filled(rect, 8.0_f32, col);
+                ui.painter().rect_filled(rect, 5.0_f32, col);
                 if outline || resp.hovered() {
-                    ui.painter().rect_stroke(rect, 8.0_f32, Stroke::new(1.0_f32, Color32::GRAY));
+                    ui.painter().rect_stroke(rect, 5.0_f32, Stroke::new(1.0_f32, Color32::GRAY));
                 }
                 if *cur == *c {
-                    ui.painter().rect_stroke(rect.expand(3.0), 10.0_f32, Stroke::new(2.5_f32, ui.visuals().text_color()));
-                    ui.painter().text(rect.center(), Align2::CENTER_CENTER, "\u{2713}", FontId::proportional(20.0), on_accent(col));
+                    ui.painter().rect_stroke(rect.expand(2.5), 7.0_f32, Stroke::new(2.0_f32, ui.visuals().text_color()));
+                    ui.painter().text(rect.center(), Align2::CENTER_CENTER, "\u{2713}", FontId::proportional(15.0), on_accent(col));
                 }
                 ui.label(RichText::new(*name).small());
                 if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
@@ -430,7 +451,7 @@ pub(crate) fn swatch_grid(ui: &mut egui::Ui, list: &[(&str, [u8; 3])], cur: &mut
                     picked = true;
                 }
             });
-            if (i + 1) % 6 == 0 {
+            if (i + 1) % 8 == 0 {
                 ui.end_row();
             }
         }
@@ -759,14 +780,24 @@ pub(crate) fn glass_rgba(r: u8, g: u8, b: u8, al: u8) -> Color32 {
 
 /// Paint a glass look's backdrop behind everything: a soft four-colour gradient with glows.
 /// Called at the start of each frame, before the panels (which are see-through with glass).
+/// Whether this run's window was made see-through (it can only be chosen when the window opens).
+pub(crate) static WINDOW_SEE_THROUGH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The window is see-through now: made so at the start, with a glass look in use.
+pub(crate) fn see_through_now(settings: &Settings) -> bool {
+    WINDOW_SEE_THROUGH.load(std::sync::atomic::Ordering::Relaxed) && settings.see_through && !settings.glass.is_empty()
+}
+
 pub(crate) fn paint_glass_backdrop(ctx: &egui::Context, settings: &Settings) {
     if settings.glass.is_empty() {
         return;
     }
+    // see-through: only a faint wash of the backdrop, so the desktop shows behind
+    let wash = if see_through_now(settings) { 0.3f32 } else { 1.0 };
     let g = glass_backdrop(&settings.glass);
     let r = ctx.screen_rect();
     let painter = ctx.layer_painter(egui::LayerId::background());
-    let c = |x: [u8; 3]| Color32::from_rgb(x[0], x[1], x[2]);
+    let c = |x: [u8; 3]| if wash < 1.0 { glass_rgba(x[0], x[1], x[2], (255.0 * wash) as u8) } else { Color32::from_rgb(x[0], x[1], x[2]) };
     let mut mesh = egui::epaint::Mesh::default();
     // a 2 x 2 grid of the four corner colours, with a centre point for a smoother mix
     let pts = [r.left_top(), r.right_top(), r.left_bottom(), r.right_bottom()];
@@ -781,7 +812,13 @@ pub(crate) fn paint_glass_backdrop(ctx: &egui::Context, settings: &Settings) {
     painter.add(egui::Shape::mesh(mesh));
     // soft glows: a fan of triangles from a coloured centre out to a see-through edge
     let side = r.width().max(r.height());
-    for (centre, rad, col) in g.glows {
+    // a splash of colour, when chosen: two soft glows of the accent colour, one lighter
+    let a = settings.accent;
+    let strong = if settings.dark { 70 } else { 95 };
+    let light = [0, 1, 2].map(|i| ((a[i] as u16 * 2 + 255) / 3) as u8);
+    let splash = [([0.2f32, 0.3f32], 0.45f32, [a[0], a[1], a[2], strong]), ([0.85, 0.75], 0.4, [light[0], light[1], light[2], strong - 20])];
+    let extra: &[([f32; 2], f32, [u8; 4])] = if settings.glass_splash { &splash } else { &[] };
+    for (centre, rad, col) in g.glows.iter().chain(extra.iter()) {
         let ctr = egui::pos2(r.left() + centre[0] * r.width(), r.top() + centre[1] * r.height());
         let radius = rad * side;
         let mut m = egui::epaint::Mesh::default();

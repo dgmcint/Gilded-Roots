@@ -1091,7 +1091,7 @@ impl App {
         }
         let mut open = true;
         let mut print: Option<String> = None;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Blank census forms"))).open(&mut open).resizable(false).default_width(520.0).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Blank census forms"))).open(&mut open).resizable(false).default_width(520.0).show(ctx, |ui| {
             let s = &mut self.x.census;
             if s.lines == 0 {
                 s.lines = 20;

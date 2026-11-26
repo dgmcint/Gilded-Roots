@@ -176,7 +176,7 @@ impl App {
         }
         let mut open = true;
         let mut go: Option<Hit> = None;
-        egui::Window::new(crate::look::wtitle(tr("Search everything"))).id(egui::Id::new("search_all")).open(&mut open).default_size([640.0, 560.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(tr("Search everything"))).id(egui::Id::new("search_all")).open(&mut open).default_size([640.0, 560.0]).show(ctx, |ui| {
             let r = ui.add(egui::TextEdit::singleline(&mut self.x.sall_q).hint_text(tr("Words to find anywhere: names, places, notes, sources, stories, emails...")).desired_width(f32::INFINITY));
             if self.x.sall_focus {
                 r.request_focus();

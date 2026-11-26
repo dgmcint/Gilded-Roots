@@ -532,3 +532,71 @@ impl App {
         self.status = if notice.is_empty() { format!("Opened {}.", tree_title(name)) } else { notice };
     }
 }
+
+impl App {
+    /// File > GEDCOM: every way to bring a tree in or send it out, in one window.
+    pub(crate) fn gedcom_window(&mut self, ctx: &egui::Context) {
+        if !self.x.ged_open {
+            return;
+        }
+        let tr = crate::i18n::tr;
+        let mut open = true;
+        let mut close = false;
+        crate::look::window(crate::look::wtitle(tr("GEDCOM"))).id(egui::Id::new("gedcom_window")).open(&mut open).collapsible(false).resizable(false).default_width(520.0).show(ctx, |ui| {
+            ui.label(RichText::new(tr("GEDCOM is the file every family history program and website can read and write.")).small().weak());
+            ui.add_space(6.0);
+            let section = |ui: &mut egui::Ui, title: &str, note: &str, add: &mut dyn FnMut(&mut egui::Ui)| {
+                egui::Frame::group(ui.style()).rounding(6.0).inner_margin(egui::Margin::symmetric(12.0, 8.0)).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    ui.label(RichText::new(title).strong());
+                    if !note.is_empty() {
+                        ui.label(RichText::new(note).small().weak());
+                    }
+                    ui.add_space(2.0);
+                    ui.horizontal_wrapped(|ui| add(ui));
+                });
+                ui.add_space(6.0);
+            };
+            section(ui, tr("Bring in a tree"), tr("From a GEDCOM file (5.5, 5.5.1 or 7), a GEDZIP, or another program's file."), &mut |ui| {
+                if ui.button(tr("Import tree...")).clicked() {
+                    self.imp_open = true;
+                    close = true;
+                }
+            });
+            section(ui, tr("GEDCOM 5.5.1"), tr("Works with nearly every program and website. If in doubt, use this."), &mut |ui| {
+                if ui.button(tr("Everything...")).clicked() {
+                    self.export(false);
+                    close = true;
+                }
+                if ui.button(tr("Living people private...")).clicked() {
+                    self.export(true);
+                    close = true;
+                }
+            });
+            section(ui, tr("GEDCOM 7"), tr("The newer GEDCOM. Some programs can't read it yet."), &mut |ui| {
+                if ui.button(tr("Everything...")).clicked() {
+                    self.export7(false, false);
+                    close = true;
+                }
+                if ui.button(tr("Living people private...")).clicked() {
+                    self.export7(true, false);
+                    close = true;
+                }
+            });
+            section(ui, tr("GEDZIP with photos"), tr("One .gdz file holding the GEDCOM 7 file and every photo and document."), &mut |ui| {
+                if ui.button(tr("Everything...")).clicked() {
+                    self.export7(false, true);
+                    close = true;
+                }
+                if ui.button(tr("Living people private...")).clicked() {
+                    self.export7(true, true);
+                    close = true;
+                }
+            });
+            ui.label(RichText::new(tr("Living people private: living people are shown as \"Living\", with no dates or places.")).small().weak());
+        });
+        if !open || close {
+            self.x.ged_open = false;
+        }
+    }
+}

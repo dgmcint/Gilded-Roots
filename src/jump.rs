@@ -313,7 +313,7 @@ impl App {
         let mut pick: Option<usize> = if enter && n > 0 { Some(self.x.jump_sel.min(n - 1)) } else { None };
         let mut close = esc;
         let cur = self.x.jump_sel;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Quick jump")))
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Quick jump")))
             .title_bar(false)
             .collapsible(false)
             .resizable(false)

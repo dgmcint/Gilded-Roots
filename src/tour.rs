@@ -389,7 +389,7 @@ impl App {
         let mut back_to_sample = false;
         let mut fold = None;
         let n = lesson.steps.len();
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Guided tour")))
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Guided tour")))
             .id(egui::Id::new("tour_card"))
             .collapsible(false)
             .resizable(false)
@@ -481,7 +481,7 @@ impl App {
     fn tour_lessons(&mut self, ctx: &egui::Context) {
         let mut open = true;
         let mut start = None;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Guided tour")))
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Guided tour")))
             .id(egui::Id::new("tour_lessons"))
             .open(&mut open)
             .collapsible(false)

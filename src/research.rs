@@ -1125,7 +1125,7 @@ impl App {
     pub(crate) fn research_picture(&mut self, ctx: &egui::Context) {
         let Some(f) = self.x.research_view_pic.clone() else { return };
         let mut open = true;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Scan"))).id(egui::Id::new("research_pic")).open(&mut open).default_size([800.0, 700.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Scan"))).id(egui::Id::new("research_pic")).open(&mut open).default_size([800.0, 700.0]).show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.add(egui::Image::new(img_uri(&mfile(&f))).max_width(ui.available_width()));
             });

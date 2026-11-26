@@ -11,6 +11,15 @@ impl eframe::App for App {
         }
         self.frame(ctx);
     }
+
+    /// Clear to nothing when the window is see-through, so the desktop shows behind.
+    fn clear_color(&self, visuals: &egui::Visuals) -> [f32; 4] {
+        if crate::settings::see_through_now(&self.settings) {
+            [0.0; 4]
+        } else {
+            visuals.panel_fill.to_normalized_gamma_f32()
+        }
+    }
 }
 
 impl App {
@@ -28,6 +37,7 @@ impl App {
                 }
             }
         }
+        crate::look::note_screen(ctx);
         paint_glass_backdrop(ctx, &self.settings);
         let mut act: Option<Action> = None;
         self.type_pending_letter(ctx);
@@ -66,38 +76,10 @@ impl App {
                         ui.close_menu();
                     }
                     ui.separator();
-                    if ui.button(crate::i18n::tr("Import tree...")).clicked() {
-                        self.imp_open = true;
+                    if ui.button(crate::i18n::tr("GEDCOM: import and export...")).on_hover_text(crate::i18n::tr("Bring in a tree from another program or website, or send yours out in every GEDCOM form")).clicked() {
+                        self.x.ged_open = true;
                         ui.close_menu();
                     }
-                    if ui.button(crate::i18n::tr("Export GEDCOM (everything)...")).clicked() {
-                        self.export(false);
-                        ui.close_menu();
-                    }
-                    if ui.button(crate::i18n::tr("Export GEDCOM (living people private)...")).clicked() {
-                        self.export(true);
-                        ui.close_menu();
-                    }
-                    ui.menu_button(crate::i18n::tr("Export GEDCOM 7"), |ui| {
-                        ui.label(RichText::new(crate::i18n::tr("The newer GEDCOM. Some programs can't read it yet; if in doubt, use the export above.")).small().weak());
-                        if ui.button(crate::i18n::tr("GEDCOM 7 file (everything)...")).clicked() {
-                            self.export7(false, false);
-                            ui.close_menu();
-                        }
-                        if ui.button(crate::i18n::tr("GEDCOM 7 file (living people private)...")).clicked() {
-                            self.export7(true, false);
-                            ui.close_menu();
-                        }
-                        ui.separator();
-                        if ui.button(crate::i18n::tr("GEDZIP with photos (everything)...")).on_hover_text(crate::i18n::tr("One .gdz file holding the GEDCOM 7 file and every photo and document")).clicked() {
-                            self.export7(false, true);
-                            ui.close_menu();
-                        }
-                        if ui.button(crate::i18n::tr("GEDZIP with photos (living people private)...")).clicked() {
-                            self.export7(true, true);
-                            ui.close_menu();
-                        }
-                    });
                     if ui.button(crate::i18n::tr("Make a family website...")).on_hover_text(crate::i18n::tr("Web pages for every person, to put on a USB stick or send to relatives. Living people are left out.")).clicked() {
                         self.web_open();
                         ui.close_menu();
@@ -189,143 +171,41 @@ impl App {
                         act = Some(Action::Fit);
                         ui.close_menu();
                     }
-                    ui.separator();
-                    let mut tb = false;
-                    tb |= ui.checkbox(&mut self.settings.tb_main, crate::i18n::tr("Show main toolbar")).changed();
-                    tb |= ui.checkbox(&mut self.settings.tb_tab, crate::i18n::tr("Show tab toolbars")).changed();
-                    tb |= ui.checkbox(&mut self.settings.tb_words, crate::i18n::tr("Toolbar words beside the pictures")).changed();
-                    tb |= ui.checkbox(&mut self.settings.tb_large, crate::i18n::tr("Large toolbar buttons")).changed();
-                    if tb {
-                        save_settings(&self.settings);
-                    }
-                    ui.label(RichText::new(crate::i18n::tr("Right-click a toolbar to choose its buttons.")).small().weak());
-                    ui.separator();
-                    for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
-                        if ui.button(crate::i18n::trv(l)).clicked() {
-                            self.view = v;
-                            ui.close_menu();
-                        }
-                    }
-                    ui.menu_button(crate::i18n::tr("Generations"), |ui| {
-                        for n in 3..=8usize {
-                            if ui.selectable_label(self.settings.gens == n, crate::i18n::trf("{} generations", &["", " generations"], &[(n).to_string()])).clicked() {
-                                act = Some(Action::SetGens(n));
+                    ui.menu_button(crate::i18n::tr("Go to tab"), |ui| {
+                        for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Charts, "Charts"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                            if ui.selectable_label(self.view == v, crate::i18n::trv(l)).clicked() {
+                                self.view = v;
                                 ui.close_menu();
                             }
                         }
                     });
                     ui.separator();
-                    let mut changed = false;
-                    ui.menu_button(crate::i18n::tr("Colours"), |ui| {
-                        ui.menu_button(crate::i18n::tr("Colour schemes"), |ui| {
-                            egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
-                                if scheme_list(ui, &mut self.settings) {
-                                    changed = true;
-                                    ui.close_menu();
-                                }
-                            });
-                        });
-                        ui.separator();
-                        ui.label(RichText::new(crate::i18n::tr("Accent colour")).strong());
-                        if swatch_grid(ui, &PRESETS, &mut self.settings.accent, false) {
-                            changed = true;
-                        }
-                        if self.settings.dark {
-                            ui.separator();
-                            ui.label(RichText::new(crate::i18n::tr("Dark background")).strong());
-                            if swatch_grid(ui, &BG_PRESETS, &mut self.settings.bg, true) {
-                                changed = true;
-                            }
-                        }
-                        ui.separator();
-                        if ui.button(crate::i18n::tr("More: theme and your own colours...")).clicked() {
+                    if ui.checkbox(&mut self.settings.float_tb, crate::i18n::tr("Floating toolbar beside the charts")).changed() {
+                        save_settings(&self.settings);
+                    }
+                    // the rest of the choices live in Settings, each on its page
+                    let tr = crate::i18n::tr;
+                    for (l, page) in [(tr("Appearance..."), 0usize), (tr("Colours..."), 1), (tr("Text and readability..."), 2), (tr("Names and dates..."), 4), (tr("Charts..."), 5), (tr("Toolbars..."), 6)] {
+                        if ui.button(l).clicked() {
                             self.x.settings_open = true;
-                            self.x.settings_page = 0;
+                            self.x.settings_page = page;
                             ui.close_menu();
                         }
-                    });
-                    ui.menu_button(crate::i18n::tr("Text size"), |ui| {
-                        for (v, l) in [(0.85f32, "Small"), (1.0, "Normal"), (1.15, "Large"), (1.3, "Larger"), (1.5, "Largest")] {
-                            if ui.selectable_label((self.settings.ui_scale - v).abs() < 0.01, crate::i18n::trv(l)).clicked() {
-                                self.settings.ui_scale = v;
-                                changed = true;
-                            }
-                        }
-                        ui.label(RichText::new(crate::i18n::tr("Makes all text and buttons bigger or smaller.")).small().weak());
-                    });
-                    ui.menu_button(crate::i18n::tr("Language"), |ui| {
-                        // Each language is shown in its own words, so it can be found by someone
-                        // who does not read the one the program is in now.
-                        // Japanese, Chinese and Korean names in this list need those fonts to show.
-                        if crate::i18n::offered().any(|l| matches!(l.0, "ja" | "zh" | "ko")) {
-                            crate::i18n::add_asian_fonts(ctx);
-                        }
-                        let cur = if self.settings.language.is_empty() { "en" } else { self.settings.language.as_str() };
-                        let mut pick = None;
-                        egui::ScrollArea::vertical().max_height(480.0).show(ui, |ui| {
-                            for &(code, own, english, _) in crate::i18n::offered() {
-                                let text = if own == english { own.to_string() } else { format!("{own}  ({english})") };
-                                if ui.selectable_label(cur == code, text).clicked() {
-                                    pick = Some(code);
-                                }
-                            }
-                        });
-                        ui.label(RichText::new(crate::i18n::tr("Anything not translated yet stays in English.")).small().weak());
-                        if let Some(code) = pick {
-                            self.settings.language = if code == "en" { String::new() } else { code.to_string() };
-                            crate::i18n::set_language(&self.settings.language);
-                            changed = true;
-                            ui.close_menu();
-                        }
-                    });
-                    ui.menu_button(crate::i18n::tr("Names"), |ui| {
-                        for (v, l) in [(0u8, "John Henry Smith"), (1, "SMITH, John Henry"), (2, "Smith, John Henry")] {
-                            if ui.selectable_label(self.settings.name_style == v, crate::i18n::trv(l)).clicked() {
-                                self.settings.name_style = v;
-                                changed = true;
-                            }
-                        }
-                    });
-                    ui.menu_button(crate::i18n::tr("Dates"), |ui| {
-                        for (v, l) in [(0u8, "As typed"), (1, "12 Mar 1921"), (2, "March 12, 1921"), (3, "1921-03-12")] {
-                            if ui.selectable_label(self.settings.date_style == v, crate::i18n::trv(l)).clicked() {
-                                self.settings.date_style = v;
-                                changed = true;
-                            }
-                        }
-                        ui.label(RichText::new(crate::i18n::tr("Only changes how dates look. What you typed is kept.")).small().weak());
-                    });
-                    ui.menu_button(crate::i18n::tr("Profile photo size"), |ui| {
-                        for (v, l) in [(0u8, "Small"), (1, "Normal"), (2, "Large"), (3, "Extra large")] {
-                            if ui.selectable_label(self.settings.photo_size == v, crate::i18n::trv(l)).clicked() {
-                                self.settings.photo_size = v;
-                                changed = true;
-                            }
-                        }
-                        ui.label(RichText::new(crate::i18n::tr("The photo at the top of the Individual page.")).small().weak());
-                    });
-                    ui.menu_button(crate::i18n::tr("Chart boxes"), |ui| {
-                        changed |= ui.checkbox(&mut self.settings.box_photos, crate::i18n::tr("Show photos")).changed();
-                        changed |= ui.checkbox(&mut self.settings.box_places, crate::i18n::tr("Show birthplace")).changed();
-                        changed |= ui.checkbox(&mut self.settings.box_ids, crate::i18n::tr("Show person ID")).changed();
-                    });
+                    }
+                    ui.separator();
                     {
+                        let max = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
+                        if ui.button(if max { crate::i18n::tr("Back to the window's own size") } else { crate::i18n::tr("Fill the screen (keep the menu bar)") }).clicked() {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(!max));
+                            ui.close_menu();
+                        }
                         let fs = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
                         if ui.add(menu_item(if fs { crate::i18n::tr("Leave full screen") } else { crate::i18n::tr("Full screen") }, if MAC { "Ctrl+Cmd+F" } else { "F11" })).clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fs));
                             ui.close_menu();
                         }
                     }
-                    if changed {
-                        save_settings(&self.settings);
-                        apply_theme(ctx, &self.settings);
-                    }
                     ui.separator();
-                    if ui.button(crate::i18n::tr("Appearance...")).clicked() {
-                        self.x.settings_open = true;
-                        self.x.settings_page = 0;
-                        ui.close_menu();
-                    }
                     if ui.button(crate::i18n::tr("Where my tree is kept...")).clicked() {
                         self.show_loc = true;
                         ui.close_menu();
@@ -767,7 +647,8 @@ impl App {
                 self.welcome(ui, &mut act);
                 return;
             }
-            if self.sel.is_some() {
+            // the trail of people visited belongs with the pedigree
+            if self.sel.is_some() && self.view == View::Pedigree {
                 self.trail_bar(ui, &mut act);
             }
             match self.view {
@@ -801,7 +682,7 @@ impl App {
                         ui.allocate_rect(r, Sense::click_and_drag());
                         ui.painter().rect_filled(r, 0.0_f32, Color32::from_black_alpha(110));
                     });
-                    egui::Window::new(crate::look::wtitle(crate::i18n::tr("Unsaved changes"))).collapsible(false).resizable(false).order(egui::Order::Tooltip).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+                    crate::look::window(crate::look::wtitle(crate::i18n::tr("Unsaved changes"))).collapsible(false).resizable(false).order(egui::Order::Tooltip).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                         ui.set_max_width(380.0);
                         ui.label(crate::i18n::trf("You have changed {} and not pressed Save.", &["You have changed ", " and not pressed Save."], &[(name).to_string()]));
                         ui.add_space(8.0);
@@ -868,6 +749,7 @@ impl App {
         self.history_window(ctx);
         self.archive_windows(ctx);
         self.web_window(ctx);
+        self.gedcom_window(ctx);
         self.focus_ring(ctx);
         self.journal_window(ctx, &mut act);
         self.history_events_window(ctx);
@@ -905,7 +787,7 @@ impl App {
                 hits.sort_by(|a, b| a.1.cmp(&b.1));
             }
             let mut q2 = q.clone();
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Home person"))).open(&mut open).collapsible(false).default_width(420.0).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Home person"))).open(&mut open).collapsible(false).default_width(420.0).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.label(crate::i18n::tr("The Home button and the Home key always come back to this person, and the tree opens on them."));
                 ui.add_space(4.0);
                 ui.label(RichText::new(crate::i18n::trf("Current home person: {}", &["Current home person: ", ""], &[(cur.clone().unwrap_or_else(|| "none chosen".into())).to_string()])).strong());
@@ -944,7 +826,7 @@ impl App {
             let mut close = false;
             let mut full: Option<u32> = None;
             if let Some(q) = self.quick.as_mut() {
-                egui::Window::new(crate::look::wtitle(crate::i18n::tr("Quick edit"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+                crate::look::window(crate::look::wtitle(crate::i18n::tr("Quick edit"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                     egui::Grid::new("quick_grid").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
                         ui.label(crate::i18n::tr("Given name(s)"));
                         ui.add(egui::TextEdit::singleline(&mut q.given).desired_width(260.0));
@@ -1017,7 +899,7 @@ impl App {
             let mut open = true;
             let mut couple: Option<(u32, u32)> = None;
             let found = if self.x.find_mode == 0 { self.sorted_kept(&self.search.clone()) } else { Default::default() };
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Find Individual"))).open(&mut open).default_width(320.0).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Find Individual"))).open(&mut open).default_width(320.0).show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.selectable_value(&mut self.x.find_mode, 0, crate::i18n::tr("Name or place"));
                     ui.selectable_value(&mut self.x.find_mode, 1, crate::i18n::tr("ID number"));
@@ -1126,7 +1008,7 @@ impl App {
                 }
                 n
             };
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Sources and repositories"))).open(&mut open).default_size([900.0, 560.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Sources and repositories"))).open(&mut open).default_size([900.0, 560.0]).show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     if ui.selectable_label(self.src_tab == 0, crate::i18n::trf("Sources ({})", &["Sources (", ")"], &[(self.db.sources.len()).to_string()])).clicked() {
                         self.src_tab = 0;
@@ -1412,7 +1294,7 @@ impl App {
         if self.show_loc {
             let mut open = true;
             let mut reset = false;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Where my tree is kept"))).open(&mut open).resizable(false).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Where my tree is kept"))).open(&mut open).resizable(false).show(ctx, |ui| {
                 ui.set_max_width(460.0);
                 ui.label(crate::i18n::tr("Your tree, photos, recordings and backups are kept in this folder:"));
                 ui.label(RichText::new(data_dir().display().to_string()).strong());
@@ -1465,7 +1347,7 @@ impl App {
                 Wipe::Restore => ("", ""),
             };
             let mut choice: Option<bool> = None;
-            egui::Window::new(crate::look::wtitle(crate::i18n::trv(title))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::trv(title))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.label(crate::i18n::trf("You have {} people in your tree. {}", &["You have ", " people in your tree. ", ""], &[(self.db.people.len()).to_string(), (msg).to_string()]));
                 ui.label(crate::i18n::tr("A backup of your current tree is saved first. You can bring it back with Tools > Restore previous tree."));
                 ui.add_space(6.0);
@@ -1495,7 +1377,7 @@ impl App {
         }
         if self.show_about {
             let mut open = true;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("About Gilded Roots"))).open(&mut open).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("About Gilded Roots"))).open(&mut open).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.set_width(420.0);
                 ui.vertical_centered(|ui| {
                     ui.add(egui::Image::new(egui::include_image!("../icons/icon-256.png")).max_width(110.0));
@@ -1558,7 +1440,7 @@ impl App {
         }
         if self.x.licenses_open {
             let mut open = true;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Open-source licences"))).open(&mut open).default_size([640.0, 560.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Open-source licences"))).open(&mut open).default_size([640.0, 560.0]).show(ctx, |ui| {
                 ui.label(crate::i18n::tr("Gilded Roots is built with these open-source libraries. Thank you to their authors."));
                 ui.separator();
                 egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
@@ -1571,7 +1453,7 @@ impl App {
         if self.imp_open {
             let mut open = true;
             let mut pick = false;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Import a family tree"))).open(&mut open).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Import a family tree"))).open(&mut open).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.set_max_width(460.0);
                 ui.label(crate::i18n::tr("Ancestry, MyHeritage, FamilySearch and most programs share trees as a GEDCOM (.ged) file. Export one from your account, then choose it here."));
                 ui.add_space(6.0);
@@ -1627,7 +1509,7 @@ impl App {
         if self.rel_open {
             let mut open = true;
             let everyone = self.sorted_kept("");
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Relationship finder"))).open(&mut open).resizable(false).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Relationship finder"))).open(&mut open).resizable(false).show(ctx, |ui| {
                 ui.set_min_width(380.0);
                 ui.label(crate::i18n::tr("Choose two people to see how they are related."));
                 let ids: Vec<u32> = everyone.iter().copied().filter(|i| self.db.people.contains_key(i)).collect();
@@ -1669,7 +1551,7 @@ impl App {
             let mut open = true;
             let issues = self.db.check();
             let mut go_to: Option<u32> = None;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Data checker"))).open(&mut open).default_size([560.0, 420.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Data checker"))).open(&mut open).default_size([560.0, 420.0]).show(ctx, |ui| {
                 ui.label(crate::i18n::trf("{} thing(s) worth a look. Click a name to open that person.", &["", " thing(s) worth a look. Click a name to open that person."], &[(issues.len()).to_string()]));
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     for (id, msg) in &issues {
@@ -1696,7 +1578,7 @@ impl App {
                 Some(me) => {
                     let mut others: Vec<u32> = self.db.people.keys().copied().filter(|i| *i != me).collect();
                     others.sort_by_key(|i| self.db.people[i].name.to_lowercase());
-                    egui::Window::new(crate::look::wtitle(crate::i18n::tr("Merge with another person"))).open(&mut open).default_size([460.0, 220.0]).show(ctx, |ui| {
+                    crate::look::window(crate::look::wtitle(crate::i18n::tr("Merge with another person"))).open(&mut open).default_size([460.0, 220.0]).show(ctx, |ui| {
                         ui.label(crate::i18n::trf("Keep: {}", &["Keep: ", ""], &[(self.db.label(me)).to_string()]));
                         ui.label(crate::i18n::tr("Choose the other record of this person. You will see both side by side and confirm before anything is merged."));
                         let shown = self.merge_other.filter(|i| self.db.people.contains_key(i)).map(|i| self.db.label(i)).unwrap_or_else(|| "Choose...".to_string());
@@ -1736,7 +1618,7 @@ impl App {
             let mut merge: Option<(u32, u32)> = None;
             let mut ignore: Option<(u32, u32)> = None;
             let mut rescan = false;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Possible duplicates"))).open(&mut open).default_size([580.0, 440.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Possible duplicates"))).open(&mut open).default_size([580.0, 440.0]).show(ctx, |ui| {
                 ui.label(crate::i18n::trf("{} possible duplicate pair(s).", &["", " possible duplicate pair(s)."], &[(self.dups.len()).to_string()]));
                 if ui.button(crate::i18n::tr("Scan again")).clicked() {
                     rescan = true;
@@ -1787,7 +1669,7 @@ impl App {
             let mut open = true;
             let mut save_text: Option<String> = None;
             if let Some(r) = &self.report {
-                egui::Window::new(crate::look::wtitle(crate::i18n::tr("Import report"))).open(&mut open).default_size([620.0, 520.0]).show(ctx, |ui| {
+                crate::look::window(crate::look::wtitle(crate::i18n::tr("Import report"))).open(&mut open).default_size([620.0, 520.0]).show(ctx, |ui| {
                     ui.label(RichText::new(format!("{}", r.file)).strong());
                     let mut from = String::new();
                     if !r.program.is_empty() {
@@ -1868,7 +1750,7 @@ impl App {
         if self.verify_open {
             let mut open = true;
             let mut again = false;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Backup check"))).open(&mut open).default_size([540.0, 380.0]).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Backup check"))).open(&mut open).default_size([540.0, 380.0]).show(ctx, |ui| {
                 ui.label(crate::i18n::tr("Each backup is read back and compared with its checksum."));
                 if self.verify_results.is_empty() {
                     ui.label(crate::i18n::tr("No dated backups yet."));
@@ -1905,7 +1787,7 @@ impl App {
                 cands = self.db.sorted(&l.q).into_iter().filter(|i| *i != l.child).take(12).map(|i| (i, self.db.label(i))).collect();
             }
             if let Some(l) = self.link.as_mut() {
-                egui::Window::new(crate::look::wtitle(crate::i18n::tr("Link an existing person as a parent"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+                crate::look::window(crate::look::wtitle(crate::i18n::tr("Link an existing person as a parent"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                     ui.horizontal(|ui| {
                         ui.label(crate::i18n::tr("Search"));
                         ui.text_edit_singleline(&mut l.q);
@@ -1956,7 +1838,7 @@ impl App {
                 Kind::Sibling => "Add brother or sister",
             };
             let lock = matches!(d.kind, Kind::Father | Kind::Mother | Kind::Spouse);
-            egui::Window::new(crate::look::wtitle(crate::i18n::trv(title)))
+            crate::look::window(crate::look::wtitle(crate::i18n::trv(title)))
                 .collapsible(false)
                 .resizable(false)
                 .anchor(Align2::CENTER_CENTER, [0.0, 0.0])

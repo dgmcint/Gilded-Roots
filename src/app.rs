@@ -111,6 +111,8 @@ pub(crate) struct Extra {
     /// The Settings window (Cmd+, / Ctrl+,) and the page it shows.
     pub(crate) settings_open: bool,
     pub(crate) settings_page: usize,
+    /// The GEDCOM window (File > GEDCOM): every way in and out.
+    pub(crate) ged_open: bool,
     /// The Research tab: the chosen item, the kind shown (None = all), the search, filters.
     pub(crate) research_sel: Option<u32>,
     pub(crate) research_kind: Option<u8>,

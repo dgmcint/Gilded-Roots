@@ -119,6 +119,11 @@ fn main() -> eframe::Result<()> {
     if st.win_max {
         vb = vb.with_maximized(true);
     }
+    // see-through, when chosen with a glass look (the desktop shows behind the window)
+    if st.see_through && !st.glass.is_empty() {
+        vb = vb.with_transparent(true);
+        settings::WINDOW_SEE_THROUGH.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
     if let Some(icon) = window_icon() {
         vb = vb.with_icon(icon);
     }

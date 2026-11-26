@@ -396,7 +396,7 @@ impl App {
         };
         let label_cache: HashMap<u32, String> = self.db.people.get(&pid).and_then(|p| p.media.get(idx)).map(|m| m.faces.iter().map(|f| (f.who, self.db.label(f.who))).collect()).unwrap_or_default();
         let lc = label_cache;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Photo"))).open(&mut open).default_size([720.0, 640.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Photo"))).open(&mut open).default_size([720.0, 640.0]).show(ctx, |ui| {
             let p = self.db.people.get_mut(&pid).unwrap();
             let imgs: Vec<usize> = p.media.iter().enumerate().filter(|(_, m)| is_image(&m.file)).map(|(i, _)| i).collect();
             let pos = imgs.iter().position(|&i| i == idx).unwrap_or(0);
@@ -1119,7 +1119,7 @@ impl App {
             let freed = self.x.gal_freed.clone();
             let notes = self.x.gal_sel.iter().filter(|k| k.1 == NOTE_ITEM).count();
             let del = &mut self.x.gal_del_files;
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Remove selected items"))).id(egui::Id::new("gal_remove")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Remove selected items"))).id(egui::Id::new("gal_remove")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
                 ui.label(crate::i18n::trf("Remove {} item(s) from the people they belong to?", &["Remove ", " item(s) from the people they belong to?"], &[(n).to_string()]));
                 if notes > 0 {
                     ui.label(RichText::new(crate::i18n::trf("{} of them are notes: the whole of each person's Notes box is cleared.", &["", " of them are notes: the whole of each person's Notes box is cleared."], &[(notes).to_string()])).small());
@@ -1166,7 +1166,7 @@ impl App {
             let online = self.db.people.values().map(|p| p.media.iter().filter(|m| online_photo(m)).count()).sum::<usize>();
             let people = self.db.people.values().filter(|p| p.media.iter().any(online_photo)).count();
             let (mut go, mut cancel) = (false, false);
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Remove online links"))).id(egui::Id::new("gal_online")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Remove online links"))).id(egui::Id::new("gal_online")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0)).show(ui.ctx(), |ui| {
                 ui.label(crate::i18n::trf("Remove all {} links to photos stored on websites, from {} people?", &["Remove all ", " links to photos stored on websites, from ", " people?"], &[(online).to_string(), (people).to_string()]));
                 ui.label(RichText::new(crate::i18n::tr("These came with a tree from Ancestry, MyHeritage or a similar site: the file held a web address instead of the picture. Nothing on your computer is deleted, and Undo (Ctrl+Z) brings the links back.")).small().weak());
                 ui.label(RichText::new(crate::i18n::tr("To keep a picture, download it from the website first and add it with + Add.")).small().weak());
@@ -1328,7 +1328,7 @@ impl App {
         let mut open = true;
         let mut save = false;
         let who = self.db.people.get(&st.who).map(|p| p.name.clone()).unwrap_or_default();
-        egui::Window::new(crate::look::wtitle(crate::i18n::trf("Story about {}", &["Story about ", ""], &[(who).to_string()]))).id(egui::Id::new("story_win")).open(&mut open).default_size([620.0, 520.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::trf("Story about {}", &["Story about ", ""], &[(who).to_string()]))).id(egui::Id::new("story_win")).open(&mut open).default_size([620.0, 520.0]).show(ctx, |ui| {
             ui.add(egui::TextEdit::singleline(&mut st.title).hint_text(crate::i18n::tr("Title, for example \"How Grandpa met Grandma\"")).font(egui::TextStyle::Heading).desired_width(f32::INFINITY));
             ui.add_space(4.0);
             egui::ScrollArea::vertical().max_height(400.0).show(ui, |ui| {

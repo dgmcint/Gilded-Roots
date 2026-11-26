@@ -221,9 +221,9 @@ impl App {
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
-        egui::ScrollArea::both().show(ui, |ui| {
+        let view = chart_canvas(ui, ("ped_cc", sel, z.to_bits()), self.settings.hand, vec2(tw + 12.0, th), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
-            let o = resp.rect.min + vec2(6.0, 0.0) + hand_pan(ui, ("ped_cc", sel, z.to_bits()));
+            let o = resp.rect.min + vec2(6.0, 0.0);
             // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
             painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
@@ -253,11 +253,9 @@ impl App {
             let h0 = self.ped_person_hit(ui, r0, sel, ("c0", sel), act);
             let _ = h0;
             let w = r0.width().min(230.0);
-            let r_a = Rect::from_min_size(pos2(r0.min.x, r0.max.y + 8.0), vec2(w.max(220.0), 4000.0));
-            ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_a), |ui| {
-                let n = self.db.partners(sel).len() + self.db.children_of(sel).len();
-                crate::views::stay_open(ui, "ped_sc", crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[n.to_string()]), |ui| self.spouse_children_menu(ui, sel, act));
-            });
+            let n = self.db.partners(sel).len() + self.db.children_of(sel).len();
+            let n_sib = self.db.siblings(sel).len();
+            self.family_panel(ui, r0, w, sel, crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[n.to_string()]), crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[n_sib.to_string()]), act);
             // couples
             for col in 1..gens {
                 let n = 1usize << (col - 1);
@@ -358,10 +356,8 @@ impl App {
                     }
                 }
             }
-            if self.settings.hand {
-                hand_overlay(ui, resp.rect, ("ped_cc", sel, z.to_bits()));
-            }
         });
+        self.float_bar(ui, view, act, Action::PrintPedigree);
     }
 
     /// Upright tree: the chosen person (with their spouse) near the bottom, parents and grandparents rising
@@ -389,9 +385,9 @@ impl App {
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
-        egui::ScrollArea::both().show(ui, |ui| {
+        let view = chart_canvas(ui, ("ped_up", sel, z.to_bits()), self.settings.hand, vec2(width, height), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(width, height), Sense::hover());
-            let o = resp.rect.min + hand_pan(ui, ("ped_up", sel, z.to_bits()));
+            let o = resp.rect.min;
             // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
             painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
@@ -518,10 +514,8 @@ impl App {
             if hit.clicked() {
                 *act = Some(Action::AddFor(sel, Kind::Child(None)));
             }
-            if self.settings.hand {
-                hand_overlay(ui, resp.rect, ("ped_up", sel, z.to_bits()));
-            }
         });
+        self.float_bar(ui, view, act, Action::PrintPedigree);
     }
 }
 

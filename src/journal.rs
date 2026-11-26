@@ -181,7 +181,7 @@ impl App {
         let mut edit: Option<usize> = None;
         let mut go: Option<u32> = None;
         let sources: Vec<(u32, String)> = self.db.sources.iter().map(|(k, s)| (*k, s.title.clone())).collect();
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Research journal"))).open(&mut open).default_size([640.0, 600.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Research journal"))).open(&mut open).default_size([640.0, 600.0]).show(ctx, |ui| {
             if let Some(j) = self.x.journal_new.as_mut() {
                 egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.label(RichText::new(if self.x.journal_edit.is_some() { crate::i18n::tr("Edit entry") } else { crate::i18n::tr("New entry") }).strong());
@@ -305,7 +305,7 @@ impl App {
         }
         let mut open = true;
         let mut del: Option<usize> = None;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Historical events"))).open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Historical events"))).open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
             ui.label(crate::i18n::tr("These appear in a person's timeline when they happened during that person's life. World events always show; regional ones show when the person's places are in that region."));
             if ui.checkbox(&mut self.settings.show_history, crate::i18n::tr("Show historical events in timelines")).changed() {
                 save_settings(&self.settings);

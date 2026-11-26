@@ -443,7 +443,7 @@ impl App {
         let mut save: Option<(u32, Born, Age)> = None;
         let mut load: Option<u32> = None;
         let sel = self.sel;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Tombstone calculator"))).open(&mut open).resizable(false).default_width(470.0).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Tombstone calculator"))).open(&mut open).resizable(false).default_width(470.0).show(ctx, |ui| {
             let t = &mut self.x.tomb;
             ui.label(crate::i18n::tr("Works out a birth date from the death date and the age carved on a gravestone."));
             ui.add_space(4.0);

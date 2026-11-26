@@ -346,7 +346,7 @@ impl App {
         }
         let mut open = true;
         let mut change: Option<Box<dyn FnOnce(&mut App)>> = None;
-        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Groups"))).open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(crate::i18n::tr("Groups"))).open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
             ui.label(
                 RichText::new(crate::i18n::tr("A group is a set of people you pick out, by relationship or by what is recorded about them. Groups are kept with the tree. Use one to show those people in the People tab, print a list, export a GEDCOM file of just them, or start a new tree from them."))
                     .small()
@@ -635,7 +635,7 @@ impl App {
             let mut go = false;
             let tree = sanitize_tree_name(&name);
             let exists = !tree.is_empty() && base_dir().join("More trees").join(&tree).exists();
-            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Start a new tree from a group"))).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+            crate::look::window(crate::look::wtitle(crate::i18n::tr("Start a new tree from a group"))).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
                 let n = self.db.groups.get(gi).map_or(0, |g| g.ids.iter().filter(|i| self.db.people.contains_key(i)).count());
                 ui.label(crate::i18n::trf("Copy the {} people in this group, with their families, sources, notes and photos, into a new tree.", &["Copy the ", " people in this group, with their families, sources, notes and photos, into a new tree."], &[(n).to_string()]));
                 ui.label(RichText::new(crate::i18n::tr("This tree stays as it is. The new tree opens when it is made; switch back any time with File > Trees.")).small().weak());

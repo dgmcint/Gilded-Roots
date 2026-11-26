@@ -21,48 +21,152 @@ fn pan_id(key: impl std::hash::Hash) -> egui::Id {
     egui::Id::new(("hand_pan", key))
 }
 
-/// How far the hand tool has moved a chart. It stays where it was put until another person is
-/// chosen or the zoom changes (the key holds both).
-pub(crate) fn hand_pan(ui: &egui::Ui, key: impl std::hash::Hash) -> egui::Vec2 {
-    let id = pan_id(key);
-    ui.ctx().data(|d| d.get_temp::<egui::Vec2>(id)).unwrap_or(egui::Vec2::ZERO)
-}
-
-/// The hand tool itself: the whole visible chart area becomes a surface to grab and drag, and
-/// the chart moves with the mouse, whether or not it is bigger than the window. `chart` is where
-/// the chart was laid out before moving; some of it always stays in sight.
-pub(crate) fn hand_overlay(ui: &mut egui::Ui, chart: Rect, key: impl std::hash::Hash) {
-    let id = pan_id(key);
-    let view = ui.clip_rect();
-    let r = ui.interact(view, id.with("grab"), Sense::click_and_drag());
-    if r.dragged() {
-        ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
-        let mut pan = ui.ctx().data(|d| d.get_temp::<egui::Vec2>(id)).unwrap_or(egui::Vec2::ZERO) + r.drag_delta();
+/// A chart on a canvas that fills the rest of the window, as on the genealogy websites: drag
+/// any empty part (or anywhere, with the hand on) to move the chart, or use the scroll wheel or
+/// trackpad. The chart starts centred, and stays where it is put until another person is chosen
+/// or the zoom changes (the key holds both). `add` draws the chart from the child's top-left.
+/// Returns the canvas rectangle.
+pub(crate) fn chart_canvas(ui: &mut egui::Ui, key: impl std::hash::Hash, hand: bool, size: egui::Vec2, add: impl FnOnce(&mut egui::Ui)) -> Rect {
+    // Centre (on the side toolbar) starts every chart afresh
+    let round = ui.ctx().data(|d| d.get_temp::<u32>(egui::Id::new("recentre"))).unwrap_or(0);
+    let id = pan_id((key, round));
+    let view = ui.available_rect_before_wrap();
+    // under the chart: boxes keep their clicks, and a drag that starts anywhere moves the chart
+    let bg = ui.interact(view, id.with("bg"), Sense::drag());
+    let mut pan = ui.ctx().data(|d| d.get_temp::<egui::Vec2>(id)).unwrap_or(egui::Vec2::ZERO);
+    let mut moved = false;
+    if bg.dragged() {
+        pan += bg.drag_delta();
+        moved = true;
+    }
+    let pointer_in = ui.rect_contains_pointer(view);
+    if pointer_in {
+        let sd = ui.input(|i| i.smooth_scroll_delta);
+        if sd != egui::Vec2::ZERO {
+            pan += sd;
+            moved = true;
+        }
+    }
+    // at the left, centred from top to bottom while it fits (otherwise from the top)
+    let base = pos2(view.min.x + 70.0, if size.y < view.height() { view.center().y - size.y / 2.0 } else { view.min.y + 8.0 });
+    let clamp = |pan: &mut egui::Vec2| {
+        let chart = Rect::from_min_size(base, size);
         let keep = 80.0;
         let (lo_x, hi_x) = (view.min.x + keep - chart.max.x, view.max.x - keep - chart.min.x);
         let (lo_y, hi_y) = (view.min.y + keep - chart.max.y, view.max.y - keep - chart.min.y);
         pan.x = pan.x.max(lo_x).min(hi_x.max(lo_x));
         pan.y = pan.y.max(lo_y).min(hi_y.max(lo_y));
+    };
+    clamp(&mut pan);
+    let mut child = ui.new_child(egui::UiBuilder::new().max_rect(Rect::from_min_size(base + pan, size)));
+    child.set_clip_rect(view.intersect(ui.clip_rect()));
+    add(&mut child);
+    // the hand: a layer over everything, so clicks never select anyone by accident
+    if hand {
+        let h = ui.interact(view, id.with("hand"), Sense::click_and_drag());
+        if h.dragged() {
+            pan += h.drag_delta();
+            moved = true;
+        }
+        ui.ctx().set_cursor_icon(if h.dragged() { egui::CursorIcon::Grabbing } else if h.hovered() { egui::CursorIcon::Grab } else { ui.ctx().output(|o| o.cursor_icon) });
+    } else if bg.dragged() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+    }
+    if moved {
+        clamp(&mut pan);
         ui.ctx().data_mut(|d| d.insert_temp(id, pan));
-    } else if r.hovered() {
-        ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+    }
+    ui.allocate_rect(view, Sense::hover());
+    view
+}
+
+impl App {
+    /// The panel fastened under the main person's card, the card's own width: Spouse & children
+    /// and Siblings, each opening and closing with a click (both open at first) and staying as
+    /// they are from person to person.
+    pub(crate) fn family_panel(&self, ui: &mut egui::Ui, card: Rect, w: f32, id: u32, label_sc: String, label_sib: String, act: &mut Option<Action>) {
+        let r = Rect::from_min_size(pos2(card.min.x, card.max.y + 2.0), vec2(w, 4000.0));
+        ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r), |ui| {
+            egui::Frame::popup(ui.style()).rounding(egui::Rounding { nw: 2.0, ne: 2.0, sw: 8.0, se: 8.0 }).inner_margin(8.0).show(ui, |ui| {
+                ui.set_width(w - 16.0);
+                ui.spacing_mut().item_spacing.y = 3.0;
+                egui::CollapsingHeader::new(RichText::new(label_sc).strong()).id_salt("ped_sc").default_open(true).show(ui, |ui| self.spouse_children_menu(ui, id, act));
+                egui::CollapsingHeader::new(RichText::new(label_sib).strong()).id_salt("ped_sib").default_open(true).show(ui, |ui| self.siblings_menu(ui, id, act));
+            });
+        });
     }
 }
 
-/// A button that opens a panel under itself, which stays open until the button is clicked again
-/// (also while moving from person to person), unlike a menu that closes at the next click.
-pub(crate) fn stay_open(ui: &mut egui::Ui, key: &str, label: String, add: impl FnOnce(&mut egui::Ui)) {
-    let id = egui::Id::new(("stay_open", key));
-    let mut open = ui.ctx().data(|d| d.get_temp::<bool>(id)).unwrap_or(false);
-    if ui.add(egui::Button::new(label).selected(open)).clicked() {
-        open = !open;
-        ui.ctx().data_mut(|d| d.insert_temp(id, open));
-    }
-    if open {
-        egui::Frame::popup(ui.style()).show(ui, |ui| {
-            ui.set_min_width(200.0);
-            add(ui);
-        });
+impl App {
+    /// The floating toolbar down the left of a chart: select or hand, centre, home person, zoom
+    /// and print. Turned on and off in Settings > Toolbars (or View).
+    pub(crate) fn float_bar(&self, ui: &mut egui::Ui, view: Rect, act: &mut Option<Action>, print: Action) {
+        let mut print = Some(print);
+        if !self.settings.float_tb {
+            return;
+        }
+        use crate::toolbar::{paint_icon, Icon};
+        let z = self.settings.zoom;
+        let hand = self.settings.hand;
+        let tr = crate::i18n::tr;
+        let items: [(Option<Icon>, bool, String); 9] = [
+            (Some(Icon::Pointer), !hand, tr("Select: click a person to go to them (H)").to_string()),
+            (Some(Icon::Hand), hand, tr("Hand: drag anywhere to move the chart (H)").to_string()),
+            (None, false, String::new()),
+            (Some(Icon::Centre), false, tr("Put the chart back in its place").to_string()),
+            (Some(Icon::Home), false, tr("Go to the home person").to_string()),
+            (Some(Icon::ZoomIn), false, tr("Bigger").to_string()),
+            (Some(Icon::ZoomOut), false, tr("Smaller").to_string()),
+            (Some(Icon::Fit), false, tr("Fit the whole chart in the window").to_string()),
+            (Some(Icon::Print), false, tr("Print").to_string()),
+        ];
+        let size = 34.0;
+        let h: f32 = items.iter().map(|(i, _, _)| if i.is_some() { size } else { 9.0 }).sum::<f32>() + 12.0;
+        let r = Rect::from_min_size(pos2(view.min.x + 10.0, view.min.y + 12.0), vec2(size + 12.0, h));
+        let v = ui.visuals().clone();
+        let fill = if v.dark_mode { Color32::from_rgba_premultiplied(40, 42, 46, 235) } else { Color32::from_rgba_premultiplied(250, 250, 252, 240) };
+        let p = ui.painter().clone().with_clip_rect(view);
+        p.add(egui::Shape::from(v.popup_shadow.as_shape(r, 10.0)));
+        p.rect_filled(r, 10.0, fill);
+        p.rect(r, 10.0, Color32::TRANSPARENT, v.widgets.noninteractive.bg_stroke);
+        let mut y = r.min.y + 6.0;
+        for (k, (icon, on, tip)) in items.iter().enumerate() {
+            let Some(icon) = icon else {
+                p.line_segment([pos2(r.min.x + 9.0, y + 4.0), pos2(r.max.x - 9.0, y + 4.0)], v.widgets.noninteractive.bg_stroke);
+                y += 9.0;
+                continue;
+            };
+            let b = Rect::from_min_size(pos2(r.min.x + 6.0, y), vec2(size, size));
+            let resp = ui.interact(b, egui::Id::new(("float_bar", k)), Sense::click()).on_hover_text(tip.as_str());
+            if *on {
+                p.rect_filled(b.shrink(1.0), 7.0, v.selection.bg_fill);
+            } else if resp.hovered() {
+                p.rect_filled(b.shrink(1.0), 7.0, v.widgets.hovered.weak_bg_fill);
+            }
+            let ink = if *on { v.selection.stroke.color } else { v.text_color() };
+            paint_icon(&p, b.shrink(9.0), *icon, ink);
+            if resp.clicked() {
+                *act = match icon {
+                    Icon::Pointer => Some(Action::SetHand(false)),
+                    Icon::Hand => Some(Action::SetHand(true)),
+                    Icon::Home => Some(Action::GoHome),
+                    Icon::ZoomIn => Some(Action::SetZoom((z + if z >= 0.6 { 0.1 } else { 0.05 }).min(1.8))),
+                    Icon::ZoomOut => Some(Action::SetZoom((z - if z > 0.65 { 0.1 } else { 0.05 }).max(0.25))),
+                    Icon::Fit => Some(Action::Fit),
+                    Icon::Print => print.take(),
+                    Icon::Centre => {
+                        let id = egui::Id::new("recentre");
+                        ui.ctx().data_mut(|d| {
+                            let n = d.get_temp::<u32>(id).unwrap_or(0);
+                            d.insert_temp(id, n.wrapping_add(1));
+                        });
+                        None
+                    }
+                    _ => None,
+                };
+            }
+            y += size;
+        }
     }
 }
 
@@ -228,9 +332,9 @@ impl App {
         let (line, edge, box_c, hover_c, ink_c, _head_c, accent) = self.chart_colors(ui);
         let dark = ui.visuals().dark_mode;
         self.paint_stage(ui);
-        egui::ScrollArea::both().show(ui, |ui| {
+        let view = chart_canvas(ui, ("desc", sel, z.to_bits()), self.settings.hand, vec2(tw + 12.0, th), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
-            let o = resp.rect.min + vec2(6.0, 0.0) + hand_pan(ui, ("desc", sel, z.to_bits()));
+            let o = resp.rect.min + vec2(6.0, 0.0);
             // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
             painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
@@ -309,12 +413,8 @@ impl App {
                     *act = Some(Action::Highlight(nid));
                 }
             }
-            // hand tool: a layer over the whole chart that takes every click and drag, so dragging
-            // anywhere moves the chart and nothing is selected by accident
-            if self.settings.hand {
-                hand_overlay(ui, resp.rect, ("desc", sel, z.to_bits()));
-            }
         });
+        self.float_bar(ui, view, act, Action::PrintDescendants);
     }
 }
 
@@ -717,7 +817,8 @@ impl App {
         }
         let (photo_cards, compact) = (style == 1, style == 4);
         let (bh0, pitch0, gap0, wmin, wmax) = match style {
-            1 => (62.0f32, 72.0f32, 30.0f32, 210.0f32, 360.0f32),
+            // the last generation shown is a slim card, so the chart stays compact (pitch is its spacing)
+            1 => (62.0f32, 40.0f32, 30.0f32, 210.0f32, 360.0f32),
             4 => (18.0, 21.0, 16.0, 110.0, 230.0),
             _ => (28.0, 36.0, 28.0, 150.0, 340.0),
         };
@@ -763,9 +864,9 @@ impl App {
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
-        egui::ScrollArea::both().show(ui, |ui| {
+        let view = chart_canvas(ui, ("ped", sel, z.to_bits()), self.settings.hand, vec2(tw + 12.0, th + 6.0), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th + 6.0), Sense::hover());
-            let o = resp.rect.min + vec2(6.0, 0.0) + hand_pan(ui, ("ped", sel, z.to_bits()));
+            let o = resp.rect.min + vec2(6.0, 0.0);
             // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
             painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
@@ -791,6 +892,9 @@ impl App {
                 for i in 0..n {
                     let cy = o.y + top + (i as f32 + 0.5) * step;
                     let x = o.x + g as f32 * (bw + gap);
+                    // Photo cards: the last generation shown is slim, a small photo and one line
+                    let last_small = photo_cards && g == gens - 1 && gens > 2;
+                    let bh = if last_small { 32.0 * z } else { bh };
                     let rect = Rect::from_min_size(pos2(x, cy - bh / 2.0), vec2(bw, bh));
                     if g > 0 {
                         let ccy = o.y + top + ((i / 2) as f32 + 0.5) * step * 2.0;
@@ -850,11 +954,11 @@ impl App {
                             // Classic and Compact are names only; Photo cards has the pictures
                             if photo_cards {
                                 match self.portrait_src(p).filter(|_| self.settings.box_photos || photo_cards) {
-                                    Some((uri, fr)) => put_photo(ui, ir, &uri, fr, if photo_cards { 6.0 } else { 3.0 }),
+                                    Some((uri, fr)) => put_photo(ui, ir, &uri, fr, if last_small { 3.0 } else { 6.0 }),
                                     None => {
                                         painter.rect_filled(ir, 3.0_f32, if is_sel { on_accent(accent).gamma_multiply(0.22) } else { hover_c });
                                         let initial = p.name.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_else(|| "?".into());
-                                        painter.text(ir.center(), Align2::CENTER_CENTER, initial, FontId::proportional(if photo_cards { 26.0 } else { 14.0 } * z), if is_sel { ink } else { head_c });
+                                        painter.text(ir.center(), Align2::CENTER_CENTER, initial, FontId::proportional(if last_small { 14.0 } else { 26.0 } * z), if is_sel { ink } else { head_c });
                                     }
                                 }
                             }
@@ -864,7 +968,7 @@ impl App {
                             let right_pad = 34.0 + if has_arrow { 24.0 } else { 0.0 };
                             let right_pad = if compact { 30.0 + if has_arrow { 18.0 } else { 0.0 } } else { right_pad };
                             let clip = Rect::from_min_max(rect.min + vec2(2.0, 2.0), pos2((rect.max.x - right_pad).max(text_x + 20.0), rect.max.y - 2.0));
-                            if photo_cards {
+                            if photo_cards && !last_small {
                                 // name, years and birthplace on three lines
                                 let pc = painter.with_clip_rect(clip);
                                 pc.text(pos2(text_x + 2.0, rect.min.y + 13.0 * z), Align2::LEFT_CENTER, styled_name(p), FontId::proportional(15.0 * z), ink);
@@ -876,7 +980,7 @@ impl App {
                                 }
                                 pc.text(pos2(text_x + 2.0, rect.min.y + 48.0 * z), Align2::LEFT_CENTER, third, FontId::proportional(11.5 * z), if is_sel { ink } else { head_c });
                             } else {
-                                painter.with_clip_rect(clip).text(pos2(text_x, rect.center().y), Align2::LEFT_CENTER, txt, FontId::proportional(font * z), ink);
+                                painter.with_clip_rect(clip).text(pos2(text_x, rect.center().y), Align2::LEFT_CENTER, txt, FontId::proportional(if last_small { 13.0 } else { font } * z), ink);
                             }
                             let mz = if compact { Rect::from_min_size(pos2(rect.max.x - 26.0, rect.min.y + 1.0), vec2(24.0, bh - 2.0)) } else { Rect::from_min_size(pos2(rect.max.x - 32.0, rect.min.y + 3.0), vec2(30.0, bh - 6.0)) };
                             ui.allocate_new_ui(egui::UiBuilder::new().max_rect(mz), |ui| {
@@ -935,12 +1039,9 @@ impl App {
                                 let w = rect.width().min(230.0);
                                 let n_sc = self.db.partners(id).len() + kids.len();
                                 let n_sib = self.db.siblings(id).len();
-                                let r_a = Rect::from_min_size(pos2(rect.min.x, rect.max.y + 8.0), vec2(w.max(220.0), 4000.0));
-                                ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_a), |ui| {
-                                    ui.spacing_mut().item_spacing.y = 6.0;
-                                    stay_open(ui, "ped_sc", crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[(n_sc).to_string()]), |ui| self.spouse_children_menu(ui, id, act));
-                                    stay_open(ui, "ped_sib", crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[(n_sib).to_string()]), |ui| self.siblings_menu(ui, id, act));
-                                });
+                                let label_sc = crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[(n_sc).to_string()]);
+                                let label_sib = crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[(n_sib).to_string()]);
+                                self.family_panel(ui, rect, w, id, label_sc, label_sib, act);
                             }
                             if r2.double_clicked() {
                                 *act = Some(Action::Open(id));
@@ -970,12 +1071,8 @@ impl App {
                     }
                 }
             }
-            // hand tool: a layer over the whole chart that takes every click and drag, so dragging
-            // anywhere moves the chart and nothing is selected by accident
-            if self.settings.hand {
-                hand_overlay(ui, resp.rect, ("ped", sel, z.to_bits()));
-            }
         });
+        self.float_bar(ui, view, act, Action::PrintPedigree);
     }
 
     /// A compact, clickable person card: portrait (or initial), name, years and birthplace.

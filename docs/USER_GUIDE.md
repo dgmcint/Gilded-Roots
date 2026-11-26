@@ -126,7 +126,7 @@ Made a mistake? **Undo** (Ctrl+Z; Cmd+Z on a Mac) takes back the last change, as
 ![Adding a person: only the name is required](images/guide/add-person.png)
 
 ## Bringing in a tree from another program
-Choose **Import an existing family tree** on the welcome screen, or **File → Import tree...** at any time, and pick
+Choose **Import an existing family tree** on the welcome screen, or **File → GEDCOM: import and export... → Import tree...** at any time, and pick
 the file.
 
 **From PAF.** PAF 5 files (.paf) can be imported directly, without PAF: names, sex, births, deaths, marriages,
@@ -243,15 +243,20 @@ the right; right-clicking a box opens the same menu:
 - **Show which parents** (when someone has more than one set, such as birth and adoptive parents)
 - **Centre chart on this person**, **Make this the home person** and **Bookmark this person**
 
-**Select and Hand:** the toolbar above the pedigree and descendant charts has **Select** (click people as usual)
-and **Hand**. With the hand on, drag anywhere on the chart to move it around (the pointer becomes a hand), even
-when the whole chart fits in the window, and clicks never change who is selected by accident. The chart stays where
-you put it until you choose another person or change the zoom. Press **H** to switch between the two; the choice is remembered.
+**Moving around a chart:** the pedigree, descendants, fan and hourglass charts sit on a canvas that fills the
+window, as on the genealogy websites. The chart starts at the left, centred from top to bottom. Drag any empty part
+of the canvas (or anywhere, with the **Hand** on) to move it, or use the scroll wheel or trackpad. It stays where you
+put it until you choose another person or change the zoom. **Select** clicks people as usual; with the **Hand**,
+clicks never change who is selected by accident. Press **H** to switch between the two.
 
-Under the main person (generation 1) there are two buttons: **Spouse & children** and **Siblings**. Click one to
-open its list under it; it stays open, also as you move from person to person, until you click the button again.
-Pick a name to move the chart to them, or use the Add entries at the bottom. The **Classic** style shows names only;
-**Photo cards** has each person's picture. The descendants chart has the same
+**The floating toolbar** down the left of the charts has Select and Hand, **Centre** (puts the chart back in its
+place), the home person, Bigger, Smaller, Fit and Print. Turn it off or on in **View** or **Settings → Toolbars**.
+
+Fastened under the main person's card is a panel with **Spouse & children** and **Siblings**, both open at first.
+Click a heading to close or open it; it stays as it is, also as you move from person to person. Pick a name to move
+the chart to them, or use the Add entries. **Photo cards** (the style Gilded Roots starts with) shows each person's
+picture, and the last generation shown is a slim card so the chart stays compact; **Classic** shows names only. The
+descendants chart has the same
 right-click menu. **Smaller**, **Bigger** and **Fit** on the tab toolbar change the size of the chart.
 
 ## Adding people
@@ -412,7 +417,7 @@ face tags from GEDCOM).
 ## Profile photo: crop and size
 Open a photo and press **Crop for profile photo**, drag a box around the part you want, then press **Use this part
 as the profile photo**. **Use as profile photo** uses the whole picture again. The photo is never stretched; it is
-trimmed to fit each frame. **View → Profile photo size** makes the photo at the top of the Individual page Small,
+trimmed to fit each frame. **Settings → Charts → Profile photo size** makes the photo at the top of the Individual page Small,
 Normal, Large or Extra large.
 
 ## Reading PDFs
@@ -458,7 +463,7 @@ Every printout (pedigree, family group sheet, reports, family book, charts) open
 **Print or save as PDF**. **Print** on the main toolbar prints what the tab shows. Pages are US Letter, or A4 if you
 choose **Reports → Paper: A4** (choose the same paper in the print window), with the title, the date and "Page n of
 N" at the bottom. Long web addresses in sources wrap instead of running off the paper. Dates are printed tidily ("25
-Jan 1975") in the style chosen under View → Dates.
+Jan 1975") in the style chosen under Settings → Names and dates.
 
 - The **family group sheet** shows each spouse's birth, christening, death and burial with date and place in
   separate columns, their parents, the marriage, and children with sex, dates, places and spouses, followed by notes
@@ -551,7 +556,7 @@ or had other events (blue). It works without the internet: the world map and abo
   pinch) to zoom in further. **World** shows the whole world.
 - The map wraps around: keep dragging east or west and the world carries on, so Pacific moves (to Hawaii, Samoa or
   New Zealand) show without a break.
-- **Map style:** Match the app (follows the background and accent colours under View → Colours), Charcoal, Warm
+- **Map style:** Match the app (follows the background and accent colours in Settings → Colours), Charcoal, Warm
   grey, Slate blue or Paper. The same style is used for the DNA map.
 - Click a pin to list everyone and everything at that place; click a name to go to them.
 - A hollow pin means only the state or country was found, so it sits in the middle of it.
@@ -733,7 +738,7 @@ DNA results are saved with your tree and in Family Tree Archives, but are not pa
 ## Privacy
 Gilded Roots needs no account or subscription, shows no advertising, and never sends your family information
 anywhere. Everything is kept in your data folder on this computer. Printouts and reports can keep living people
-private (Reports → Keep living people private), and **File → Export GEDCOM (living people private)** leaves out their
+private (Reports → Keep living people private), and **File → GEDCOM → Living people private** leaves out their
 details when you share a file.
 
 ## Keeping your tree safe
@@ -790,10 +795,13 @@ one person from that day (family links need re-adding for someone who was remove
 day** replaces everything; your current tree is kept as a backup first.
 
 ## Exporting
-**File → Export GEDCOM (everything)** or **(living people private)**. Photos go in a `<file>-media` folder
+**File → GEDCOM: import and export...** opens one window with every way in and out: **Import tree...**, and
+**GEDCOM 5.5.1**, **GEDCOM 7** and **GEDZIP with photos**, each as **Everything** or **Living people private**.
+
+**GEDCOM 5.5.1** works with nearly every program and website. Photos go in a `<file>-media` folder
 next to the `.ged` file; keep the two together. Every export is read back and checked.
 
-**File → Export GEDCOM 7** writes the newer GEDCOM 7 instead: a **GEDCOM 7 file** (photos in a folder next to it,
+**GEDCOM 7** writes the newer GEDCOM instead: a **GEDCOM 7 file** (photos in a folder next to it,
 as above) or a **GEDZIP with photos**, one `.gdz` file holding the GEDCOM 7 file and every photo and document. Each
 comes as everything or with living people private. Not every program reads GEDCOM 7 yet; if the program you are
 sending to is older, use the ordinary export. GEDCOM 7 files and GEDZIP files can also be brought in with
@@ -852,46 +860,50 @@ use large buttons, choose which buttons it shows, or hide it. **View** has **Sho
 toolbars** (each on its own), and the same word and size choices. Your choices are remembered.
 
 ## Settings
-**Edit → Settings...** (**Cmd+,** on a Mac, **Ctrl+,** on Windows and Linux) gathers the choices in one window, with
-the pages down the left:
+**Edit → Settings...** (**Cmd+,** on a Mac, **Ctrl+,** on Windows and Linux) gathers the choices in one window, laid
+out like a desktop program's preferences: the pages down the left, and each page in titled panels that fit without
+scrolling.
 - **Appearance:** **Light**, **Dark** or **Automatic** (light or dark as your computer is set, changing when it
-  does), the colour schemes in their groups (Glass, Heritage, Easy to see and others: click a group to see its
-  schemes), accent colour and dark background (each with a **Custom** colour picker), text size, and the **font**: the computer's own
-  (San Francisco on a Mac, Segoe UI on Windows, your desktop's font on Linux) or the one built into Gilded Roots.
+  does), and the colour schemes in their groups (Gilded Roots, Tree pictures, Greens, Glass, Heritage, Easy to see and
+  others: click a group to see its schemes). **Back to the Gilded Roots look** at the bottom puts the colours back.
+- **Colours:** accent colour and dark background, each with a **Custom** colour picker.
+- **Text and readability:** text size, the **font** (the computer's own, San Francisco on a Mac, Segoe UI on Windows,
+  your desktop's font on Linux, or the one built into Gilded Roots) and **Easier to see**.
 - **Language**, **Names and dates**, **Charts** (generations, what chart boxes show, profile photo size),
-  **Toolbars**, **Printing and privacy** (keep living people private, US Letter or A4 paper), and **Tree, backups
-  and microphone**.
-The same choices are still in the View and Reports menus. Everything is saved as you change it.
+  **Toolbars** (and the floating toolbar), **Printing and privacy** (keep living people private, US Letter or A4
+  paper), and **Tree, backups and microphone**.
+**View** opens each of these pages too. Everything is saved as you change it; **Done** closes the window.
 
 Menus show each command's shortcut on the right, written the way your computer writes them (⌘Z on a Mac, Ctrl+Z
 on Windows and Linux). **Quit Gilded Roots** is **Cmd+Q** on a Mac and **Ctrl+Q** on Linux; on Windows it is
 **Exit** (Alt+F4).
 
 On a Mac the menu bar at the top of the screen has Gilded Roots' own menus too: **Gilded Roots** (About,
-**Settings** ⌘, and Quit), **File** (family trees, import and export, archives, a family website, **Print** ⌘P),
-**Edit** (Undo, Redo, Find a person, Search everything, Quick jump), **View** (each tab, and full screen),
+**Settings** ⌘, and Quit), **File** (family trees, GEDCOM, archives, a family website, **Print** ⌘P),
+**Edit** (Undo, Redo, Find a person, Search everything, Quick jump), **View** (each tab, **Fill the screen** and
+full screen),
 **Window** and **Help** (this guide, the guided tour and the wiki). The menus inside the window hold everything
 else and work the same on every computer.
 
 ## View options and text
-- **View → Text size:** Small to Largest; makes every word and button bigger or smaller.
-- **View → Names:** "John Henry Smith", "SMITH, John Henry" or "Smith, John Henry".
-- **View → Dates:** as typed, "12 Mar 1921", "March 12, 1921" or "1921-03-12". Dates with words in them ("about
-  1850") are shown as written. These only change how things look; what you typed is kept and exported unchanged.
-- **View → Chart boxes:** show or hide photos, birthplaces and person IDs in the pedigree boxes.
-- **View → Colours:** a large set of accent colours and dark backgrounds to click on. **View → Appearance** opens the
-  Appearance page of Settings.
-- **View → Full screen** (also in File, or **F11**).
+- **View** has Go to home person, Fit chart to window, **Go to tab**, the floating toolbar, and the Settings pages
+  (Appearance, Colours, Text and readability, Names and dates, Charts, Toolbars).
+- **View → Fill the screen (keep the menu bar)** makes the window as big as the screen while the Mac's menu bar (or
+  the Windows taskbar) stays; **View → Full screen** (**F11**, or Ctrl+Cmd+F on a Mac) takes the whole screen.
+- Names show as "John Henry Smith", "SMITH, John Henry" or "Smith, John Henry", and dates as typed, "12 Mar 1921",
+  "March 12, 1921" or "1921-03-12" (Settings → Names and dates). Dates with words in them ("about 1850") are shown as
+  written. These only change how things look; what you typed is kept and exported unchanged.
 - The window opens at a comfortable size the first time (most of the screen, centred) and then remembers the size you
   leave it at.
 
 ## Easier to see and to use
 **Edit → Settings → Appearance** has what helps if the screen is hard to read or the mouse is hard to use:
-- **Glass** looks (Edit → Settings → Appearance, or View → Colours): **Glass** (light: frosted white over a pale sky),
-  **Dark Glass**, **Ocean Glass** and **Steel Glass**. The panels and windows are see-through over a soft coloured
-  backdrop, with light edges and rounder corners. More looks came from the family's other apps: **Console**,
-  **Archive**, **Amber Screen** and **Pioneer** (from Ship's Log), and **Paper** and **Classic** (the original looks of
-  Family Keeper and PAF Classic).
+- **Glass** looks (Settings → Appearance): **Glass** (light: frosted white over a pale grey), **Dark Glass**,
+  **Ocean Glass** and **Steel Glass**. The panels and windows are see-through over a soft, plain backdrop, with light
+  edges and rounder corners. With a glass look, **A splash of colour behind the glass** adds soft glows of the accent
+  colour, and **Transparent window** lets your desktop show behind Gilded Roots (from the next start). More looks:
+  **Console**, **Archive**, **Amber Screen** and **Pioneer** (Retro screens), and **Paper** and **Classic**
+  (Traditional).
 - **Colour schemes** under **Easy to see**: **High contrast light** (black on white) and **High contrast dark** (white
   on black, with yellow for what is selected). Under **Heritage**: **Sepia** and **Old Photograph**, warm brown looks
   like an old album.
@@ -907,7 +919,7 @@ else and work the same on every computer.
   the charts by name and years.
 
 ## Language
-**View → Language** shows the program in English, Deutsch (German), Español (Spanish), Français (French), Italiano
+**Settings → Language** shows the program in English, Deutsch (German), Español (Spanish), Français (French), Italiano
 (Italian), Nederlands (Dutch), Norsk (Norwegian), Português (Brazilian Portuguese) or Svenska (Swedish). The
 change happens at once and is remembered. Menus, buttons, windows and messages are translated; this guide, the
 census forms and a few printouts are still in English for now. Your own names, places and notes are never changed.

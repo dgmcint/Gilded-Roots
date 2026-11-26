@@ -67,7 +67,7 @@ impl App {
         let mut open = true;
         let mut changed = false;
         let sel = self.sel.filter(|s| self.db.people.contains_key(s));
-        egui::Window::new(crate::look::wtitle(tr("Research notepad"))).id(egui::Id::new("notepad")).open(&mut open).default_size([520.0, 460.0]).min_width(360.0).show(ctx, |ui| {
+        crate::look::window(crate::look::wtitle(tr("Research notepad"))).id(egui::Id::new("notepad")).open(&mut open).default_size([520.0, 460.0]).min_width(360.0).show(ctx, |ui| {
             // the pages, as tabs
             ui.horizontal_wrapped(|ui| {
                 let pages: Vec<(u32, String)> = self.db.notepad.iter().map(|p| (p.id, p.title.clone())).collect();

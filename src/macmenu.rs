@@ -18,10 +18,11 @@ pub(crate) fn run_command(app: &mut App, ctx: &egui::Context, id: &str, act: &mu
         "settings" => app.x.settings_open = true,
         "quit" | "close" => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
         "trees" => app.x.trees_open = true,
-        "import" => app.imp_open = true,
-        "export_all" => app.export(false),
-        "export_private" => app.export(true),
-        "export7" => app.export7(false, false),
+        "gedcom" => app.x.ged_open = true,
+        "fill" => {
+            let max = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(!max));
+        }
         "website" => app.web_open(),
         "arch_save" => app.save_archive_pick(),
         "arch_open" => app.open_archive_pick(),
@@ -128,10 +129,7 @@ mod mac {
             &[
                 &item("trees", &tr("Family trees..."), None),
                 &sep(),
-                &item("import", &tr("Import tree..."), None),
-                &item("export_all", &tr("Export GEDCOM (everything)..."), None),
-                &item("export_private", &tr("Export GEDCOM (living people private)..."), None),
-                &item("export7", &tr("Export GEDCOM 7"), None),
+                &item("gedcom", &tr("GEDCOM: import and export..."), None),
                 &item("website", &tr("Make a family website..."), None),
                 &sep(),
                 &item("arch_save", &tr("Save Family Tree Archive..."), None),
@@ -161,6 +159,7 @@ mod mac {
             view.append(&item(&format!("view:{}", name), crate::i18n::trv(name), None))?;
         }
         view.append(&sep())?;
+        view.append(&item("fill", &tr("Fill the screen (keep the menu bar)"), None))?;
         view.append(&PredefinedMenuItem::fullscreen(None))?;
         let window = Submenu::with_items(
             tr("Window"),
@@ -247,7 +246,7 @@ mod tests {
             ("about", (|a: &App| a.show_about) as fn(&App) -> bool),
             ("settings", |a| a.x.settings_open),
             ("trees", |a| a.x.trees_open),
-            ("import", |a| a.imp_open),
+            ("gedcom", |a| a.x.ged_open),
             ("find", |a| a.find_open),
             ("searchall", |a| a.x.sall_open),
             ("jump", |a| a.x.jump_open),
