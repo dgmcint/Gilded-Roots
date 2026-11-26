@@ -299,7 +299,6 @@ impl App {
             }
             "media" => {
                 self.person_memories(ui, act, id, false, &mut pdf_req);
-                self.person_research(ui, id);
             }
             "more" => {
                 none(ui, crate::i18n::tr("Press Edit to merge or delete this person."));
@@ -1061,7 +1060,6 @@ impl App {
             }
             "media" => {
                 self.person_memories(ui, act, id, true, pdf_req);
-                self.person_research(ui, id);
             }
             "todo" => self.todo_panel(ui, id),
             "journal" => self.journal_panel(ui, id),
@@ -1179,6 +1177,11 @@ impl App {
                 });
                 ui.add_space(6.0);
             };
+            // Memories: the cards scroll by themselves (only the rows in view are drawn)
+            if tab == "media" {
+                if editing { self.person_section(ui, act, id, "media") } else { self.person_read(ui, act, id, "media") }
+                return;
+            }
             egui::ScrollArea::vertical().id_salt(("person_tab", tab.as_str())).auto_shrink([false, false]).show(ui, |ui| match tab.as_str() {
                 // Facts: the facts in boxes on the left and the timeline on the right, side by side
                 "facts" if !editing && ui.available_width() > 900.0 => {
@@ -1209,6 +1212,8 @@ impl App {
                 }
                 "research" => {
                     self.todo_panel(ui, id);
+                    ui.add_space(12.0);
+                    self.person_research(ui, id);
                     ui.add_space(12.0);
                     ui.label(RichText::new(crate::i18n::tr("Research journal")).size(17.0).strong());
                     ui.separator();

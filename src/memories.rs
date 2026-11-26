@@ -66,6 +66,10 @@ impl App {
                 }
             }
             ui.separator();
+            if !media.is_empty() && !self.x.gal_pick && ui.button(crate::i18n::tr("Choose several...")).on_hover_text(crate::i18n::tr("Tick several memories to remove them together")).clicked() {
+                self.x.gal_pick = true;
+                self.x.gal_sel.clear();
+            }
             ui.menu_button(RichText::new(crate::i18n::tr("+ Add")).strong(), |ui| {
                 if ui.button(crate::i18n::tr("Photos, documents or recordings...")).on_hover_text(crate::i18n::tr("Any file: photos, PDFs, letters, certificates, sound or video")).clicked() {
                     *act = Some(Action::AttachFiles);
@@ -117,112 +121,10 @@ impl App {
             ui.label(RichText::new(crate::i18n::tr("Nothing here yet. Use + Add for photos, documents, stories and recordings.")).italics().weak());
             return;
         }
-        let show = |k: u8| kind == 0 || kind == k;
-        // photos as pictures
-        let photos: Vec<&(usize, Media, u8)> = media.iter().filter(|x| x.2 == 1).collect();
-        if show(1) && !photos.is_empty() {
-            let w = if editing { 150.0 } else { 120.0 };
-            ui.horizontal_wrapped(|ui| {
-                for (i, m, _) in photos {
-                    ui.vertical(|ui| {
-                        ui.set_width(w);
-                        let size = vec2(w, (w * 0.74).round());
-                        if online_photo(m) {
-                            if ui.add_sized(size, egui::Button::new(crate::i18n::tr("Photo stored online\nClick to open"))).clicked() {
-                                ui.ctx().open_url(egui::OpenUrl::new_tab(m.path.clone()));
-                            }
-                        } else if m.thumb.is_empty() || m.thumb == "-" {
-                            let label = if m.thumb == "-" { "No preview\nClick to open" } else { "Loading..." };
-                            if ui.add_sized(size, egui::Button::new(crate::i18n::trv(label))).clicked() {
-                                // still making its preview: open it in our own viewer; only a photo
-                                // that cannot be previewed at all goes to the computer's own app
-                                if m.thumb.is_empty() {
-                                    self.viewing = Some((id, *i));
-                                } else {
-                                    open_media(&m.file);
-                                }
-                            }
-                        } else {
-                            let r = ui.add(egui::Image::new(img_uri(&mprev(&m.thumb))).fit_to_exact_size(size).rounding(4.0).sense(Sense::click()));
-                            if r.on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text(crate::i18n::tr("Open; tag faces and choose the profile photo there")).clicked() {
-                                self.viewing = Some((id, *i));
-                            }
-                        }
-                        if editing {
-                            if let Some(mm) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(*i)) {
-                                ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text(crate::i18n::tr("Caption")).desired_width(w));
-                            }
-                        } else {
-                            let cap = if m.caption.is_empty() { m.name.as_str() } else { m.caption.as_str() };
-                            ui.add(egui::Label::new(RichText::new(cap).small()).truncate());
-                        }
-                    });
-                }
-            });
-        }
-        if show(1) {
-            self.tagged_strip(ui, id);
-        }
-        // everything else as a list
-        let mut remove: Option<usize> = None;
-        let mut story_open: Option<usize> = None;
-        let others: Vec<&(usize, Media, u8)> = media.iter().filter(|x| x.2 != 1 && show(x.2)).collect();
-        if !others.is_empty() {
-            ui.add_space(4.0);
-        }
-        for (i, m, k) in others {
-            let cap = if m.caption.is_empty() { m.name.clone() } else { m.caption.clone() };
-            let online = m.file.is_empty() && is_url(&m.path);
-            ui.horizontal(|ui| {
-                let badge = match k {
-                    3 => "Recording",
-                    4 => "Story",
-                    _ if is_pdf(&m.file) => "PDF",
-                    _ => "Document",
-                };
-                fixed_label(ui, 70.0, RichText::new(crate::i18n::trv(badge)).small().color(ui.visuals().hyperlink_color));
-                if editing {
-                    if let Some(mm) = self.db.people.get_mut(&id).and_then(|p| p.media.get_mut(*i)) {
-                        ui.add(egui::TextEdit::singleline(&mut mm.caption).hint_text(m.name.as_str()).desired_width(260.0));
-                    }
-                } else {
-                    ui.label(cap.as_str());
-                }
-                if online {
-                    ui.hyperlink_to(crate::i18n::tr("Open online"), m.path.as_str());
-                } else if m.file.is_empty() {
-                    ui.label(RichText::new(crate::i18n::trf("File not found (the GEDCOM file named it {})", &["File not found (the GEDCOM file named it ", ")"], &[(if m.path.is_empty() { "nothing" } else { m.path.as_str() }).to_string()])).small().weak());
-                } else {
-                    let label = if *k == 3 { "Play" } else if *k == 4 || is_pdf(&m.file) { "Read" } else { "Open" };
-                    if ui.small_button(crate::i18n::trv(label)).clicked() {
-                        if *k == 4 && m.file.ends_with(".txt") {
-                            story_open = Some(*i);
-                        } else if is_pdf(&m.file) {
-                            *pdf_req = Some((mfile(&m.file), cap.clone()));
-                        } else {
-                            open_media(&m.file);
-                        }
-                    }
-                }
-                if editing && ui.small_button(crate::i18n::tr("Remove")).on_hover_text(crate::i18n::tr("Take it off this person. The file stays in the media folder; Undo (Ctrl+Z) puts it back.")).clicked() {
-                    remove = Some(*i);
-                }
-            });
-        }
-        if let Some(i) = remove {
-            if let Some(p) = self.db.people.get_mut(&id) {
-                if i < p.media.len() {
-                    p.media.remove(i);
-                    self.dirty = true;
-                }
-            }
-        }
-        if let Some(i) = story_open {
-            if let Some(m) = self.db.people.get(&id).and_then(|p| p.media.get(i)) {
-                let text = safe_media_path(&m.file).and_then(|p| std::fs::read_to_string(p).ok()).unwrap_or_default();
-                self.x.story = Some(StoryEdit { who: id, idx: Some(i), title: m.caption.clone(), text });
-            }
-        }
+        // the same cards as the Memories tab, each with a remove button
+        let _ = pdf_req;
+        let items = self.person_memory_items(id, kind);
+        self.memory_cards(ui, act, &items, false);
         if editing {
             ui.label(RichText::new(crate::i18n::tr("Photos, documents and recordings are kept on this computer only, in the media folder.")).small().weak());
         }

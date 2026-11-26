@@ -739,35 +739,6 @@ impl App {
         }
     }
 
-    /// Photos in other people's albums where this person is tagged, shown cropped to their face.
-    pub(crate) fn tagged_strip(&mut self, ui: &mut egui::Ui, id: u32) {
-        let tags = self.tagged_in(id);
-        if tags.is_empty() {
-            return;
-        }
-        ui.add_space(6.0);
-        ui.label(RichText::new(crate::i18n::trf("Tagged in {} other photo(s)", &["Tagged in ", " other photo(s)"], &[(tags.len()).to_string()])).strong());
-        let mut open: Option<(u32, usize)> = None;
-        ui.horizontal_wrapped(|ui| {
-            for (owner, i, r) in &tags {
-                let Some(m) = self.db.people.get(owner).and_then(|o| o.media.get(*i)) else { continue };
-                let src = [&m.mid, &m.thumb].into_iter().find(|f| !f.is_empty() && *f != "-").map(|f| mprev(f)).unwrap_or_else(|| mfile(&m.file));
-                let uri = img_uri(&src);
-                let who = self.db.label(*owner);
-                ui.vertical(|ui| {
-                    let (rect, resp) = ui.allocate_exact_size(vec2(90.0, 90.0), Sense::click());
-                    put_photo(ui, rect, &uri, *r, 6.0);
-                    if resp.on_hover_text(crate::i18n::trf("From {}'s photos", &["From ", "'s photos"], &[(who).to_string()])).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                        open = Some((*owner, *i));
-                    }
-                });
-            }
-        });
-        if let Some(v) = open {
-            self.viewing = Some(v);
-        }
-    }
-
     /// Photos in other people's albums where this person is tagged: (owner, index, face box).
     pub(crate) fn tagged_in(&self, id: u32) -> Vec<(u32, usize, [f32; 4])> {
         let mut v = Vec::new();
@@ -895,7 +866,7 @@ impl App {
                 items
             }
         };
-        self.memory_cards(ui, act, &items);
+        self.memory_cards(ui, act, &items, self.settings.mem_by_person);
     }
 
     /// Files in the media folder that are not on anyone yet, to add to the selected person.
@@ -970,6 +941,26 @@ impl App {
         }
     }
 
+    /// One person's memories as cards: their own, then photos of other people they are tagged in.
+    pub(crate) fn person_memory_items(&self, id: u32, want: u8) -> Vec<MemItem> {
+        let mut items: Vec<MemItem> = Vec::new();
+        for (oid, p) in &self.db.people {
+            for (i, m) in p.media.iter().enumerate() {
+                if *oid != id && !m.faces.iter().any(|f| f.who == id) {
+                    continue;
+                }
+                let kind = media_kind(m);
+                if want != 0 && want != kind {
+                    continue;
+                }
+                let title = if !m.caption.is_empty() { m.caption.clone() } else if !m.name.is_empty() { m.name.clone() } else { m.path.rsplit('/').next().unwrap_or("").to_string() };
+                items.push((*oid, i, kind, title, p.name.clone()));
+            }
+        }
+        items.sort_by(|a, b| (a.0 != id).cmp(&(b.0 != id)).then(a.4.cmp(&b.4)).then(a.0.cmp(&b.0)).then(a.1.cmp(&b.1)));
+        items
+    }
+
     /// Every card to show, in order of the owner's name.
     fn memory_items(&self, want: u8, q: &str) -> Vec<MemItem> {
         let mut items: Vec<MemItem> = Vec::new();
@@ -999,7 +990,7 @@ impl App {
         items
     }
 
-    fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, items: &[MemItem]) {
+    pub(crate) fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, items: &[MemItem], group: bool) {
         ui.separator();
         if items.is_empty() {
             ui.label(crate::i18n::tr("Nothing here yet. Select a person and use + Add."));
@@ -1042,7 +1033,7 @@ impl App {
         // what to draw, line by line: a person's name (when grouped by person) or a row of cards
         let head_h = 30.0;
         let mut lines: Vec<(Option<(u32, String, usize)>, std::ops::Range<usize>)> = Vec::new();
-        if self.settings.mem_by_person {
+        if group {
             let mut s = 0;
             while s < items.len() {
                 let mut e = s;
@@ -1202,6 +1193,7 @@ impl App {
                 ui.set_width(cw);
                 ui.set_max_width(cw);
                 let size = vec2(cw, (cw * 0.76).round());
+                let tile = Rect::from_min_size(ui.cursor().min, size);
                 if *i == NOTE_ITEM {
                     // a note: show its first lines on a card
                     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
@@ -1314,6 +1306,23 @@ impl App {
                 }
                 if ui.link(RichText::new(name.as_str()).small()).clicked() {
                     *act = Some(Action::Open(*id));
+                }
+                // a remove button on the card itself, so nothing has to be opened first
+                if !self.x.gal_pick && ui.rect_contains_pointer(tile) {
+                    let b = Rect::from_center_size(pos2(tile.max.x - 15.0, tile.min.y + 15.0), vec2(24.0, 24.0));
+                    let r = ui.interact(b, egui::Id::new(("mem_remove", *id, *i)), Sense::click()).on_hover_text(crate::i18n::tr("Remove this from the person..."));
+                    let fill = if r.hovered() { Color32::from_rgb(200, 60, 60) } else { Color32::from_black_alpha(170) };
+                    ui.painter().circle_filled(b.center(), 12.0, fill);
+                    let c = b.center();
+                    let st = Stroke::new(2.0_f32, Color32::WHITE);
+                    ui.painter().line_segment([c + vec2(-4.5, -4.5), c + vec2(4.5, 4.5)], st);
+                    ui.painter().line_segment([c + vec2(-4.5, 4.5), c + vec2(4.5, -4.5)], st);
+                    if r.clicked() {
+                        self.x.gal_sel.clear();
+                        self.x.gal_sel.insert((*id, *i));
+                        self.x.gal_freed = files_freed_by(&self.db, &self.x.gal_sel);
+                        self.x.gal_confirm = true;
+                    }
                 }
     }
 

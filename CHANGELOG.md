@@ -2,8 +2,11 @@
 
 Major work so far, in the order it was done.
 
-## Next version (not released yet)
+## 1.0.9 (26 November 2026)
 
+- **A new icon**: a gold and silver GR with a tree, on green, for the app, the Dock, the taskbar and the installers.
+- **Memories on a person's page** are cards in a grid, like the Memories tab; every card has a remove button (×) on it, so nothing has to be opened first, and **Choose several...** removes many together. Research files moved to the Research tab.
+- **The family panel under the main card** stays the card's width (it never crosses the lines), names that are too long are shortened, and a long list scrolls inside its part.
 - **Tabs on the Individual page**: Facts, Timeline, Memories, Sources, Notes, Research and Merge and delete, each
   in a box. Facts has the vital facts, other names, events (and contact details for the living, and LDS ordinances
   when chosen) on the left and the timeline on the right. Relationships stay on the right. (The panels and layouts

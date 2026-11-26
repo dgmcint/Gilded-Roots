@@ -39,14 +39,6 @@ pub(crate) fn chart_canvas(ui: &mut egui::Ui, key: impl std::hash::Hash, hand: b
         pan += bg.drag_delta();
         moved = true;
     }
-    let pointer_in = ui.rect_contains_pointer(view);
-    if pointer_in {
-        let sd = ui.input(|i| i.smooth_scroll_delta);
-        if sd != egui::Vec2::ZERO {
-            pan += sd;
-            moved = true;
-        }
-    }
     // at the left, centred from top to bottom while it fits (otherwise from the top)
     let base = pos2(view.min.x + 70.0, if size.y < view.height() { view.center().y - size.y / 2.0 } else { view.min.y + 8.0 });
     let clamp = |pan: &mut egui::Vec2| {
@@ -61,6 +53,16 @@ pub(crate) fn chart_canvas(ui: &mut egui::Ui, key: impl std::hash::Hash, hand: b
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(Rect::from_min_size(base + pan, size)));
     child.set_clip_rect(view.intersect(ui.clip_rect()));
     add(&mut child);
+    // the scroll wheel or trackpad moves the chart (after the chart, so a list inside it that
+    // scrolls, such as Siblings, keeps the scrolling for itself)
+    if ui.rect_contains_pointer(view) {
+        let sd = ui.input(|i| i.smooth_scroll_delta);
+        if sd != egui::Vec2::ZERO {
+            pan += sd;
+            moved = true;
+            ui.input_mut(|i| i.smooth_scroll_delta = egui::Vec2::ZERO);
+        }
+    }
     // the hand: a layer over everything, so clicks never select anyone by accident
     if hand {
         let h = ui.interact(view, id.with("hand"), Sense::click_and_drag());
@@ -88,10 +90,18 @@ impl App {
         let r = Rect::from_min_size(pos2(card.min.x, card.max.y + 2.0), vec2(w, 4000.0));
         ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r), |ui| {
             egui::Frame::popup(ui.style()).rounding(egui::Rounding { nw: 2.0, ne: 2.0, sw: 8.0, se: 8.0 }).inner_margin(8.0).show(ui, |ui| {
+                // exactly the card's width, so it never reaches the lines to the parents; long
+                // names are cut short, and a long list scrolls inside its own part
                 ui.set_width(w - 16.0);
+                ui.set_max_width(w - 16.0);
+                ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Truncate);
                 ui.spacing_mut().item_spacing.y = 3.0;
-                egui::CollapsingHeader::new(RichText::new(label_sc).strong()).id_salt("ped_sc").default_open(true).show(ui, |ui| self.spouse_children_menu(ui, id, act));
-                egui::CollapsingHeader::new(RichText::new(label_sib).strong()).id_salt("ped_sib").default_open(true).show(ui, |ui| self.siblings_menu(ui, id, act));
+                egui::CollapsingHeader::new(RichText::new(label_sc).strong()).id_salt("ped_sc").default_open(true).show(ui, |ui| {
+                    egui::ScrollArea::vertical().id_salt("ped_sc_list").max_height(190.0).show(ui, |ui| self.spouse_children_menu(ui, id, act));
+                });
+                egui::CollapsingHeader::new(RichText::new(label_sib).strong()).id_salt("ped_sib").default_open(true).show(ui, |ui| {
+                    egui::ScrollArea::vertical().id_salt("ped_sib_list").max_height(150.0).show(ui, |ui| self.siblings_menu(ui, id, act));
+                });
             });
         });
     }

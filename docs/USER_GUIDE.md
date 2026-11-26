@@ -381,11 +381,13 @@ Memories are everything you keep about the family besides the facts: **photos**,
 **recordings** and **notes**.
 
 **On a person's page:** the **Memories** tab shows that person's own memories,
-with a filter for **All, Photos, Documents, Stories** and **Recordings** (each with how many there are). Photos are
-shown as pictures and everything else as a list. **+ Add** takes any kind of file (photos, PDFs, letters,
-certificates, sound or video) and works out what it is, or lets you **write a story** or **record a spoken story**.
-Click a photo to view it, tag faces or choose the profile photo there. While editing, you can type captions and
-remove items. The Individual tab's toolbar has **Add files**, **Write a story** and **Record a story** too.
+with a filter for **All, Photos, Documents, Stories** and **Recordings** (each with how many there are), as cards in a
+grid like the Memories tab, with photos of others they are tagged in after their own. **+ Add** takes any kind of file
+(photos, PDFs, letters, certificates, sound or video) and works out what it is, or lets you **write a story** or
+**record a spoken story**. Click a card to open it (tag faces or choose the profile photo in a photo). To remove one,
+point at its card and click the **×** in its corner; you are asked first, and Undo (Ctrl+Z) brings it back.
+**Choose several...** ticks many to remove together. The Individual tab's toolbar has **Add files**, **Write a story**
+and **Record a story** too. Research files are on the **Research** tab.
 
 **The Memories tab** (Ctrl/Cmd+5) shows everything in the tree with the same filters plus **Notes**. Choose
 **Photos** for the photo grid. The filter you used last is remembered.
