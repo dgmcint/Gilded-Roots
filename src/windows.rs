@@ -27,7 +27,7 @@ impl App {
         let home = self.db.home.filter(|h| self.db.people.contains_key(h)).map(|h| self.db.label(h));
         let n = self.db.people.len();
         let nf = self.db.fams.len();
-        egui::Window::new(crate::i18n::tr("Renumber people")).open(&mut open).collapsible(false).resizable(false).default_width(560.0).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Renumber people"))).open(&mut open).collapsible(false).resizable(false).default_width(560.0).show(ctx, |ui| {
             ui.label(crate::i18n::tr("Give everyone new ID numbers 1, 2, 3... with no gaps. Families get new numbers 1, 2, 3... too."));
             ui.label(RichText::new(crate::i18n::tr("Nothing else changes: names, dates, links, sources and photos all stay as they are.")).small().weak());
             ui.add_space(6.0);
@@ -101,7 +101,7 @@ impl App {
         let mut load: Option<String> = None;
         let mut restore_all: Option<String> = None;
         let mut bring_back: Option<u32> = None;
-        egui::Window::new(crate::i18n::tr("Saved versions")).open(&mut open).default_size([760.0, 540.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Saved versions"))).open(&mut open).default_size([760.0, 540.0]).show(ctx, |ui| {
             ui.label(RichText::new(crate::i18n::tr("A copy of your tree is kept each day you use the program (the last 14 days). Pick a day to see what was different then.")).small().weak());
             ui.separator();
             egui::SidePanel::left("ver_list").resizable(false).exact_width(200.0).show_inside(ui, |ui| {
@@ -216,7 +216,7 @@ impl App {
         let mut open = true;
         let mut go_undo = 0usize;
         let mut go_redo = 0usize;
-        egui::Window::new(crate::i18n::tr("History of changes")).open(&mut open).default_size([460.0, 520.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("History of changes"))).open(&mut open).default_size([460.0, 520.0]).show(ctx, |ui| {
             ui.label(RichText::new(crate::i18n::tr("Newest first. Click a change to go back to just before it. Nothing is lost: you can redo forward again.")).small().weak());
             ui.separator();
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
@@ -472,7 +472,7 @@ impl App {
         let mut save: Option<Option<String>> = None;
         if let Some((lock, pw, pw2)) = &mut self.x.arch_save {
             let mut close = false;
-            egui::Window::new(crate::i18n::tr("Save Family Tree Archive")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Save Family Tree Archive"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.set_max_width(460.0);
                 ui.label(crate::i18n::tr("One file with your whole tree, every photo, document, story and recording, and a GEDCOM copy."));
                 ui.add_space(6.0);
@@ -521,7 +521,7 @@ impl App {
         let mut try_open: Option<(PathBuf, String)> = None;
         if let Some((path, pw, err)) = &mut self.x.arch_unlock {
             let mut close = false;
-            egui::Window::new(crate::i18n::tr("Open Family Tree Archive")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Open Family Tree Archive"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.set_max_width(440.0);
                 ui.label(RichText::new(path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default()).strong());
                 ui.label(crate::i18n::tr("This archive is locked with a password."));
@@ -587,7 +587,7 @@ impl App {
             let mut go = false;
             let mut cancel = false;
             let has_tree = !self.db.people.is_empty() && self.x.practice.is_none();
-            egui::Window::new(crate::i18n::tr("Open Family Tree Archive")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Open Family Tree Archive"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
                 ui.set_max_width(440.0);
                 ui.label(RichText::new(path.file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_default()).strong());
                 ui.label(crate::i18n::trf("Made {}. {} people, {} families, {} photos and documents.", &["Made ", ". ", " people, ", " families, ", " photos and documents."], &[(if info.made.is_empty() { "on an unknown date".to_string() } else { print_date(&info.made) }).to_string(), (info.people).to_string(), (info.families).to_string(), (info.media).to_string()]));
@@ -648,7 +648,7 @@ impl App {
         if self.x.backup_open {
             let mut open = true;
             let mut changed = false;
-            egui::Window::new(crate::i18n::tr("Backup settings")).open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Backup settings"))).open(&mut open).resizable(false).show(ctx, |ui| {
                 ui.set_max_width(480.0);
                 ui.label(RichText::new(crate::i18n::tr("Automatic backups")).strong());
                 ui.horizontal(|ui| {
@@ -715,7 +715,7 @@ impl App {
         let mut go: Option<String> = None;
         let cur = self.settings.current_tree.clone();
         let trees = other_trees();
-        egui::Window::new(crate::i18n::tr("Family trees")).open(&mut open).resizable(false).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Family trees"))).open(&mut open).resizable(false).show(ctx, |ui| {
             ui.set_max_width(460.0);
             ui.label(crate::i18n::tr("Keep separate research projects apart: your own family, your spouse's, a client's, a one-name study. Each tree has its own people, photos and backups."));
             ui.add_space(6.0);
@@ -802,7 +802,7 @@ impl App {
         let mut sd = show_done;
         let mut ids: Vec<u32> = self.db.people.iter().filter(|(_, p)| !p.todos.is_empty()).map(|(i, _)| *i).collect();
         ids.sort_by(|a, b| self.db.people[a].name.cmp(&self.db.people[b].name));
-        egui::Window::new(crate::i18n::tr("Research to-do list")).open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Research to-do list"))).open(&mut open).default_size([560.0, 520.0]).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(RichText::new(crate::i18n::trf("{} open task(s)", &["", " open task(s)"], &[(total_open).to_string()])).strong());
                 ui.add(egui::TextEdit::singleline(&mut find).hint_text(crate::i18n::tr("Filter by task or name")).desired_width(200.0));
@@ -878,7 +878,7 @@ impl App {
         let mut rename = self.x.places_rename.clone();
         let mut do_rename: Option<(String, String)> = None;
         let mut go: Option<u32> = None;
-        egui::Window::new(crate::i18n::tr("Places")).open(&mut open).default_size([860.0, 560.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Places"))).open(&mut open).default_size([860.0, 560.0]).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(RichText::new(crate::i18n::trf("{} different places", &["", " different places"], &[(uses.len()).to_string()])).strong());
                 ui.add(egui::TextEdit::singleline(&mut find).hint_text(crate::i18n::tr("Search places")).desired_width(220.0));

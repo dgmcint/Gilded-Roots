@@ -244,11 +244,14 @@ the right; right-clicking a box opens the same menu:
 - **Centre chart on this person**, **Make this the home person** and **Bookmark this person**
 
 **Select and Hand:** the toolbar above the pedigree and descendant charts has **Select** (click people as usual)
-and **Hand**. With the hand on, drag anywhere on the chart to move it around (the pointer becomes a hand), and
-clicks never change who is selected by accident. Press **H** to switch between the two; the choice is remembered.
+and **Hand**. With the hand on, drag anywhere on the chart to move it around (the pointer becomes a hand), even
+when the whole chart fits in the window, and clicks never change who is selected by accident. The chart stays where
+you put it until you choose another person or change the zoom. Press **H** to switch between the two; the choice is remembered.
 
-Under the main person (generation 1) there are two drop-downs: **Spouse & children** and **Siblings**. Pick a
-name to move the chart to them, or use the Add entries at the bottom. The descendants chart has the same
+Under the main person (generation 1) there are two buttons: **Spouse & children** and **Siblings**. Click one to
+open its list under it; it stays open, also as you move from person to person, until you click the button again.
+Pick a name to move the chart to them, or use the Add entries at the bottom. The **Classic** style shows names only;
+**Photo cards** has each person's picture. The descendants chart has the same
 right-click menu. **Smaller**, **Bigger** and **Fit** on the tab toolbar change the size of the chart.
 
 ## Adding people
@@ -851,7 +854,9 @@ toolbars** (each on its own), and the same word and size choices. Your choices a
 ## Settings
 **Edit → Settings...** (**Cmd+,** on a Mac, **Ctrl+,** on Windows and Linux) gathers the choices in one window, with
 the pages down the left:
-- **Appearance:** colour scheme, accent colour, dark background, text size, and the **font**: the computer's own
+- **Appearance:** **Light**, **Dark** or **Automatic** (light or dark as your computer is set, changing when it
+  does), the colour schemes in their groups (Glass, Heritage, Easy to see and others: click a group to see its
+  schemes), accent colour and dark background (each with a **Custom** colour picker), text size, and the **font**: the computer's own
   (San Francisco on a Mac, Segoe UI on Windows, your desktop's font on Linux) or the one built into Gilded Roots.
 - **Language**, **Names and dates**, **Charts** (generations, what chart boxes show, profile photo size),
   **Toolbars**, **Printing and privacy** (keep living people private, US Letter or A4 paper), and **Tree, backups
@@ -862,14 +867,20 @@ Menus show each command's shortcut on the right, written the way your computer w
 on Windows and Linux). **Quit Gilded Roots** is **Cmd+Q** on a Mac and **Ctrl+Q** on Linux; on Windows it is
 **Exit** (Alt+F4).
 
+On a Mac the menu bar at the top of the screen has Gilded Roots' own menus too: **Gilded Roots** (About,
+**Settings** ⌘, and Quit), **File** (family trees, import and export, archives, a family website, **Print** ⌘P),
+**Edit** (Undo, Redo, Find a person, Search everything, Quick jump), **View** (each tab, and full screen),
+**Window** and **Help** (this guide, the guided tour and the wiki). The menus inside the window hold everything
+else and work the same on every computer.
+
 ## View options and text
 - **View → Text size:** Small to Largest; makes every word and button bigger or smaller.
 - **View → Names:** "John Henry Smith", "SMITH, John Henry" or "Smith, John Henry".
 - **View → Dates:** as typed, "12 Mar 1921", "March 12, 1921" or "1921-03-12". Dates with words in them ("about
   1850") are shown as written. These only change how things look; what you typed is kept and exported unchanged.
 - **View → Chart boxes:** show or hide photos, birthplaces and person IDs in the pedigree boxes.
-- **View → Colours:** a large set of accent colours and dark backgrounds to click on. **View → Appearance** has light
-  or dark theme and a custom colour picker.
+- **View → Colours:** a large set of accent colours and dark backgrounds to click on. **View → Appearance** opens the
+  Appearance page of Settings.
 - **View → Full screen** (also in File, or **F11**).
 - The window opens at a comfortable size the first time (most of the screen, centred) and then remembers the size you
   leave it at.

@@ -532,7 +532,7 @@ impl App {
         let Some(mut o) = self.x.web.take() else { return };
         let mut keep = true;
         let mut go = false;
-        egui::Window::new(crate::i18n::tr("Make a family website")).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).open(&mut keep).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Make a family website"))).collapsible(false).resizable(false).anchor(Align2::CENTER_CENTER, [0.0, 0.0]).open(&mut keep).show(ctx, |ui| {
             ui.set_max_width(480.0);
             ui.label(crate::i18n::tr("Makes a folder of web pages: a front page with a search box and the surnames, and a page for every person with their facts, family, photos and sources. It needs no internet: open index.html in any web browser, from your computer, a USB stick or a disc."));
             ui.add_space(6.0);

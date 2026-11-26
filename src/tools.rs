@@ -138,7 +138,7 @@ impl App {
             return;
         }
         let mut open = true;
-        egui::Window::new(crate::i18n::tr("Date calculator")).open(&mut open).default_width(420.0).resizable(false).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Date calculator"))).open(&mut open).default_width(420.0).resizable(false).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut self.x.calc_mode, 0, crate::i18n::tr("Age on a date"));
                 ui.selectable_value(&mut self.x.calc_mode, 1, crate::i18n::tr("Born from an age"));
@@ -240,7 +240,7 @@ impl App {
         }
         let mut open = true;
         let mut go: Option<u32> = None;
-        egui::Window::new(crate::i18n::tr("Soundex")).open(&mut open).default_width(380.0).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Soundex"))).open(&mut open).default_width(380.0).show(ctx, |ui| {
             ui.label(RichText::new(crate::i18n::tr("Soundex gives surnames that sound alike the same code (Smith, Smyth and Smithe are all S530), as used in US census indexes.")).small().weak());
             ui.add(egui::TextEdit::singleline(&mut self.x.soundex_q).hint_text(crate::i18n::tr("a surname, e.g. Harwood")).desired_width(220.0));
             let code = sound_key(&self.x.soundex_q);

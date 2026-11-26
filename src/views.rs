@@ -17,14 +17,52 @@ pub(crate) fn hand_switch(ui: &mut egui::Ui, hand: bool, act: &mut Option<Action
     }
 }
 
-/// The hand tool itself: everything under `rect` becomes a surface to grab and drag.
-pub(crate) fn hand_overlay(ui: &mut egui::Ui, rect: Rect, id: &str) {
-    let r = ui.interact(rect, egui::Id::new(("hand_tool", id)), Sense::click_and_drag());
+fn pan_id(key: impl std::hash::Hash) -> egui::Id {
+    egui::Id::new(("hand_pan", key))
+}
+
+/// How far the hand tool has moved a chart. It stays where it was put until another person is
+/// chosen or the zoom changes (the key holds both).
+pub(crate) fn hand_pan(ui: &egui::Ui, key: impl std::hash::Hash) -> egui::Vec2 {
+    let id = pan_id(key);
+    ui.ctx().data(|d| d.get_temp::<egui::Vec2>(id)).unwrap_or(egui::Vec2::ZERO)
+}
+
+/// The hand tool itself: the whole visible chart area becomes a surface to grab and drag, and
+/// the chart moves with the mouse, whether or not it is bigger than the window. `chart` is where
+/// the chart was laid out before moving; some of it always stays in sight.
+pub(crate) fn hand_overlay(ui: &mut egui::Ui, chart: Rect, key: impl std::hash::Hash) {
+    let id = pan_id(key);
+    let view = ui.clip_rect();
+    let r = ui.interact(view, id.with("grab"), Sense::click_and_drag());
     if r.dragged() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
-        ui.scroll_with_delta(r.drag_delta());
+        let mut pan = ui.ctx().data(|d| d.get_temp::<egui::Vec2>(id)).unwrap_or(egui::Vec2::ZERO) + r.drag_delta();
+        let keep = 80.0;
+        let (lo_x, hi_x) = (view.min.x + keep - chart.max.x, view.max.x - keep - chart.min.x);
+        let (lo_y, hi_y) = (view.min.y + keep - chart.max.y, view.max.y - keep - chart.min.y);
+        pan.x = pan.x.max(lo_x).min(hi_x.max(lo_x));
+        pan.y = pan.y.max(lo_y).min(hi_y.max(lo_y));
+        ui.ctx().data_mut(|d| d.insert_temp(id, pan));
     } else if r.hovered() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+    }
+}
+
+/// A button that opens a panel under itself, which stays open until the button is clicked again
+/// (also while moving from person to person), unlike a menu that closes at the next click.
+pub(crate) fn stay_open(ui: &mut egui::Ui, key: &str, label: String, add: impl FnOnce(&mut egui::Ui)) {
+    let id = egui::Id::new(("stay_open", key));
+    let mut open = ui.ctx().data(|d| d.get_temp::<bool>(id)).unwrap_or(false);
+    if ui.add(egui::Button::new(label).selected(open)).clicked() {
+        open = !open;
+        ui.ctx().data_mut(|d| d.insert_temp(id, open));
+    }
+    if open {
+        egui::Frame::popup(ui.style()).show(ui, |ui| {
+            ui.set_min_width(200.0);
+            add(ui);
+        });
     }
 }
 
@@ -135,9 +173,12 @@ impl App {
 
     /// Fill the rest of the window under a chart with its backdrop. Call just before the chart's
     /// scroll area, so the backdrop reaches the window's edges whatever the chart's size.
-    pub(crate) fn paint_stage(&self, ui: &egui::Ui) {
-        let r = ui.available_rect_before_wrap().expand2(vec2(8.0, 8.0));
+    pub(crate) fn paint_stage(&self, ui: &mut egui::Ui) {
+        // a little of the window's own colour is left between the toolbar and the backdrop
+        let a = ui.available_rect_before_wrap();
+        let r = Rect::from_min_max(pos2(a.min.x - 8.0, a.min.y + 4.0), pos2(a.max.x + 8.0, a.max.y + 8.0));
         ui.painter().rect_filled(r, 0.0, self.chart_stage(ui));
+        ui.add_space(8.0);
     }
 
     pub(crate) fn descendants(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
@@ -188,8 +229,10 @@ impl App {
         let dark = ui.visuals().dark_mode;
         self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
-            let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
-            let o = resp.rect.min + vec2(6.0, 0.0);
+            let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
+            let o = resp.rect.min + vec2(6.0, 0.0) + hand_pan(ui, ("desc", sel, z.to_bits()));
+            // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
+            painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
                 let zd = ui.input(|i| i.zoom_delta());
                 if (zd - 1.0).abs() > 0.001 {
@@ -269,7 +312,7 @@ impl App {
             // hand tool: a layer over the whole chart that takes every click and drag, so dragging
             // anywhere moves the chart and nothing is selected by accident
             if self.settings.hand {
-                hand_overlay(ui, resp.rect, "desc");
+                hand_overlay(ui, resp.rect, ("desc", sel, z.to_bits()));
             }
         });
     }
@@ -721,8 +764,10 @@ impl App {
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
-            let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th + 6.0), Sense::hover());
-            let o = resp.rect.min + vec2(6.0, 0.0);
+            let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th + 6.0), Sense::hover());
+            let o = resp.rect.min + vec2(6.0, 0.0) + hand_pan(ui, ("ped", sel, z.to_bits()));
+            // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
+            painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
                 let zd = ui.input(|i| i.zoom_delta());
                 if (zd - 1.0).abs() > 0.001 {
@@ -765,19 +810,25 @@ impl App {
                             let is_sel = g == 0;
                             let is_hl = self.hl == Some(id) && !is_sel;
                             let side = if g == 0 { None } else { Some(i < n / 2) };
+                            // a father's or mother's place says which, when the record does not
+                            let sex = match p.sex.as_str() {
+                                "M" | "F" => p.sex.as_str(),
+                                _ if g > 0 => if i % 2 == 0 { "M" } else { "F" },
+                                _ => "",
+                            };
                             let fill = if is_sel {
                                 accent
                             } else if is_hl {
                                 accent.gamma_multiply(0.35)
                             } else if r2.hovered() {
-                                self.ped_fill(hover_c, &p.sex, side)
+                                self.ped_fill(hover_c, sex, side)
                             } else {
-                                self.ped_fill(box_c, &p.sex, side)
+                                self.ped_fill(box_c, sex, side)
                             };
                             let ink = if is_sel { on_accent(accent) } else { ink_c };
                             card(&painter, rect, 8.0, fill, edge, dark);
                             // the colour band, when it is turned on
-                            if let Some(t) = self.ped_band_colour(&p.sex, side).filter(|_| !is_hl) {
+                            if let Some(t) = self.ped_band_colour(sex, side).filter(|_| !is_hl) {
                                 let band = Rect::from_min_size(rect.min, vec2(rect.width(), (4.0 * z).clamp(2.0, 5.0)));
                                 painter.rect_filled(band, egui::Rounding { nw: 8.0, ne: 8.0, sw: 0.0, se: 0.0 }, t);
                             }
@@ -796,7 +847,8 @@ impl App {
                                 txt.push_str(&format!("  #{}", id));
                             }
                             let ir = Rect::from_min_size(pos2(rect.min.x + 3.0, rect.min.y + 2.0), vec2(bh - 4.0, bh - 4.0));
-                            if !compact {
+                            // Classic and Compact are names only; Photo cards has the pictures
+                            if photo_cards {
                                 match self.portrait_src(p).filter(|_| self.settings.box_photos || photo_cards) {
                                     Some((uri, fr)) => put_photo(ui, ir, &uri, fr, if photo_cards { 6.0 } else { 3.0 }),
                                     None => {
@@ -806,7 +858,7 @@ impl App {
                                     }
                                 }
                             }
-                            let text_x = if compact { rect.min.x + 6.0 } else { rect.min.x + bh + 4.0 };
+                            let text_x = if photo_cards { rect.min.x + bh + 4.0 } else if compact { rect.min.x + 6.0 } else { rect.min.x + 10.0 };
                             let (pf0, pm0) = self.db.parents_ix(&ix, id);
                             let has_arrow = (g == gens - 1 && (pf0.is_some() || pm0.is_some())) || (g == 0 && !kids.is_empty());
                             let right_pad = 34.0 + if has_arrow { 24.0 } else { 0.0 };
@@ -883,13 +935,11 @@ impl App {
                                 let w = rect.width().min(230.0);
                                 let n_sc = self.db.partners(id).len() + kids.len();
                                 let n_sib = self.db.siblings(id).len();
-                                let r_a = Rect::from_min_size(pos2(rect.min.x, rect.max.y + 8.0), vec2(w, 22.0));
+                                let r_a = Rect::from_min_size(pos2(rect.min.x, rect.max.y + 8.0), vec2(w.max(220.0), 4000.0));
                                 ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_a), |ui| {
-                                    ui.menu_button(crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[(n_sc).to_string()]), |ui| self.spouse_children_menu(ui, id, act));
-                                });
-                                let r_b = Rect::from_min_size(pos2(rect.min.x, rect.max.y + 36.0), vec2(w, 22.0));
-                                ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_b), |ui| {
-                                    ui.menu_button(crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[(n_sib).to_string()]), |ui| self.siblings_menu(ui, id, act));
+                                    ui.spacing_mut().item_spacing.y = 6.0;
+                                    stay_open(ui, "ped_sc", crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[(n_sc).to_string()]), |ui| self.spouse_children_menu(ui, id, act));
+                                    stay_open(ui, "ped_sib", crate::i18n::trf("Siblings ({})", &["Siblings (", ")"], &[(n_sib).to_string()]), |ui| self.siblings_menu(ui, id, act));
                                 });
                             }
                             if r2.double_clicked() {
@@ -923,7 +973,7 @@ impl App {
             // hand tool: a layer over the whole chart that takes every click and drag, so dragging
             // anywhere moves the chart and nothing is selected by accident
             if self.settings.hand {
-                hand_overlay(ui, resp.rect, "ped");
+                hand_overlay(ui, resp.rect, ("ped", sel, z.to_bits()));
             }
         });
     }

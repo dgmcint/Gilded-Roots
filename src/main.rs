@@ -29,6 +29,7 @@ mod homepage;
 mod gedcom;
 mod ged7;
 mod website;
+mod macmenu;
 mod review;
 mod sample;
 mod temples;

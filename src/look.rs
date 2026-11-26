@@ -179,13 +179,45 @@ pub(crate) fn install_fonts(ctx: &egui::Context) {
 // ---------------------------------------------------------------------------------------------
 // Spacing
 
+/// Light, Dark or Automatic (following the computer). Returns whether anything changed.
+pub(crate) fn light_dark_choice(ui: &mut egui::Ui, ctx: &egui::Context, settings: &mut Settings) -> bool {
+    let tr = crate::i18n::tr;
+    let mut changed = false;
+    let auto = settings.auto_dark;
+    if ui.selectable_label(!auto && !settings.dark, tr("Light")).clicked() {
+        settings.auto_dark = false;
+        settings.set_dark(false);
+        changed = true;
+    }
+    if ui.selectable_label(!auto && settings.dark, tr("Dark")).clicked() {
+        settings.auto_dark = false;
+        settings.set_dark(true);
+        changed = true;
+    }
+    let r = ui.selectable_label(auto, tr("Automatic")).on_hover_text(tr("Light or dark as your computer is set, changing when it changes"));
+    if r.clicked() && !auto {
+        settings.auto_dark = true;
+        if let Some(t) = ctx.system_theme() {
+            settings.set_dark(t == egui::Theme::Dark);
+        }
+        changed = true;
+    }
+    changed
+}
+
+/// A window's title, at the size a Mac or desktop window's title bar uses, so the bar stays slim.
+pub(crate) fn wtitle(t: impl Into<String>) -> egui::RichText {
+    egui::RichText::new(t).size(13.5)
+}
+
 /// Even spacing and comfortable buttons, closer to what people expect on a Mac or Linux desktop.
 pub(crate) fn apply_spacing(style: &mut egui::Style) {
     let s = &mut style.spacing;
     s.item_spacing = vec2(8.0, 6.0);
     s.button_padding = vec2(8.0, 4.0);
     s.menu_margin = egui::Margin::symmetric(6.0, 6.0);
-    s.window_margin = egui::Margin::same(12.0);
+    // slim title bars (the margin above and below the title sets their height), as on a Mac
+    s.window_margin = egui::Margin { left: 12.0, right: 12.0, top: 6.0, bottom: 10.0 };
     s.interact_size.y = s.interact_size.y.max(22.0);
     s.combo_width = s.combo_width.max(120.0);
     s.icon_spacing = 6.0;
@@ -228,7 +260,7 @@ impl App {
         }
         let mut open = true;
         let mut changed = false;
-        egui::Window::new(crate::i18n::tr("Settings")).id(egui::Id::new("settings_window")).open(&mut open).collapsible(false).default_size([720.0, 520.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Settings"))).id(egui::Id::new("settings_window")).open(&mut open).collapsible(false).default_size([720.0, 520.0]).show(ctx, |ui| {
             ui.horizontal_top(|ui| {
                 // the pages, down the left
                 ui.allocate_ui_with_layout(vec2(190.0, 470.0), egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
@@ -267,18 +299,37 @@ impl App {
         };
         match self.x.settings_page {
             0 => {
-                heading(ui, tr("Colour scheme"));
-                egui::ScrollArea::vertical().id_salt("schemes").max_height(170.0).show(ui, |ui| {
-                    changed |= scheme_list(ui, &mut self.settings);
+                heading(ui, tr("Light or dark"));
+                ui.horizontal(|ui| {
+                    changed |= light_dark_choice(ui, ctx, &mut self.settings);
                 });
+                heading(ui, tr("Colour scheme"));
+                changed |= scheme_list(ui, &mut self.settings);
                 heading(ui, tr("Accent colour"));
                 changed |= swatch_grid(ui, &PRESETS, &mut self.settings.accent, false);
+                ui.horizontal(|ui| {
+                    ui.label(tr("Custom"));
+                    changed |= ui.color_edit_button_srgb(&mut self.settings.accent).changed();
+                });
                 if self.settings.dark {
                     heading(ui, tr("Dark background"));
                     changed |= swatch_grid(ui, &BG_PRESETS, &mut self.settings.bg, true);
+                    ui.horizontal(|ui| {
+                        ui.label(tr("Custom"));
+                        changed |= ui.color_edit_button_srgb(&mut self.settings.bg).changed();
+                    });
                 }
-                if ui.button(tr("More: theme and your own colours...")).clicked() {
-                    self.show_look = true;
+                ui.add_space(4.0);
+                if ui.button(tr("Reset colours to the defaults")).clicked() {
+                    let d = Settings::default();
+                    self.settings.auto_dark = d.auto_dark;
+                    self.settings.dark = d.dark;
+                    self.settings.accent = d.accent;
+                    self.settings.bg = d.bg;
+                    self.settings.light_bg = d.light_bg;
+                    self.settings.ink = d.ink;
+                    self.settings.glass = d.glass;
+                    changed = true;
                 }
                 heading(ui, tr("Text size"));
                 ui.horizontal_wrapped(|ui| {

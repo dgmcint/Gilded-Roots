@@ -59,7 +59,7 @@ impl PdfView {
     pub fn show(&mut self, ctx: &egui::Context) -> bool {
         let mut open = true;
         let title = format!("{}  (page {} of {})", self.title, self.page + 1, self.pages);
-        egui::Window::new(title).id(egui::Id::new("pdf_viewer")).open(&mut open).default_size([760.0, 860.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(title)).id(egui::Id::new("pdf_viewer")).open(&mut open).default_size([760.0, 860.0]).show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
                 if ui.add_enabled(self.page > 0, egui::Button::new(crate::i18n::tr("< Previous"))).clicked() {
                     self.page -= 1;

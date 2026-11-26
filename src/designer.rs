@@ -211,7 +211,7 @@ impl App {
         let mut load: Option<Design> = None;
         let mut del: Option<usize> = None;
         let mut save_as = false;
-        egui::Window::new(crate::i18n::tr("Report designer")).open(&mut open).default_size([760.0, 620.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Report designer"))).open(&mut open).default_size([760.0, 620.0]).show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.label(crate::i18n::tr("Saved designs:"));
                 if saved.is_empty() {

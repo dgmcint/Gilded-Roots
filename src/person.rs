@@ -1128,7 +1128,7 @@ impl App {
             }
             let mut open = true;
             let mut dock_back = false;
-            egui::Window::new(crate::i18n::trv(dock_title(&it.sec))).id(egui::Id::new(("float", it.sec.as_str()))).open(&mut open).default_size([420.0, 420.0]).show(&ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::trv(dock_title(&it.sec)))).id(egui::Id::new(("float", it.sec.as_str()))).open(&mut open).default_size([420.0, 420.0]).show(&ctx, |ui| {
                 if ui.small_button(crate::i18n::tr("Dock back on the right")).clicked() {
                     dock_back = true;
                 }

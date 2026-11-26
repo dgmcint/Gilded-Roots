@@ -486,7 +486,7 @@ impl App {
         if let Some(mut text) = self.x.line.paste.take() {
             let mut open = true;
             let mut keep = true;
-            egui::Window::new(crate::i18n::tr("Paste Y-DNA markers")).open(&mut open).default_width(520.0).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Paste Y-DNA markers"))).open(&mut open).default_width(520.0).show(ctx, |ui| {
                 ui.label(crate::i18n::tr("Copy the marker table from your results page and paste it here. Two rows (marker names, then values) or pairs such as \"DYS393 13\" both work."));
                 egui::ScrollArea::vertical().max_height(220.0).show(ui, |ui| {
                     ui.add(egui::TextEdit::multiline(&mut text).desired_rows(8).desired_width(f32::INFINITY).font(egui::TextStyle::Monospace));
@@ -510,7 +510,7 @@ impl App {
         if let Some((i, mut m)) = self.x.line.edit.take() {
             let mut open = true;
             let (mut done, mut delete) = (false, false);
-            egui::Window::new(if i == usize::MAX { format!("Add a {} match", if y { "Y-DNA" } else { crate::i18n::tr("mtDNA") }) } else { format!("{} match", if y { "Y-DNA" } else { crate::i18n::tr("mtDNA") }) }).open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(if i == usize::MAX { format!("Add a {} match", if y { "Y-DNA" } else { crate::i18n::tr("mtDNA") }) } else { format!("{} match", if y { "Y-DNA" } else { crate::i18n::tr("mtDNA") }) })).open(&mut open).resizable(false).show(ctx, |ui| {
                 egui::Grid::new("line_edit").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
                     ui.label(crate::i18n::tr("Name"));
                     ui.add(egui::TextEdit::singleline(&mut m.name).desired_width(260.0));
@@ -602,7 +602,7 @@ impl App {
         if let Some((file, rows, mut cols)) = self.x.line.import.take() {
             let mut open = true;
             let mut add: Option<Vec<LineMatch>> = None;
-            egui::Window::new(crate::i18n::tr("Import matches")).open(&mut open).default_width(560.0).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Import matches"))).open(&mut open).default_width(560.0).show(ctx, |ui| {
                 ui.label(crate::i18n::trf("{}: {} row(s)", &["", ": ", " row(s)"], &[(file).to_string(), (rows.len().saturating_sub(1)).to_string()]));
                 let headers = rows[0].clone();
                 egui::Grid::new("line_imp").num_columns(2).spacing([10.0, 4.0]).show(ui, |ui| {

@@ -424,7 +424,7 @@ impl App {
         let mut swap = false;
         let mut go: Option<u32> = None;
         let c = compare(&self.db, rv.left, &self.db, rv.right, true);
-        egui::Window::new(crate::i18n::tr("Review before merging")).open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Review before merging"))).open(&mut open).default_size([760.0, 600.0]).show(ctx, |ui| {
             egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(crate::i18n::tr("The LEFT record is kept. The RIGHT record is folded into it and removed.")).strong());
@@ -542,7 +542,7 @@ impl App {
         let Some(mut im) = self.imerge.take() else { return };
         let mut open = true;
         let mut finish = false;
-        egui::Window::new(crate::i18n::tr("Add to my tree: check possible matches")).open(&mut open).default_size([980.0, 640.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Add to my tree: check possible matches"))).open(&mut open).default_size([980.0, 640.0]).show(ctx, |ui| {
             let total = im.inc.people.len();
             let n_same = im.same.len();
             let undecided = im.order.iter().filter(|i| !im.same.contains_key(i) && !im.different.contains(i)).count();

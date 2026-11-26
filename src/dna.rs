@@ -1292,7 +1292,7 @@ impl App {
         if self.x.dna.details {
             let mut open = true;
             let mut delete = false;
-            egui::Window::new(crate::i18n::tr("DNA test details")).open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("DNA test details"))).open(&mut open).resizable(false).show(ctx, |ui| {
                 let who = self.db.dna[si].person.filter(|p| self.db.people.contains_key(p)).map(|p| self.db.label(p)).unwrap_or_else(|| "Not chosen".to_string());
                 egui::Grid::new("dna_details").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
                     ui.label(crate::i18n::tr("Who took the test"));
@@ -1382,7 +1382,7 @@ impl App {
         if let Some(mut text) = self.x.dna.paste.take() {
             let mut open = true;
             let mut keep = true;
-            egui::Window::new(crate::i18n::tr("Paste an ethnicity estimate")).open(&mut open).default_width(460.0).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Paste an ethnicity estimate"))).open(&mut open).default_width(460.0).show(ctx, |ui| {
                 ui.label(crate::i18n::tr("On the testing company's site, select the list of regions with their percentages, copy it, and paste it here. You can also type one region per line, such as \"Scotland 32%\"."));
                 egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
                     ui.add(egui::TextEdit::multiline(&mut text).desired_rows(10).desired_width(f32::INFINITY));
@@ -1416,7 +1416,7 @@ impl App {
             let mut open = true;
             let mut done = false;
             let mut delete = false;
-            egui::Window::new(if i == usize::MAX { crate::i18n::tr("Add a DNA match") } else { crate::i18n::tr("DNA match") }).open(&mut open).resizable(false).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(if i == usize::MAX { crate::i18n::tr("Add a DNA match") } else { crate::i18n::tr("DNA match") })).open(&mut open).resizable(false).show(ctx, |ui| {
                 let num = |ui: &mut egui::Ui, v: &mut Option<f32>, hint: &str| {
                     let mut s = v.map(|x| if x.fract() == 0.0 { format!("{:.0}", x) } else { format!("{}", x) }).unwrap_or_default();
                     if ui.add(egui::TextEdit::singleline(&mut s).hint_text(hint).desired_width(90.0)).changed() {
@@ -1519,7 +1519,7 @@ impl App {
         if let Some(mut imp) = self.x.dna.import.take() {
             let mut open = true;
             let mut add: Option<Vec<DnaMatch>> = None;
-            egui::Window::new(crate::i18n::tr("Import DNA matches")).open(&mut open).default_width(620.0).show(ctx, |ui| {
+            egui::Window::new(crate::look::wtitle(crate::i18n::tr("Import DNA matches"))).open(&mut open).default_width(620.0).show(ctx, |ui| {
                 ui.label(crate::i18n::trf("{}: {} row(s)", &["", ": ", " row(s)"], &[(imp.file).to_string(), (imp.rows.len().saturating_sub(1)).to_string()]));
                 ui.label(RichText::new(crate::i18n::tr("Check which column holds each detail. Most are found automatically; change any that are wrong.")).small());
                 let headers = imp.rows[0].clone();

@@ -23,6 +23,12 @@ ab_glyph = "0.2"
 cfb = "0.10"
 hayro = { version = "0.8", default-features = false, features = ["embed-fonts", "embed-cmaps"] }
 
+# The Mac's own menu bar (About, Settings, Quit and the usual menus at the top of the screen)
+[target.'cfg(target_os = "macos")'.dependencies]
+muda = { version = "0.17", default-features = false }
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSResponder", "NSWindow"] }
+
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
 

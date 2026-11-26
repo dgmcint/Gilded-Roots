@@ -182,7 +182,7 @@ impl App {
         let mut find = self.help_find.clone();
         let mut goto = self.x.help_goto.take();
         let mut tour = false;
-        egui::Window::new(crate::i18n::tr("User guide")).open(&mut open).default_size([880.0, 640.0]).min_width(520.0).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("User guide"))).open(&mut open).default_size([880.0, 640.0]).min_width(520.0).show(ctx, |ui| {
             let q = find.trim().to_lowercase();
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::tr("Search"));

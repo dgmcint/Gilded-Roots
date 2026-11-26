@@ -297,7 +297,7 @@ impl App {
         }
         let plan = self.x.folders_plan.clone().unwrap_or_default();
         let on = self.db.media_folders;
-        egui::Window::new(crate::i18n::tr("Sort media into person folders")).id(egui::Id::new("media_folders")).open(&mut open).collapsible(false).default_width(560.0).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Sort media into person folders"))).id(egui::Id::new("media_folders")).open(&mut open).collapsible(false).default_width(560.0).show(ctx, |ui| {
             ui.label(crate::i18n::tr("Puts each photo, document and recording in a folder named after the person it belongs to, inside the media folder, so you can find a person's files on your computer."));
             ui.add_space(4.0);
             ui.label(RichText::new(crate::i18n::tr("- One person's files go in a folder like \"Harwood, Thomas James (9)\" (the ID number keeps two people with the same name apart).\n- A file on several people, or on a couple, goes in \"Shared\".\n- A file only a source uses goes in \"Sources\".\n- After this, it stays sorted: new files go to their folder, a person's folder follows their name, and a file added to a second person moves to Shared.")).small());

@@ -100,6 +100,12 @@ pub(crate) struct Settings {
     /// Open on the Home tab when the program starts.
     #[serde(default = "default_true")]
     pub(crate) start_home: bool,
+    /// Settings saved before the default colour became gold have this false (see load_settings).
+    #[serde(default)]
+    pub(crate) accent_gold: bool,
+    /// Light or dark following the computer's own setting (Automatic on a Mac).
+    #[serde(default)]
+    pub(crate) auto_dark: bool,
     /// The last choices in the Import options window.
     #[serde(default)]
     pub(crate) import: ImportChoices,
@@ -217,9 +223,14 @@ pub(crate) fn default_bg() -> [u8; 3] {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { hand: false, dark: true, accent: [59, 111, 212], bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true }
+        Settings { hand: false, dark: true, accent: DEFAULT_ACCENT, bg: default_bg(), gens: default_gens(), hide_living: true, mic: String::new(), zoom: 1.0, home: None, dock: default_dock(), dock_w: default_dock_w(), ui_scale: 1.0, name_style: 0, date_style: 0, paper_a4: false, box_photos: true, box_places: false, box_ids: false, photo_size: 1, show_history: true, current_tree: String::new(), backup_every: 0, backup_keep: 14, backup_extra: String::new(), win: None, win_max: false, layouts: Vec::new(), reports: Vec::new(), map_style: 0, light_bg: default_light_bg(), ink: None, mem_kind: 0, mem_by_person: false, pmem_kind: 0, import: ImportChoices::default(), tb_main: true, tb_tab: true, tb_words: true, tb_large: false, tb_hidden: Vec::new(), language: String::new(), tour_done: Vec::new(), system_font: true, auto_log: true, ped_style: 0, ped_colours: 0, ped_band: false, high_contrast: false, cb_colours: false, focus_ring: true, glass: String::new(), start_home: true, accent_gold: true, auto_dark: false }
     }
 }
+
+/// The colour the program starts with: an old gold, for Gilded Roots.
+pub(crate) const DEFAULT_ACCENT: [u8; 3] = [160, 112, 24];
+/// The colour it started with before 1.0.9.
+const OLD_DEFAULT_ACCENT: [u8; 3] = [59, 111, 212];
 
 pub(crate) const PRESETS: [(&str, [u8; 3]); 24] = [
     ("Blue", [59, 111, 212]),
@@ -360,13 +371,26 @@ impl Settings {
 /// The schemes in their groups; returns true when one was picked.
 pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
     let mut picked = false;
-    for (i, s) in SCHEMES.iter().enumerate() {
-        if i == 0 || SCHEMES[i - 1].group != s.group {
-            if i > 0 {
-                ui.separator();
-            }
-            ui.label(RichText::new(crate::i18n::trv(s.group)).small().weak());
+    // the groups as buttons, then the schemes of the chosen group (at first, the one in use)
+    let mut groups: Vec<&str> = Vec::new();
+    for s in SCHEMES.iter() {
+        if !groups.contains(&s.group) {
+            groups.push(s.group);
         }
+    }
+    let gid = egui::Id::new("scheme_group");
+    let current = SCHEMES.iter().find(|s| settings.is_scheme(s)).map(|s| s.group).unwrap_or(groups[0]);
+    let mut group = ui.ctx().data(|d| d.get_temp::<usize>(gid)).and_then(|i| groups.get(i).copied()).unwrap_or(current);
+    ui.horizontal_wrapped(|ui| {
+        for (i, g) in groups.iter().enumerate() {
+            if ui.selectable_label(*g == group, crate::i18n::trv(g)).clicked() {
+                group = g;
+                ui.ctx().data_mut(|d| d.insert_temp(gid, i));
+            }
+        }
+    });
+    ui.add_space(4.0);
+    for s in SCHEMES.iter().filter(|s| s.group == group) {
         ui.horizontal(|ui| {
             let (rect, _) = ui.allocate_exact_size(vec2(28.0, 16.0), Sense::hover());
             let bg = Color32::from_rgb(s.bg[0], s.bg[1], s.bg[2]);
@@ -375,6 +399,7 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
             ui.painter().rect_filled(dot, 2.0_f32, Color32::from_rgb(s.ink[0], s.ink[1], s.ink[2]));
             if ui.selectable_label(settings.is_scheme(s), crate::i18n::trv(s.name)).clicked() {
                 settings.use_scheme(s);
+                settings.auto_dark = false;
                 picked = true;
             }
         });
@@ -417,6 +442,17 @@ pub(crate) fn settings_path() -> PathBuf {
     config_dir().join("settings.json")
 }
 
+impl Settings {
+    /// Switch to the plain light or dark theme, as the Light and Dark buttons do.
+    pub(crate) fn set_dark(&mut self, dark: bool) {
+        self.dark = dark;
+        self.ink = None;
+        if !dark {
+            self.light_bg = default_light_bg();
+        }
+    }
+}
+
 pub(crate) fn load_settings() -> Settings {
     std::fs::read_to_string(settings_path())
         .ok()
@@ -427,6 +463,13 @@ pub(crate) fn load_settings() -> Settings {
                 if !st.dock.iter().any(|x| x.sec == d.sec) {
                     st.dock.push(d);
                 }
+            }
+            // the old default blue becomes the new default gold, once; a colour someone chose stays
+            if !st.accent_gold {
+                if st.accent == OLD_DEFAULT_ACCENT {
+                    st.accent = DEFAULT_ACCENT;
+                }
+                st.accent_gold = true;
             }
             st
         })
@@ -499,6 +542,9 @@ pub(crate) fn shift(bg: [u8; 3], d: i16) -> Color32 {
 pub(crate) fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     let (dark, acc, bg) = (settings.dark, settings.accent, settings.bg);
     let rgb = |r: u8, g: u8, b: u8| Color32::from_rgb(r, g, b);
+    // the program picks light or dark itself (or follows the computer through auto_dark), so egui
+    // keeps one style and does not swap in its own when the computer changes
+    ctx.set_theme(if dark { egui::Theme::Dark } else { egui::Theme::Light });
     let mut v = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
     let accent = Color32::from_rgb(acc[0], acc[1], acc[2]);
     if dark {

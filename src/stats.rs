@@ -182,7 +182,7 @@ impl App {
         let st = self.x.stats.as_ref().unwrap().1.clone();
         let mut open = true;
         let mut map_surname: Option<String> = None;
-        egui::Window::new(crate::i18n::tr("Family statistics")).open(&mut open).default_size([620.0, 640.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Family statistics"))).open(&mut open).default_size([620.0, 640.0]).show(ctx, |ui| {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.label(RichText::new(crate::i18n::trf("{} people in {} families. {} living. {} with a birth date, {} with at least one source.", &["", " people in ", " families. ", " living. ", " with a birth date, ", " with at least one source."], &[(st.people).to_string(), (st.families).to_string(), (st.living).to_string(), (st.with_birth).to_string(), (st.with_sources).to_string()])).strong());
                 ui.add_space(8.0);

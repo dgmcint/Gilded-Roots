@@ -222,8 +222,10 @@ impl App {
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
-            let (resp, painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
-            let o = resp.rect.min + vec2(6.0, 0.0);
+            let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
+            let o = resp.rect.min + vec2(6.0, 0.0) + hand_pan(ui, ("ped_cc", sel, z.to_bits()));
+            // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
+            painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
                 let zd = ui.input(|i| i.zoom_delta());
                 if (zd - 1.0).abs() > 0.001 {
@@ -251,10 +253,10 @@ impl App {
             let h0 = self.ped_person_hit(ui, r0, sel, ("c0", sel), act);
             let _ = h0;
             let w = r0.width().min(230.0);
-            let r_a = Rect::from_min_size(pos2(r0.min.x, r0.max.y + 8.0), vec2(w, 22.0));
+            let r_a = Rect::from_min_size(pos2(r0.min.x, r0.max.y + 8.0), vec2(w.max(220.0), 4000.0));
             ui.allocate_new_ui(egui::UiBuilder::new().max_rect(r_a), |ui| {
                 let n = self.db.partners(sel).len() + self.db.children_of(sel).len();
-                ui.menu_button(crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[n.to_string()]), |ui| self.spouse_children_menu(ui, sel, act));
+                crate::views::stay_open(ui, "ped_sc", crate::i18n::trf("Spouse & children ({})", &["Spouse & children (", ")"], &[n.to_string()]), |ui| self.spouse_children_menu(ui, sel, act));
             });
             // couples
             for col in 1..gens {
@@ -293,9 +295,14 @@ impl App {
                         match who.and_then(|id| self.db.people.get(&id).map(|p| (id, p))) {
                             Some((id, p)) => {
                                 let hit = self.ped_person_hit(ui, lr, id, ("cc", col, i, k), act);
-                                let fill = self.ped_fill(if hit.hovered() { hover_c } else { box_c }, &p.sex, side);
+                                // the husband's and wife's places say which, when the record does not
+                                let sex = match p.sex.as_str() {
+                                    "M" | "F" => p.sex.as_str(),
+                                    _ => if k == 0 { "M" } else { "F" },
+                                };
+                                let fill = self.ped_fill(if hit.hovered() { hover_c } else { box_c }, sex, side);
                                 painter.rect_filled(lr.shrink2(vec2(1.0, 1.0)), 5.0, fill);
-                                let bar = if p.sex == "F" { woman() } else if p.sex == "M" { man() } else { head };
+                                let bar = if sex == "F" { woman() } else { man() };
                                 painter.rect_filled(Rect::from_min_size(lr.min + vec2(1.0, 3.0), vec2(4.0 * z, half - 6.0)), 2.0, bar);
                                 let face = Rect::from_min_size(lr.min + vec2(9.0 * z, 3.0), vec2(half - 6.0, half - 6.0));
                                 self.ped_face(ui, face, p, true, hover_c, head);
@@ -352,7 +359,7 @@ impl App {
                 }
             }
             if self.settings.hand {
-                hand_overlay(ui, resp.rect, "ped_cc");
+                hand_overlay(ui, resp.rect, ("ped_cc", sel, z.to_bits()));
             }
         });
     }
@@ -383,8 +390,10 @@ impl App {
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
         egui::ScrollArea::both().show(ui, |ui| {
-            let (resp, painter) = ui.allocate_painter(vec2(width, height), Sense::hover());
-            let o = resp.rect.min;
+            let (resp, mut painter) = ui.allocate_painter(vec2(width, height), Sense::hover());
+            let o = resp.rect.min + hand_pan(ui, ("ped_up", sel, z.to_bits()));
+            // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
+            painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
                 let zd = ui.input(|i| i.zoom_delta());
                 if (zd - 1.0).abs() > 0.001 {
@@ -510,7 +519,7 @@ impl App {
                 *act = Some(Action::AddFor(sel, Kind::Child(None)));
             }
             if self.settings.hand {
-                hand_overlay(ui, resp.rect, "ped_up");
+                hand_overlay(ui, resp.rect, ("ped_up", sel, z.to_bits()));
             }
         });
     }

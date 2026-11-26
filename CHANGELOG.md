@@ -2,6 +2,24 @@
 
 Major work so far, in the order it was done.
 
+## Next version (not released yet)
+
+- **The Mac menu bar**: on a Mac, Gilded Roots now fills the menu bar at the top of the screen like any Mac
+  program, with Gilded Roots, File, Edit, View, Window and Help menus (About, Settings ⌘, Print ⌘P, Close
+  Window ⌘W, Hide, Quit, each tab, full screen and the user guide). The menus inside the window stay as they are.
+- **The hand tool moves the chart even when it fits in the window**, and the chart stays where you put it.
+- **Spouse & children and Siblings stay open** under the main person until clicked again.
+- **Classic pedigree shows names only**, without the picture box (Photo cards has the pictures).
+- **The colour band shows on every generation**: a father's or mother's place gives the colour when a person's sex
+  is not recorded.
+- **Gold is the new starting colour** in place of the blue (people still on the old blue get the gold once; a
+  colour someone chose stays).
+- **Light, Dark or Automatic** in Settings > Appearance: Automatic follows the computer's own setting.
+- **One place for appearance**: the separate Appearance window is now the Appearance page of Settings, with the
+  custom colour pickers; the colour schemes are shown by group, so the Glass looks are easy to find.
+- **Slimmer title bars** on Gilded Roots' own windows, closer to a Mac's, and a little space between a chart's
+  toolbar and the chart.
+
 ## 1.0.8 (25 November 2026)
 
 **Ancestral Quest**

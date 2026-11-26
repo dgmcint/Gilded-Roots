@@ -191,7 +191,7 @@ impl App {
         }
         let mut open = true;
         let mut apply = false;
-        egui::Window::new(crate::i18n::tr("Find and replace in notes")).open(&mut open).default_size([640.0, 520.0]).show(ctx, |ui| {
+        egui::Window::new(crate::look::wtitle(crate::i18n::tr("Find and replace in notes"))).open(&mut open).default_size([640.0, 520.0]).show(ctx, |ui| {
             egui::Grid::new("nfr").num_columns(2).show(ui, |ui| {
                 ui.label(crate::i18n::tr("Find"));
                 if ui.add(egui::TextEdit::singleline(&mut self.x.nfr_find).desired_width(320.0)).changed() {
