@@ -15,3 +15,5 @@ tccutil reset Microphone local.gildedroots 2>/dev/null || true
 echo ""
 echo "Done. Your app is here: $APP"
 echo "Drag it to your Desktop or Applications, open it, and click Allow when macOS asks about the microphone."
+echo "Opening it now..."
+open "$APP"
