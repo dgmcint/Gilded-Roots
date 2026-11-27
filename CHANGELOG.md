@@ -7,8 +7,8 @@ Major work so far, in the order it was done.
 - **Descendants is on the Pedigree tab**, with Pedigree, Fan chart and Hourglass, so there is one tab for charts.
 - **No more Select and Hand**: dragging anywhere on a chart moves it, and a click on a person still goes to them.
 - **One place for each thing**: the zoom is on the floating toolbar (or the tab toolbar when that is off), Print on the
-  main toolbar, and Settings in Edit (Windows and Linux) or the Gilded Roots menu (Mac). View no longer repeats the
-  Settings pages.
+  main toolbar, and Settings in Edit (and the Gilded Roots menu on a Mac). View no longer repeats the Settings
+  pages.
 - **Children are always in order of birth**, everywhere, so the order buttons and Sort children are gone. A child
   with no date stays after the brother or sister they followed.
 - **Spouse & children and Siblings** under a pedigree card are even rows, like a menu.

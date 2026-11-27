@@ -876,8 +876,8 @@ use large buttons, choose which buttons it shows, or hide it. **View** has **Sho
 toolbars** (each on its own), and the same word and size choices. Your choices are remembered.
 
 ## Settings
-**Edit → Settings...** on Windows and Linux (**Ctrl+,**), and **Gilded Roots → Settings...** on a Mac (**Cmd+,**),
-gathers the choices in one window, laid
+**Edit → Settings...** (**Ctrl+,**, or **Cmd+,** on a Mac, where it is also in the Gilded Roots menu at the top of
+the screen) gathers the choices in one window, laid
 out like a desktop program's preferences: the pages down the left, and each page in titled panels that fit without
 scrolling.
 - **Appearance:** **Light**, **Dark** or **Automatic** (light or dark as your computer is set, changing when it

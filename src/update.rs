@@ -148,13 +148,12 @@ impl App {
                         self.view = View::Person;
                         ui.close_menu();
                     }
-                    // on a Mac, Settings is in the Gilded Roots menu at the top of the screen
-                    if !MAC {
-                        ui.separator();
-                        if ui.add(menu_item(crate::i18n::tr("Settings..."), "Ctrl+,")).clicked() {
-                            self.x.settings_open = true;
-                            ui.close_menu();
-                        }
+                    // here on every computer (on a Mac it is in the Gilded Roots menu too, as Mac
+                    // programs have it)
+                    ui.separator();
+                    if ui.add(menu_item(crate::i18n::tr("Settings..."), if MAC { "Cmd+," } else { "Ctrl+," })).clicked() {
+                        self.x.settings_open = true;
+                        ui.close_menu();
                     }
                 });
                 ui.menu_button(crate::i18n::tr("Add"), |ui| {
