@@ -2,6 +2,23 @@
 
 use super::*;
 
+/// What the Print window offers: the name, and a line about it. Charts first (0 to 3), then sheets
+/// and reports (4 to 7).
+pub(crate) const PRINT_COUNT: usize = 8;
+fn print_item(i: usize) -> (&'static str, &'static str) {
+    let tr = crate::i18n::tr;
+    match i {
+        0 => (tr("Pedigree chart"), tr("Their parents, grandparents and further back, on one page.")),
+        1 => (tr("Descendant chart"), tr("Their children, grandchildren and so on.")),
+        2 => (tr("Fan chart"), tr("Their ancestors in a half circle.")),
+        3 => (tr("Hourglass"), tr("Ancestors above and descendants below.")),
+        4 => (tr("Family group sheet"), tr("A couple, their parents and their children, with dates and places.")),
+        5 => (tr("Ancestors report"), tr("Every ancestor, generation by generation, numbered.")),
+        6 => (tr("Descendants report"), tr("Every descendant, generation by generation.")),
+        _ => (tr("Family book"), tr("Their life and family, with photos and stories, like a small book.")),
+    }
+}
+
 pub(crate) fn parse_md(d: &str) -> Option<(u32, u32)> {
     const M: [&str; 12] = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
     let toks: Vec<&str> = d.split(|c: char| !c.is_alphanumeric()).filter(|t| !t.is_empty()).collect();
@@ -412,6 +429,81 @@ pub(crate) fn print_date(s: &str) -> String {
 }
 
 impl App {
+    /// The Print window: what to print for the person you are on, then one button that opens it
+    /// ready to print or save as a PDF.
+    pub(crate) fn print_window(&mut self, ctx: &egui::Context, act: &mut Option<Action>) {
+        if !self.x.print_open {
+            return;
+        }
+        let tr = crate::i18n::tr;
+        let who = self.sel.filter(|s| self.db.people.contains_key(s)).or(self.db.home.filter(|h| self.db.people.contains_key(h)));
+        let mut open = true;
+        let mut go = false;
+        crate::look::window(crate::look::wtitle(tr("Print"))).id(egui::Id::new("print_window")).open(&mut open).collapsible(false).resizable(false).default_width(420.0).show(ctx, |ui| {
+            let Some(id) = who else {
+                ui.label(tr("Choose a person first: what you print is about them."));
+                return;
+            };
+            ui.label(RichText::new(crate::i18n::trf("For {}", &["For ", ""], &[self.db.label(id)])).strong());
+            ui.add_space(6.0);
+            egui::Grid::new("print_items").num_columns(2).spacing([24.0, 4.0]).show(ui, |ui| {
+                ui.label(RichText::new(tr("Charts")).small().weak());
+                ui.label(RichText::new(tr("Sheets and reports")).small().weak());
+                ui.end_row();
+                for row in 0..4 {
+                    for col in 0..2 {
+                        let i = col * 4 + row;
+                        ui.radio_value(&mut self.x.print_pick, i, print_item(i).0);
+                    }
+                    ui.end_row();
+                }
+            });
+            ui.add_space(6.0);
+            ui.label(RichText::new(print_item(self.x.print_pick.min(PRINT_COUNT - 1)).1).small().weak());
+            ui.add_space(4.0);
+            if ui.checkbox(&mut self.settings.hide_living, tr("Keep living people private")).on_hover_text(tr("Living people show as \"Living\" with no dates or places")).changed() {
+                save_settings(&self.settings);
+            }
+            ui.add_space(8.0);
+            ui.separator();
+            ui.label(RichText::new(tr("Opens in your web browser, ready to print. To make a PDF, choose Save as PDF there.")).small().weak());
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                if ui.add(egui::Button::new(RichText::new(tr("Print or save as PDF...")).strong()).fill(ui.visuals().selection.bg_fill)).clicked() {
+                    go = true;
+                }
+                if ui.button(tr("Cancel")).clicked() {
+                    self.x.print_open = false;
+                }
+            });
+        });
+        if !open {
+            self.x.print_open = false;
+        }
+        if go {
+            self.x.print_open = false;
+            if self.sel.is_none() {
+                self.sel = who;
+            }
+            *act = Some(match self.x.print_pick {
+                0 => Action::PrintPedigree,
+                1 => Action::PrintDescendants,
+                2 => {
+                    self.x.chart = crate::charts::ChartKind::Fan;
+                    Action::PrintChart
+                }
+                3 => {
+                    self.x.chart = crate::charts::ChartKind::Hourglass;
+                    Action::PrintChart
+                }
+                4 => Action::PrintFamily,
+                5 => Action::ReportAncestors,
+                6 => Action::ReportDescendants,
+                _ => Action::ReportBook,
+            });
+        }
+    }
+
     pub(crate) fn open_print(&mut self, html: String) {
         // kept in the program's own folder: a shared temporary folder could be tampered with
         let dir = data_dir().join("print");

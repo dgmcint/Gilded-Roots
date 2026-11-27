@@ -386,7 +386,7 @@ impl Settings {
 }
 
 /// The schemes in their groups; returns true when one was picked.
-pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
+pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings, glass_extra: &mut dyn FnMut(&mut egui::Ui, &mut Settings) -> bool) -> bool {
     let mut picked = false;
     // every scheme on show at once, as swatches in its own colours, under three headings
     let (w, h) = (72.0, 38.0);
@@ -394,6 +394,8 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
     let heads: [(&str, fn(&Scheme) -> bool); 3] = [("Light", |s| !s.glass && !s.dark), ("Dark", |s| !s.glass && s.dark), ("Glass", |s| s.glass)];
     for (k, (head, keep)) in heads.iter().enumerate() {
         ui.label(RichText::new(crate::i18n::trv(head)).small().weak());
+        // the glass looks' own choices sit beside their swatches, where they are seen at once
+        ui.horizontal_top(|ui| {
         egui::Grid::new(("scheme_grid", k)).spacing([8.0, 6.0]).show(ui, |ui| {
             for (i, s) in SCHEMES.iter().filter(|s| keep(s)).enumerate() {
                 ui.vertical(|ui| {
@@ -427,6 +429,11 @@ pub(crate) fn scheme_list(ui: &mut egui::Ui, settings: &mut Settings) -> bool {
                     ui.end_row();
                 }
             }
+        });
+        if k == 2 && !settings.glass.is_empty() {
+            ui.add_space(18.0);
+            ui.vertical(|ui| picked |= glass_extra(ui, settings));
+        }
         });
         ui.add_space(4.0);
     }

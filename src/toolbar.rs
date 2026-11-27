@@ -9,6 +9,8 @@ use super::*;
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub(crate) enum Icon {
     Back,
+    // kept for the tool picker test and for later use
+    #[allow(dead_code)]
     Forward,
     Home,
     AddPerson,
@@ -17,6 +19,7 @@ pub(crate) enum Icon {
     Find,
     Jump,
     Undo,
+    #[allow(dead_code)]
     Redo,
     Print,
     Backup,
@@ -378,19 +381,7 @@ impl App {
     /// The main toolbar: the same on every tab.
     pub(crate) fn main_toolbar(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let has = self.sel.map_or(false, |s| self.db.people.contains_key(&s));
-        let print_what = match self.view {
-            View::Pedigree if self.settings.ped_mode == 3 => "Print the descendant chart",
-            View::Pedigree if self.settings.ped_mode != 0 => "Print this chart",
-            View::Pedigree => "Print the pedigree chart",
-            View::Family => "Print the family group sheet",
-            View::Descendants => "Print the descendant chart",
-            View::Charts => "Print this chart",
-            View::Person => "Print a family book for this person",
-            _ => "",
-        };
         let tools = vec![
-            Tool::new("back", Icon::Back, crate::i18n::tr("Back"), crate::i18n::tr("Back to the person before")).enabled(!self.back.is_empty()),
-            Tool::new("forward", Icon::Forward, crate::i18n::tr("Forward"), crate::i18n::tr("Forward again")).enabled(!self.fwd.is_empty()),
             Tool::new("home", Icon::Home, crate::i18n::tr("Home"), crate::i18n::tr("Go to the home person (Home key)")).enabled(self.db.home.is_some() || has),
             Tool::new(GAP, Icon::Back, "", ""),
             Tool::new("add", Icon::AddPerson, crate::i18n::tr("Add person"), crate::i18n::tr("Add a new person to the tree")),
@@ -401,14 +392,11 @@ impl App {
             Tool::new("notepad", Icon::Notepad, crate::i18n::tr("Notepad"), crate::i18n::tr("The research notepad (F10)")),
             Tool::new(GAP, Icon::Back, "", ""),
             Tool::new("undo", Icon::Undo, crate::i18n::tr("Undo"), crate::i18n::tr("Undo the last change (Ctrl/Cmd+Z)")).enabled(!self.undo.is_empty() || self.x.track_at.is_some()),
-            Tool::new("redo", Icon::Redo, crate::i18n::tr("Redo"), crate::i18n::tr("Redo what was undone (Ctrl/Cmd+Y)")).enabled(!self.redo.is_empty()),
             Tool::new(GAP, Icon::Back, "", ""),
-            Tool::new("print", Icon::Print, crate::i18n::tr("Print"), if print_what.is_empty() { "Print (on the Pedigree, Family and Individual tabs)".to_string() } else { print_what.to_string() }).enabled(has && !print_what.is_empty()),
+            Tool::new("print", Icon::Print, crate::i18n::tr("Print"), crate::i18n::tr("Print a chart, sheet or report, or save it as a PDF")).enabled(has || self.db.home.is_some()),
             Tool::new("backup", Icon::Backup, crate::i18n::tr("Back up now"), crate::i18n::tr("Make a checked backup of your tree and photos now")).enabled(self.x.practice.is_none()),
         ];
         match tool_row(ui, "Main", &tools, &mut self.settings) {
-            Some("back") => *act = Some(Action::Back),
-            Some("forward") => *act = Some(Action::Forward),
             Some("home") => *act = Some(Action::GoHome),
             Some("add") => *act = Some(Action::Add(Kind::Person)),
             Some("edit") => *act = Some(Action::EditStart),
@@ -416,7 +404,6 @@ impl App {
             Some("jump") => self.x.jump_open = true,
             Some("notepad") => self.x.notepad_open = !self.x.notepad_open,
             Some("undo") => self.undo_action(),
-            Some("redo") => self.redo_action(),
             Some("print") => {
                 *act = Some(self.print_action())
             }

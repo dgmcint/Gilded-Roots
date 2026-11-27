@@ -102,8 +102,8 @@ impl App {
 }
 
 impl App {
-    /// The floating toolbar down the left of a chart: put it back in its place, bigger, smaller
-    /// and fit. Turned on and off in Settings > Toolbars (or View). While it is on, it is the one
+    /// The floating toolbar down the left of a chart: put it back in its place, the home person,
+    /// bigger, smaller, fit and print. Turned on and off in Settings > Toolbars (or View). While it is on, it is the one
     /// place for the zoom.
     pub(crate) fn float_bar(&self, ui: &mut egui::Ui, view: Rect, act: &mut Option<Action>) {
         if !self.settings.float_tb {
@@ -112,12 +112,15 @@ impl App {
         use crate::toolbar::{paint_icon, Icon};
         let z = self.settings.zoom;
         let tr = crate::i18n::tr;
-        let items: [(Option<Icon>, bool, String); 5] = [
+        let items: [(Option<Icon>, bool, String); 8] = [
             (Some(Icon::Centre), false, tr("Put the chart back in its place").to_string()),
+            (Some(Icon::Home), false, tr("Go to the home person").to_string()),
             (None, false, String::new()),
             (Some(Icon::ZoomIn), false, tr("Bigger").to_string()),
             (Some(Icon::ZoomOut), false, tr("Smaller").to_string()),
             (Some(Icon::Fit), false, tr("Fit the whole chart in the window").to_string()),
+            (None, false, String::new()),
+            (Some(Icon::Print), false, tr("Print this chart, or save it as a PDF").to_string()),
         ];
         let size = 34.0;
         let h: f32 = items.iter().map(|(i, _, _)| if i.is_some() { size } else { 9.0 }).sum::<f32>() + 12.0;
@@ -149,6 +152,8 @@ impl App {
                     Icon::ZoomIn => Some(Action::SetZoom((z + if z >= 0.6 { 0.1 } else { 0.05 }).min(1.8))),
                     Icon::ZoomOut => Some(Action::SetZoom((z - if z > 0.65 { 0.1 } else { 0.05 }).max(0.25))),
                     Icon::Fit => Some(Action::Fit),
+                    Icon::Home => Some(Action::GoHome),
+                    Icon::Print => Some(Action::PrintWindow),
                     Icon::Centre => {
                         let id = egui::Id::new("recentre");
                         ui.ctx().data_mut(|d| {

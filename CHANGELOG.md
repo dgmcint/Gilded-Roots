@@ -12,6 +12,17 @@ Major work so far, in the order it was done.
 - **Children are always in order of birth**, everywhere, so the order buttons and Sort children are gone. A child
   with no date stays after the brother or sister they followed.
 - **Spouse & children and Siblings** under a pedigree card are even rows, like a menu.
+- **A Print window**: Print (main toolbar, floating toolbar, File menu or Ctrl/Cmd+P) lists the charts, sheets and
+  reports for the person you are on, with the one on the tab you are on already chosen, and opens it ready to print
+  or save as a PDF. It works from every tab, the Home tab too.
+- **The floating toolbar** has the home person and Print again.
+- **A shorter main toolbar**: Back, Forward and Redo are gone (the Trail and Recent do the job of Back; Redo stays in
+  the Edit menu). Undo stays, so a mistake is always one click from being taken back.
+- **The Individual page's tabs look like folder tabs**, so it is plain they are tabs.
+- **The Memories tab is in family order**: under each person's name, the home person first, then their parents,
+  grandparents and further back (marked Father, Grandmother and so on), then everyone else.
+- **Glass looks**: their choices sit beside the glass swatches, and Transparent window has a Restart now button, as
+  a window can only be made see-through when it opens. Back to the Gilded Roots look is at the top of Appearance.
 - **Fewer, plainer colour schemes**: 25 instead of 41, named by their colours, all on show at once under Light, Dark
   and Glass.
 

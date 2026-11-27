@@ -113,6 +113,9 @@ pub(crate) struct Extra {
     pub(crate) settings_page: usize,
     /// The GEDCOM window (File > GEDCOM): every way in and out.
     pub(crate) ged_open: bool,
+    /// The Print window, and the thing picked in it (see `print_item` in reports.rs).
+    pub(crate) print_open: bool,
+    pub(crate) print_pick: usize,
     /// The Research tab: the chosen item, the kind shown (None = all), the search, filters.
     pub(crate) research_sel: Option<u32>,
     pub(crate) research_kind: Option<u8>,
@@ -160,6 +163,9 @@ pub(crate) struct Extra {
     pub(crate) last_hash: u64,
     pub(crate) map_cache: Option<std::sync::Arc<mapview::MapShown>>,
     pub(crate) mem_cache: Option<(media::MemKey, std::sync::Arc<Vec<media::MemItem>>)>,
+    /// On the Memories tab: each ancestor's place in the home person's line (1 the home person,
+    /// 2 and 3 the parents, and so on), so their memories come first, in that order.
+    pub(crate) mem_rank: std::sync::Arc<HashMap<u32, usize>>,
     /// Goes up whenever the tree is noted as changed, so long lists worked out from it (the
     /// People table, the map's pins, Memories) are kept until then instead of rebuilt each frame.
     pub(crate) data_ver: u64,
@@ -382,6 +388,8 @@ pub(crate) struct EditSession {
 }
 
 pub(crate) enum Action {
+    /// Open the Print window, with the thing on the tab that is open picked.
+    PrintWindow,
     Select(u32),
     Fit,
     ViewTree(u32, u8),
@@ -561,6 +569,28 @@ impl App {
             app.dirty = true;
         }
         app
+    }
+
+    /// Saves everything, starts Gilded Roots again and closes this copy (for changes that only
+    /// take effect in a new window, such as the see-through window).
+    pub(crate) fn restart_app(&mut self, ctx: &egui::Context) {
+        if !self.persist() {
+            self.status = crate::i18n::tr("Your latest changes could not be saved, so Gilded Roots was not restarted.").to_string();
+            return;
+        }
+        self.dirty = false;
+        let Ok(exe) = std::env::current_exe() else { return };
+        // on a Mac, open the app bundle (so it starts as an app, with its Dock icon)
+        let bundle = exe.ancestors().find(|p| p.extension().map_or(false, |e| e == "app")).map(|p| p.to_path_buf());
+        let started = match bundle {
+            Some(app) if cfg!(target_os = "macos") => std::process::Command::new("open").arg("-n").arg(app).spawn().is_ok(),
+            _ => std::process::Command::new(exe).spawn().is_ok(),
+        };
+        if started {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        } else {
+            self.status = crate::i18n::tr("Could not start Gilded Roots again. Quit and open it yourself.").to_string();
+        }
     }
 
     pub(crate) fn persist(&mut self) -> bool {

@@ -840,9 +840,6 @@ impl App {
         }
         ui.horizontal(|ui| {
             ui.checkbox(&mut self.gal_only, crate::i18n::tr("Only the selected person"));
-            if ui.checkbox(&mut self.settings.mem_by_person, crate::i18n::tr("Show by person")).on_hover_text(crate::i18n::tr("Group the memories under each person's name")).changed() {
-                save_settings(&self.settings);
-            }
             ui.add(egui::TextEdit::singleline(&mut self.gal_find).hint_text(crate::i18n::tr("Filter by name or caption")).desired_width(220.0));
             ui.separator();
             if !self.x.gal_pick {
@@ -861,12 +858,24 @@ impl App {
         let items = match &self.x.mem_cache {
             Some((k, items)) if *k == key => items.clone(),
             _ => {
+                // the home person's line first: their own memories, then their parents',
+                // grandparents' and so on back; then everyone else by name
+                let mut rank: HashMap<u32, usize> = HashMap::new();
+                if let Some(root) = self.db.home.or(self.sel).filter(|r| self.db.people.contains_key(r)) {
+                    for (slot, who) in crate::charts::ahnen(&self.db, root, 14).into_iter().enumerate() {
+                        if let Some(w) = who {
+                            rank.entry(w).or_insert(slot);
+                        }
+                    }
+                }
+                self.x.mem_rank = std::sync::Arc::new(rank);
                 let items = std::sync::Arc::new(self.memory_items(kind, &q));
                 self.x.mem_cache = Some((key, items.clone()));
                 items
             }
         };
-        self.memory_cards(ui, act, &items, self.settings.mem_by_person);
+        // always under each person's name, so the memories are not all jumbled together
+        self.memory_cards(ui, act, &items, true);
     }
 
     /// Files in the media folder that are not on anyone yet, to add to the selected person.
@@ -986,8 +995,25 @@ impl App {
                 }
             }
         }
-        items.sort_by(|a, b| a.4.cmp(&b.4).then(a.0.cmp(&b.0)).then(a.2.cmp(&b.2)).then(a.1.cmp(&b.1)));
+        let rank = self.x.mem_rank.clone();
+        let r = |id: &u32| rank.get(id).copied().unwrap_or(usize::MAX);
+        items.sort_by(|a, b| r(&a.0).cmp(&r(&b.0)).then(a.4.cmp(&b.4)).then(a.0.cmp(&b.0)).then(a.2.cmp(&b.2)).then(a.1.cmp(&b.1)));
         items
+    }
+
+    /// Where someone stands in the home person's line, for the Memories tab's headings.
+    fn line_word(&self, id: u32) -> Option<String> {
+        let slot = *self.x.mem_rank.get(&id)?;
+        let tr = crate::i18n::tr;
+        let gen = (usize::BITS - 1 - slot.leading_zeros()) as usize;
+        let male = slot % 2 == 0;
+        Some(match gen {
+            0 => tr("Home person").to_string(),
+            1 => (if male { tr("Father") } else { tr("Mother") }).to_string(),
+            2 => (if male { tr("Grandfather") } else { tr("Grandmother") }).to_string(),
+            3 => (if male { tr("Great-grandfather") } else { tr("Great-grandmother") }).to_string(),
+            g => crate::i18n::trf("Ancestor, {} generations back", &["Ancestor, ", " generations back"], &[g.to_string()]),
+        })
     }
 
     pub(crate) fn memory_cards(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>, items: &[MemItem], group: bool) {
@@ -1082,6 +1108,9 @@ impl App {
                         ui.horizontal(|ui| {
                             if ui.link(RichText::new(name.as_str()).strong().size(15.0)).on_hover_text(crate::i18n::tr("Open their page")).clicked() {
                                 *act = Some(Action::Open(*id));
+                            }
+                            if let Some(w) = self.line_word(*id) {
+                                ui.label(RichText::new(w).size(13.5).color(ui.visuals().text_color().gamma_multiply(0.75)));
                             }
                             ui.label(RichText::new(crate::i18n::trf("{} item(s)", &["", " item(s)"], &[(n).to_string()])).small().weak());
                         });

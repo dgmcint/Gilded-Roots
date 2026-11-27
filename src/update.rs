@@ -23,19 +23,26 @@ impl eframe::App for App {
 }
 
 impl App {
-    /// What Print does on the tab that is open (and, on the Pedigree tab, the chart chosen there).
-    pub(crate) fn print_action(&self) -> Action {
+    /// What the Print window picks to start with, for the tab that is open (see `print_item` in reports.rs).
+    pub(crate) fn print_pick_here(&self) -> usize {
         match self.view {
             View::Pedigree => match self.settings.ped_mode {
-                0 => Action::PrintPedigree,
-                3 => Action::PrintDescendants,
-                _ => Action::PrintChart,
+                3 => 1,
+                1 => 2,
+                2 => 3,
+                _ => 0,
             },
-            View::Family => Action::PrintFamily,
-            View::Descendants => Action::PrintDescendants,
-            View::Charts => Action::PrintChart,
-            _ => Action::ReportBook,
+            View::Descendants => 1,
+            View::Charts => 2,
+            View::Family => 4,
+            View::Person => 7,
+            _ => 0,
         }
+    }
+
+    /// Kept for the places that print straight away: the Print window.
+    pub(crate) fn print_action(&self) -> Action {
+        Action::PrintWindow
     }
 
     /// Draws the whole program once. This is the body of the frame loop; tests call it
@@ -782,6 +789,7 @@ impl App {
         self.archive_windows(ctx);
         self.web_window(ctx);
         self.gedcom_window(ctx);
+        self.print_window(ctx, &mut act);
         self.focus_ring(ctx);
         self.journal_window(ctx, &mut act);
         self.history_events_window(ctx);
@@ -2078,6 +2086,10 @@ impl App {
                         self.status = crate::i18n::trf("Bookmarked {}. Find them under Bookmarks above the chart.", &["Bookmarked ", ". Find them under Bookmarks above the chart."], &[(self.db.label(i)).to_string()]);
                     }
                     self.dirty = true;
+                }
+                Action::PrintWindow => {
+                    self.x.print_pick = self.print_pick_here();
+                    self.x.print_open = true;
                 }
                 Action::PrintChart => {
                     if let Some((title, body)) = self.chart_page() {

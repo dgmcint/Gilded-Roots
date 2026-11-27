@@ -78,8 +78,8 @@ practice mode. Try anything: nothing is saved, and your own tree is not touched.
 ![The main window](images/guide/screen.png)
 
 1. **Menus:** File, Edit, Add, View, Search, Reports, Tools and Help. Everything the program does is in a menu.
-2. **Main toolbar:** Back, Forward, Home, Add person, Edit, Find, Quick jump, Notepad, Undo, Redo, Print and Back up
-   now. It is the same on every tab.
+2. **Main toolbar:** Home, Add person, Edit, Find, Quick jump, Notepad, Undo, Print and Back up now. It is the same
+   on every tab.
 3. **Tabs:** Home, Family, Pedigree, Individual, Memories, People, Map, Research and DNA. Each shows your
    tree a different way (Ctrl+1 to Ctrl+9; Cmd on a Mac).
 4. **Tab toolbar:** buttons for the tab that is open, such as **Add father** on the Family tab. The Pedigree
@@ -117,8 +117,9 @@ This chapter starts a tree from nothing. It takes about half an hour, and every 
    family Bible), choose which fact it backs up, and type the page. See [Sources and citations](#sources-and-citations).
 8. **Add a photo or document.** On the Individual page press **Add files** and choose a photo, a scan or a PDF. It
    is copied into your tree's folder, so the original can stay where it is.
-9. **Print a chart.** Open the **Pedigree** tab and press **Print** on the toolbar. The chart opens in your web
-   browser, ready to print or to save as a PDF.
+9. **Print a chart.** Open the **Pedigree** tab and press **Print** on the toolbar. In the Print window, the pedigree
+   chart is already chosen: press **Print or save as PDF...** and it opens in your web browser, ready to print or to
+   save as a PDF.
 10. **Keep a copy safe.** Gilded Roots saves every change by itself and makes a backup each day. For a copy you can
    keep anywhere, choose **File → Save Family Tree Archive**, and put it on a USB drive or another computer. See
    [Keeping your tree safe](#keeping-your-tree-safe).
@@ -186,7 +187,6 @@ standard form.
 - **Home person:** the **Home** button (or the Home key) goes back to the home person, the one the charts start
   from. To choose another, use **File → Home person...** (also in Tools); it is kept out of the way of everyday
   clicks on purpose. Each tree keeps its own home person; an imported tree brings its home person with it.
-- **Back and Forward** on the main toolbar step through the people you have looked at.
 - **Trail:** the line above the chart lists people you have visited. Click a name to return to it.
 - **Recent** (above the chart) lists the last 15 people you looked at.
 - **Bookmarks:** mark people you come back to often (**Bookmarks → Bookmark this person**, or right-click a box).
@@ -255,9 +255,9 @@ genealogy websites. The chart starts at the left, centred from top to bottom. Dr
 it, or use the scroll wheel or trackpad; a click on a person still goes to them. It stays where you put it until you
 choose another person or change the zoom.
 
-**The floating toolbar** down the left of the charts has **Centre** (puts the chart back in its place), **Bigger**,
-**Smaller** and **Fit**. It is where the zoom lives: turn it off in **View** or **Settings → Toolbars**, and the zoom
-moves to the tab toolbar (or, with that hidden too, to the row above the chart). **Print** is on the main toolbar.
+**The floating toolbar** down the left of the charts has **Centre** (puts the chart back in its place), the **home
+person**, **Bigger**, **Smaller**, **Fit** and **Print** (this chart, or save it as a PDF). It is where the zoom lives: turn it off in **View** or **Settings → Toolbars**, and the zoom
+moves to the tab toolbar (or, with that hidden too, to the row above the chart).
 
 Fastened under the main person's card is a panel with **Spouse & children** and **Siblings**, both open at first.
 Click a heading to close or open it; it stays as it is, also as you move from person to person. Pick a name to move
@@ -295,6 +295,9 @@ See [History of changes (F12)](#history-of-changes-f12) to go back further.
 At the top of the Individual page are the person's photo, name, years and ID. **Click the photo** (or the empty box
 with **+ Add a picture**) to choose a picture from your computer; it is kept with their memories and becomes their
 profile photo in the charts. Right-click the photo to choose one of their memories instead.
+
+Under the name are the page's **tabs**, drawn like the tabs on folders in a file drawer: the open one joins the page
+below it, the others sit behind. Click a tab to open it.
 
 Below that are the tabs: **Facts**, **Timeline**, **Memories**, **Sources**, **Notes**, **Research** (the to-do list
 and the research journal and files). Each shows its part in a box. **Facts**, the tab the page opens on, has the vital
@@ -405,7 +408,9 @@ and **Record a story** too. Research files are on the **Research** tab.
 ![The Memories tab](images/guide/memories.png)
 
 - **+ Add** adds files, a story, a recording or a note for the selected person.
-- **Show by person** groups the memories under each person's name (click a name to open their page).
+- Memories are listed **under each person's name**, the home person first, then their parents, grandparents and
+  further back (each marked Father, Grandmother and so on), then everyone else by name. Click a name to open their
+  page.
 - **Only the selected person** shows just their memories (and photos they are tagged in). Filter by name or caption.
 - Click a story to read or edit it, a PDF to read it in the built-in viewer, a recording to play it, a photo to view
   it, a note to open the person's page, or the name under any item to open that person.
@@ -464,7 +469,7 @@ The **Pedigree** tab has three views, chosen at the start of its toolbar row: **
 - **Hourglass:** ancestors above, the person in the middle, children and grandchildren below.
 - **Family lifespans** are on a person's page, under **Timeline**.
 - In every chart: click to highlight, double-click to open a person, right-click for the full menu.
-- **Print** opens a printable copy in your browser.
+- **Print** (on the floating toolbar) opens the Print window with this chart chosen.
 
 ## The People tab (table)
 Everyone in one table, like a spreadsheet: ID, name, sex, birth and death dates and places, and how many sources,
@@ -474,8 +479,12 @@ people in one of your groups. **Save as spreadsheet** saves exactly what is show
 or Google Sheets.
 
 ## Printing
-Every printout (pedigree, family group sheet, reports, family book, charts) opens as a page in your web browser; use
-**Print or save as PDF**. **Print** on the main toolbar prints what the tab shows. Pages are US Letter, or A4 if you
+**Print** (on the main toolbar, the floating toolbar beside the charts, File → Print or Ctrl/Cmd+P) opens the **Print
+window**. It is about the person you are on (or the home person), and lists what you can print: the **Pedigree
+chart**, **Descendant chart**, **Fan chart** and **Hourglass**, and the **Family group sheet**, **Ancestors report**,
+**Descendants report** and **Family book**. What the tab you are on shows is chosen already. **Keep living people
+private** is there too. **Print or save as PDF...** opens the printout as a page in your web browser: print it from
+there, or choose **Save as PDF**. Pages are US Letter, or A4 if you
 choose **Reports → Paper: A4** (choose the same paper in the print window), with the title, the date and "Page n of
 N" at the bottom. Long web addresses in sources wrap instead of running off the paper. Dates are printed tidily ("25
 Jan 1975") in the style chosen under Settings → Names and dates.
@@ -861,8 +870,9 @@ never wait for a save.
 # Making it yours
 
 ## Toolbars
-The **main toolbar** under the menus is the same on every tab: Back, Forward, Home, Add person, Edit, Find, Quick
-jump, Undo, Redo, Print (prints what the tab shows) and Back up now. Under the tab names, each tab has its own
+The **main toolbar** under the menus is the same on every tab: Home, Add person, Edit, Find, Quick jump, Notepad,
+Undo, Print (opens the Print window) and Back up now. Redo is in the Edit menu (Ctrl/Cmd+Y). To step back through the
+people you have visited, use the Trail or Recent above the chart. Under the tab names, each tab has its own
 **tab toolbar**:
 - **Family:** add father, mother, spouse, child or brother or sister; family group sheet.
 - **Pedigree:** smaller, bigger and fit to the window, only while the floating toolbar is turned off (it has them
@@ -916,8 +926,10 @@ else and work the same on every computer.
 **Edit → Settings → Appearance** has what helps if the screen is hard to read or the mouse is hard to use:
 - **Glass** looks (Settings → Appearance): **Light Glass** (frosted white over a pale grey), **Dark Glass** and
   **Blue Glass**. The panels and windows are see-through over a soft, plain backdrop, with light
-  edges and rounder corners. With a glass look, **A splash of colour behind the glass** adds soft glows of the accent
-  colour, and **Transparent window** lets your desktop show behind Gilded Roots (from the next start).
+  edges and rounder corners. Choosing a glass look shows its choices right beside the glass swatches: **A splash of
+  colour** adds soft glows of the accent colour, **Frosting** sets how see-through the glass is, and **Transparent
+  window** lets your desktop show behind Gilded Roots. A window is made see-through when it opens, so a **Restart now**
+  button appears: it saves everything and opens Gilded Roots again with the change.
 - **Colour schemes** that help: **High contrast light** (black on white) and **High contrast dark** (white on black,
   with yellow for what is selected), and **Sepia**, a warm brown look like an old album.
 - **High contrast:** every button, box, window and chart card gets a clear outline, and chart lines are drawn in the
@@ -944,7 +956,7 @@ More languages are coming.
 - **F9** places · **F11** full screen · **F12** history of changes
 - **Ctrl/Cmd+1 to 9** Family, Pedigree, Descendants, Individual, Memories, Fan chart, People, Map, DNA
 - **Ctrl/Cmd+K** quick jump · **Ctrl/Cmd+Z** undo · **Ctrl/Cmd+Y** redo (Mac: **Shift+Cmd+Z**) · **Ctrl/Cmd+D** repeat the last date or place
-- **Ctrl/Cmd+,** settings · **Ctrl/Cmd+P** print what the tab shows · **Ctrl/Cmd+Q** quit (Mac and Linux)
+- **Ctrl/Cmd+,** settings · **Ctrl/Cmd+P** the Print window · **Ctrl/Cmd+Q** quit (Mac and Linux)
 - **Arrow keys** move around the chart · **Home** goes to the home person · **Ctrl/Cmd + / -** zoom
 - On a Mac the top-row keys control brightness and volume. Hold **fn** to use them as F keys, or use
   **Cmd+?** for help and **Ctrl+Cmd+F** for full screen.

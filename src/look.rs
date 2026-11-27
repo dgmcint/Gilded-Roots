@@ -244,6 +244,63 @@ pub(crate) fn apply_spacing(style: &mut egui::Style) {
 // ---------------------------------------------------------------------------------------------
 // The Settings window
 
+/// A row of tabs drawn like the tabs on folders in a file drawer: the open one joins the page
+/// below it, the others sit a little lower and darker behind it.
+pub(crate) fn folder_tabs(ui: &mut egui::Ui, tabs: &[(&str, &str)], cur: &mut String) {
+    let v = ui.visuals().clone();
+    let stroke = Stroke::new(1.0_f32, v.widgets.noninteractive.bg_stroke.color.gamma_multiply(1.6));
+    let font = egui::FontId::proportional(14.5);
+    let h = 32.0;
+    let mut rects: Vec<(Rect, bool)> = Vec::new();
+    let row = ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 2.0;
+        ui.add_space(6.0);
+        for (key, label) in tabs {
+            let on = cur.as_str() == *key;
+            let g = ui.painter().layout_no_wrap(label.to_string(), font.clone(), v.text_color());
+            let (rect, resp) = ui.allocate_exact_size(vec2(g.size().x + 30.0, h), Sense::click());
+            // the tabs behind stand a little lower, as in a drawer
+            let r = if on { rect } else { Rect::from_min_max(pos2(rect.min.x, rect.min.y + 4.0), rect.max) };
+            let fill = if on {
+                v.panel_fill
+            } else if resp.hovered() {
+                v.widgets.hovered.weak_bg_fill
+            } else {
+                v.faint_bg_color.lerp_to_gamma(v.extreme_bg_color, 0.5)
+            };
+            let round = egui::Rounding { nw: 8.0, ne: 8.0, sw: 0.0, se: 0.0 };
+            let p = ui.painter();
+            p.rect_filled(r, round, fill);
+            // the outline: up the sides and over the top (not along the bottom)
+            let pts = vec![pos2(r.min.x, r.max.y), pos2(r.min.x, r.min.y + 8.0), pos2(r.min.x + 3.0, r.min.y + 2.5), pos2(r.min.x + 8.0, r.min.y), pos2(r.max.x - 8.0, r.min.y), pos2(r.max.x - 3.0, r.min.y + 2.5), pos2(r.max.x, r.min.y + 8.0), pos2(r.max.x, r.max.y)];
+            p.add(egui::Shape::line(pts, stroke));
+            if on {
+                // a strip of the accent along the top of the open tab
+                p.rect_filled(Rect::from_min_max(pos2(r.min.x + 6.0, r.min.y), pos2(r.max.x - 6.0, r.min.y + 2.5)), 1.0_f32, v.selection.bg_fill);
+            }
+            let ink = if on { v.strong_text_color() } else { v.text_color().gamma_multiply(0.85) };
+            p.text(pos2(r.center().x, r.center().y + if on { 1.0 } else { 0.0 }), Align2::CENTER_CENTER, *label, font.clone(), ink);
+            if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                *cur = key.to_string();
+            }
+            rects.push((r, on));
+        }
+    });
+    // the edge of the page, broken under the open tab so the tab and the page are one piece
+    let y = row.response.rect.max.y;
+    let (x0, x1) = (ui.max_rect().min.x, ui.max_rect().max.x);
+    let p = ui.painter();
+    match rects.iter().find(|(_, on)| *on) {
+        Some((r, _)) => {
+            p.line_segment([pos2(x0, y), pos2(r.min.x, y)], stroke);
+            p.line_segment([pos2(r.max.x, y), pos2(x1, y)], stroke);
+        }
+        None => {
+            p.line_segment([pos2(x0, y), pos2(x1, y)], stroke);
+        }
+    }
+}
+
 pub(crate) const SETTINGS_PAGES: [&str; 9] = ["Appearance", "Colours", "Text and readability", "Language", "Names and dates", "Charts", "Toolbars", "Printing and privacy", "Tree, backups and microphone"];
 
 impl App {
@@ -348,33 +405,49 @@ impl App {
                 section(ui, tr("Light or dark"), &mut |ui| {
                     ui.horizontal(|ui| {
                         changed |= light_dark_choice(ui, ctx, &mut self.settings);
+                        // the way back, where it is always in sight
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button(tr("Back to the Gilded Roots look")).on_hover_text(tr("The colours Gilded Roots comes with, light or dark as now")).clicked() {
+                            let d = Settings::default();
+                            let dark = self.settings.dark;
+                            self.settings.accent = d.accent;
+                            self.settings.bg = d.bg;
+                            self.settings.light_bg = d.light_bg;
+                            self.settings.ink = d.ink;
+                            self.settings.glass = d.glass;
+                            self.settings.dark = dark;
+                            changed = true;
+                        }
+                        });
                     });
                 });
                 section(ui, tr("Colour scheme"), &mut |ui| {
-                    changed |= scheme_list(ui, &mut self.settings);
-                    if !self.settings.glass.is_empty() {
-                        ui.add_space(4.0);
-                        changed |= ui.checkbox(&mut self.settings.glass_splash, tr("A splash of colour behind the glass")).on_hover_text(tr("Soft glows of the accent colour (Colours page) behind the see-through panels")).changed();
+                    let started_clear = settings::WINDOW_SEE_THROUGH.load(std::sync::atomic::Ordering::Relaxed);
+                    let mut restart = false;
+                    changed |= scheme_list(ui, &mut self.settings, &mut |ui, st| {
+                        let mut c = false;
+                        c |= ui.checkbox(&mut st.glass_splash, tr("A splash of colour")).on_hover_text(tr("Soft glows of the accent colour (Colours page) behind the see-through panels")).changed();
                         ui.horizontal(|ui| {
                             ui.label(tr("Frosting"));
-                            ui.label(RichText::new(tr("Clear")).small().weak());
-                            changed |= ui.add(egui::Slider::new(&mut self.settings.glass_frost, 0.0..=1.0).show_value(false)).on_hover_text(tr("How see-through the glass is: clear glass at the left, milky and nearly solid at the right")).changed();
-                            ui.label(RichText::new(tr("Frosted")).small().weak());
+                            c |= ui.add(egui::Slider::new(&mut st.glass_frost, 0.0..=1.0).show_value(false)).on_hover_text(tr("How see-through the glass is: clear glass at the left, milky and nearly solid at the right")).changed();
                         });
-                        changed |= ui.checkbox(&mut self.settings.see_through, tr("Transparent window: your desktop shows behind the glass")).on_hover_text(tr("Takes effect the next time Gilded Roots starts")).changed();
+                        c |= ui.checkbox(&mut st.see_through, tr("Transparent window")).on_hover_text(tr("Your desktop shows behind the glass")).changed();
+                        // a window is made see-through (or not) when it opens, so a change needs a restart
+                        if st.see_through != started_clear {
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new(tr("Needs a restart.")).small().weak());
+                                if ui.small_button(tr("Restart now")).clicked() {
+                                    restart = true;
+                                }
+                            });
+                        }
+                        c
+                    });
+                    if restart {
+                        save_settings(&self.settings);
+                        self.restart_app(ctx);
                     }
                 });
-                if ui.button(tr("Back to the Gilded Roots look")).on_hover_text(tr("The colours Gilded Roots comes with, light or dark as now")).clicked() {
-                    let d = Settings::default();
-                    let dark = self.settings.dark;
-                    self.settings.accent = d.accent;
-                    self.settings.bg = d.bg;
-                    self.settings.light_bg = d.light_bg;
-                    self.settings.ink = d.ink;
-                    self.settings.glass = d.glass;
-                    self.settings.dark = dark;
-                    changed = true;
-                }
             }
             1 => {
                 section(ui, tr("Accent colour"), &mut |ui| {

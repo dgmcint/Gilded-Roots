@@ -1890,7 +1890,7 @@ mod one_chart_tab {
         let _ = ctx.run(input(), |c| app.frame(c));
         assert!(app.view == View::Pedigree);
         assert_eq!(app.settings.ped_mode, 3);
-        assert!(matches!(app.print_action(), Action::PrintDescendants));
+        assert_eq!(app.print_pick_here(), 1, "the descendant chart is chosen in the Print window");
         // the floating toolbar off, then every toolbar off: the zoom still shows somewhere
         for (f, t, m) in [(false, true, true), (false, false, false)] {
             app.settings.float_tb = f;
@@ -1900,9 +1900,16 @@ mod one_chart_tab {
             assert!(!out.shapes.is_empty());
         }
         app.settings.ped_mode = 0;
-        assert!(matches!(app.print_action(), Action::PrintPedigree));
+        assert_eq!(app.print_pick_here(), 0);
         app.settings.ped_mode = 1;
-        assert!(matches!(app.print_action(), Action::PrintChart));
+        assert_eq!(app.print_pick_here(), 2);
+        // Print opens the Print window, and the window draws on any tab, the Home tab too
+        assert!(matches!(app.print_action(), Action::PrintWindow));
+        app.view = View::Home;
+        app.x.print_open = true;
+        app.x.print_pick = app.print_pick_here();
+        let out = ctx.run(input(), |c| app.frame(c));
+        assert!(app.x.print_open && !out.shapes.is_empty());
     }
 
     #[test]

@@ -1156,19 +1156,13 @@ impl App {
             if !tabs.contains(&tab.as_str()) {
                 tab = "facts".to_string();
             }
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().button_padding = vec2(10.0, 5.0);
-                for t in &tabs {
-                    if ui.selectable_label(tab == *t, RichText::new(crate::i18n::trv(person_tab_title(t))).size(14.5)).clicked() {
-                        tab = t.to_string();
-                    }
-                }
-            });
+            let labels: Vec<(&str, &str)> = tabs.iter().map(|t| (*t, crate::i18n::trv(person_tab_title(t)))).collect();
+            crate::look::folder_tabs(ui, &labels, &mut tab);
             if tab != self.settings.person_tab {
                 self.settings.person_tab = tab.clone();
                 save_settings(&self.settings);
             }
-            ui.separator();
+            ui.add_space(8.0);
             // each tab's contents in a titled box, as in a desktop program's panels
             let boxed = |ui: &mut egui::Ui, add: &mut dyn FnMut(&mut egui::Ui)| {
                 egui::Frame::group(ui.style()).rounding(6.0).inner_margin(egui::Margin::symmetric(14.0, 10.0)).show(ui, |ui| {
