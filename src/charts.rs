@@ -114,8 +114,7 @@ impl App {
         let anc = ahnen(&self.db, root, gens);
         // on the canvas: it can be dragged about like the other charts
         let avail = ui.available_size() - vec2(84.0, 8.0);
-        let hand = self.settings.hand;
-        let view = chart_canvas(ui, ("fan", root, gens), hand, avail, |ui| {
+        let view = chart_canvas(ui, ("fan", root, gens), avail, |ui| {
         let (resp, mut painter) = ui.allocate_painter(avail, Sense::click());
         painter.set_clip_rect(ui.clip_rect());
         let rect = resp.rect;
@@ -312,7 +311,7 @@ impl App {
         let slots = anc.len() - 2;
         painter.text(rect.min + vec2(6.0, 4.0), Align2::LEFT_TOP, format!("{} of {} ancestors found in {} generations", found, slots, gens), FontId::proportional(13.0), head_c);
         });
-        self.float_bar(ui, view, act, Action::PrintChart);
+        self.float_bar(ui, view, act);
     }
 
     /// Ancestors above, the person in the middle, children and grandchildren below.
@@ -331,7 +330,7 @@ impl App {
         let width = (top_slots.max(n_g) as f32) * (bw + 10.0) + 40.0;
         let height = (up as f32 + 3.0) * (bh + vgap) + 40.0;
         self.paint_stage(ui);
-        let view = chart_canvas(ui, ("hour", root, z.to_bits()), self.settings.hand, vec2(width, height), |ui| {
+        let view = chart_canvas(ui, ("hour", root, z.to_bits()), vec2(width, height), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(width, height), Sense::hover());
             painter.set_clip_rect(ui.clip_rect());
             let o = resp.rect.min + vec2(20.0, 20.0);
@@ -420,7 +419,7 @@ impl App {
                 painter.text(pos2(cx, row_y(kid_row) + bh / 2.0), Align2::CENTER_CENTER, "No children recorded", FontId::proportional(13.0), head_c);
             }
         });
-        self.float_bar(ui, view, act, Action::PrintChart);
+        self.float_bar(ui, view, act);
     }
 
     /// The person's close family as bars along a line of years.

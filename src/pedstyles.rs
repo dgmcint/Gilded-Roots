@@ -101,9 +101,10 @@ impl App {
     /// Pedigree, Fan chart or Hourglass: the views of the Pedigree tab (as on the genealogy websites).
     pub(crate) fn ped_mode_switch(&self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let m = self.settings.ped_mode;
-        for (k, l) in [(0u8, crate::i18n::tr("Pedigree")), (1, crate::i18n::tr("Fan chart")), (2, crate::i18n::tr("Hourglass"))] {
+        // 0 pedigree, 3 descendants, 1 fan chart, 2 hourglass (the numbers kept from before)
+        for (k, l) in [(0u8, crate::i18n::tr("Pedigree")), (3, crate::i18n::tr("Descendants")), (1, crate::i18n::tr("Fan chart")), (2, crate::i18n::tr("Hourglass"))] {
             let r = ui.selectable_label(m == k, RichText::new(l).size(15.0).strong());
-            crate::tour::mark(["ped:Pedigree", "ped:Fan", "ped:Hourglass"][k as usize], r.rect);
+            crate::tour::mark(["ped:Pedigree", "ped:Fan", "ped:Hourglass", "ped:Descendants"][k as usize], r.rect);
             if r.clicked() && m != k {
                 *act = Some(Action::PedMode(k));
             }
@@ -111,7 +112,7 @@ impl App {
         ui.separator();
     }
 
-    /// The row above every pedigree style: style, colours, generations, zoom, select/hand, print.
+    /// The row above every pedigree style: style, colours, generations, zoom and print (when no toolbar has them).
     pub(crate) fn ped_controls(&self, ui: &mut egui::Ui, act: &mut Option<Action>, gens: usize, z: f32) {
         let style = self.settings.ped_style.min(4);
         let gmax = ped_max_gens(style);
@@ -147,17 +148,7 @@ impl App {
             if ui.add_enabled(gens < gmax, egui::Button::new("+")).clicked() {
                 *act = Some(Action::SetGens(gens + 1));
             }
-            ui.separator();
-            zoom_controls(ui, z, act);
-            ui.separator();
-            hand_switch(ui, self.settings.hand, act);
-            // the tab toolbar has Print when it is shown
-            if !self.settings.tb_tab {
-                ui.separator();
-                if ui.button(crate::i18n::tr("Print")).clicked() {
-                    *act = Some(Action::PrintPedigree);
-                }
-            }
+            self.row_zoom_and_print(ui, z, act);
         });
     }
 
@@ -235,10 +226,10 @@ impl App {
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
-        let view = chart_canvas(ui, ("ped_cc", sel, z.to_bits()), self.settings.hand, vec2(tw + 12.0, th), |ui| {
+        let view = chart_canvas(ui, ("ped_cc", sel, z.to_bits()), vec2(tw + 12.0, th), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(tw + 12.0, th), Sense::hover());
             let o = resp.rect.min + vec2(6.0, 0.0);
-            // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
+            // the chart can be dragged past where it was laid out, so paint anywhere in sight
             painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
                 let zd = ui.input(|i| i.zoom_delta());
@@ -371,7 +362,7 @@ impl App {
                 }
             }
         });
-        self.float_bar(ui, view, act, Action::PrintPedigree);
+        self.float_bar(ui, view, act);
     }
 
     /// Upright tree: the chosen person (with their spouse) near the bottom, parents and grandparents rising
@@ -399,10 +390,10 @@ impl App {
         self.nav_bar(ui, act);
         self.ped_controls(ui, act, gens, z);
         self.paint_stage(ui);
-        let view = chart_canvas(ui, ("ped_up", sel, z.to_bits()), self.settings.hand, vec2(width, height), |ui| {
+        let view = chart_canvas(ui, ("ped_up", sel, z.to_bits()), vec2(width, height), |ui| {
             let (resp, mut painter) = ui.allocate_painter(vec2(width, height), Sense::hover());
             let o = resp.rect.min;
-            // the hand tool can move the chart past where it was laid out, so paint anywhere in sight
+            // the chart can be dragged past where it was laid out, so paint anywhere in sight
             painter.set_clip_rect(ui.clip_rect());
             if resp.hovered() {
                 let zd = ui.input(|i| i.zoom_delta());
@@ -529,7 +520,7 @@ impl App {
                 *act = Some(Action::AddFor(sel, Kind::Child(None)));
             }
         });
-        self.float_bar(ui, view, act, Action::PrintPedigree);
+        self.float_bar(ui, view, act);
     }
 }
 

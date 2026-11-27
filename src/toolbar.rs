@@ -25,7 +25,6 @@ pub(crate) enum Icon {
     Spouse,
     Child,
     Sibling,
-    Sort,
     #[allow(dead_code)]
     Star,
     ZoomIn,
@@ -39,8 +38,6 @@ pub(crate) enum Icon {
     Globe,
     Pin,
     Notepad,
-    Pointer,
-    Hand,
     Centre,
 }
 
@@ -158,13 +155,6 @@ pub(crate) fn paint_icon(p: &egui::Painter, r: Rect, icon: Icon, c: Color32) {
             head(0.4, -0.25, 0.22);
             body(0.4, 0.6, 0.35);
         }
-        Icon::Sort => {
-            line(&[(-0.75, -0.6), (0.1, -0.6)]);
-            line(&[(-0.75, -0.1), (-0.1, -0.1)]);
-            line(&[(-0.75, 0.4), (-0.3, 0.4)]);
-            line(&[(0.55, -0.75), (0.55, 0.75)]);
-            line(&[(0.3, 0.5), (0.55, 0.75), (0.8, 0.5)]);
-        }
         Icon::Star => {
             let pts: Vec<(f32, f32)> = (0..=10).map(|i| {
                 let a = -PI / 2.0 + i as f32 * PI / 5.0;
@@ -205,17 +195,6 @@ pub(crate) fn paint_icon(p: &egui::Painter, r: Rect, icon: Icon, c: Color32) {
             line(&[(0.25, -0.55), (0.25, 0.35)]);
             arc(0.12, 0.35, 0.13, 0.0, PI);
             line(&[(-0.01, 0.35), (-0.01, -0.2)]);
-        }
-        Icon::Pointer => {
-            line(&[(-0.45, -0.8), (-0.45, 0.5), (-0.12, 0.2), (0.12, 0.75), (0.32, 0.65), (0.08, 0.12), (0.5, 0.12), (-0.45, -0.8)]);
-        }
-        Icon::Hand => {
-            line(&[(-0.5, 0.15), (-0.5, -0.35)]);
-            line(&[(-0.17, 0.0), (-0.17, -0.72)]);
-            line(&[(0.16, 0.0), (0.16, -0.66)]);
-            line(&[(0.48, 0.08), (0.48, -0.42)]);
-            line(&[(-0.5, 0.15), (-0.5, 0.42), (-0.22, 0.8), (0.32, 0.8), (0.56, 0.42), (0.48, 0.08)]);
-            line(&[(-0.5, 0.2), (-0.82, -0.05)]);
         }
         Icon::Centre => {
             head(0.0, 0.0, 0.3);
@@ -400,6 +379,8 @@ impl App {
     pub(crate) fn main_toolbar(&mut self, ui: &mut egui::Ui, act: &mut Option<Action>) {
         let has = self.sel.map_or(false, |s| self.db.people.contains_key(&s));
         let print_what = match self.view {
+            View::Pedigree if self.settings.ped_mode == 3 => "Print the descendant chart",
+            View::Pedigree if self.settings.ped_mode != 0 => "Print this chart",
             View::Pedigree => "Print the pedigree chart",
             View::Family => "Print the family group sheet",
             View::Descendants => "Print the descendant chart",
@@ -422,7 +403,7 @@ impl App {
             Tool::new("undo", Icon::Undo, crate::i18n::tr("Undo"), crate::i18n::tr("Undo the last change (Ctrl/Cmd+Z)")).enabled(!self.undo.is_empty() || self.x.track_at.is_some()),
             Tool::new("redo", Icon::Redo, crate::i18n::tr("Redo"), crate::i18n::tr("Redo what was undone (Ctrl/Cmd+Y)")).enabled(!self.redo.is_empty()),
             Tool::new(GAP, Icon::Back, "", ""),
-            Tool::new("print", Icon::Print, crate::i18n::tr("Print"), if print_what.is_empty() { "Print (on the Pedigree, Family, Descendants, Individual and Charts tabs)".to_string() } else { print_what.to_string() }).enabled(has && !print_what.is_empty()),
+            Tool::new("print", Icon::Print, crate::i18n::tr("Print"), if print_what.is_empty() { "Print (on the Pedigree, Family and Individual tabs)".to_string() } else { print_what.to_string() }).enabled(has && !print_what.is_empty()),
             Tool::new("backup", Icon::Backup, crate::i18n::tr("Back up now"), crate::i18n::tr("Make a checked backup of your tree and photos now")).enabled(self.x.practice.is_none()),
         ];
         match tool_row(ui, "Main", &tools, &mut self.settings) {
@@ -437,16 +418,19 @@ impl App {
             Some("undo") => self.undo_action(),
             Some("redo") => self.redo_action(),
             Some("print") => {
-                *act = Some(match self.view {
-                    View::Pedigree => Action::PrintPedigree,
-                    View::Family => Action::PrintFamily,
-                    View::Descendants => Action::PrintDescendants,
-                    View::Charts => Action::PrintChart,
-                    _ => Action::ReportBook,
-                })
+                *act = Some(self.print_action())
             }
             Some("backup") => self.backup_now(true),
             _ => {}
+        }
+    }
+
+    /// Whether the tab that is open has a tab toolbar at all (so no empty strip is drawn).
+    pub(crate) fn has_tab_toolbar(&self) -> bool {
+        match self.view {
+            View::Pedigree | View::Descendants => !self.settings.float_tb,
+            View::Dna | View::Research | View::Home | View::Charts => false,
+            _ => true,
         }
     }
 
@@ -458,8 +442,6 @@ impl App {
         let (which, tools): (&str, Vec<Tool>) = match self.view {
             View::Family => {
                 let (f, m) = sel.map(|s| self.db.parents(s)).unwrap_or((None, None));
-                let first_fam = sel.and_then(|s| self.db.fams_of(s).first().copied());
-                let kids = first_fam.and_then(|f| self.db.fams.get(&f)).map_or(0, |f| f.kids.len());
                 ("Family", vec![
                     Tool::new("fam_father", Icon::Father, crate::i18n::tr("Add father"), crate::i18n::tr("Add a father for the selected person")).enabled(has && f.is_none()),
                     Tool::new("fam_mother", Icon::Mother, crate::i18n::tr("Add mother"), crate::i18n::tr("Add a mother for the selected person")).enabled(has && m.is_none()),
@@ -467,21 +449,17 @@ impl App {
                     Tool::new("fam_child", Icon::Child, crate::i18n::tr("Add child"), crate::i18n::tr("Add a child (to their first family)")).enabled(has),
                     Tool::new("fam_sibling", Icon::Sibling, crate::i18n::tr("Add brother or sister"), "").enabled(has),
                     Tool::new(GAP, Icon::Back, "", ""),
-                    Tool::new("fam_sort", Icon::Sort, crate::i18n::tr("Sort children"), crate::i18n::tr("Put the children of their first family in order of birth")).enabled(kids > 1),
                     Tool::new("fam_print", Icon::Print, crate::i18n::tr("Family group sheet"), crate::i18n::tr("Print the family group sheet")).enabled(has),
                 ])
             }
-            View::Pedigree | View::Descendants => {
-                let ped = self.view == View::Pedigree;
-                let mut v = vec![
-                    Tool::new("ch_out", Icon::ZoomOut, crate::i18n::tr("Smaller"), crate::i18n::tr("Zoom out (Ctrl/Cmd -)")).enabled(z > 0.3),
-                    Tool::new("ch_in", Icon::ZoomIn, crate::i18n::tr("Bigger"), crate::i18n::tr("Zoom in (Ctrl/Cmd +)")).enabled(z < 1.75),
-                    Tool::new("ch_fit", Icon::Fit, crate::i18n::tr("Fit"), crate::i18n::tr("Fit the chart to the window (F5)")),
-                ];
-                v.push(Tool::new(GAP, Icon::Back, "", ""));
-                v.push(if ped { Tool::new("ch_print_ped", Icon::Print, crate::i18n::tr("Print pedigree"), crate::i18n::tr("Print the pedigree chart")) } else { Tool::new("ch_print_desc", Icon::Print, crate::i18n::tr("Print descendants"), crate::i18n::tr("Print the descendant chart")) }.enabled(has));
-                (if ped { "Pedigree" } else { "Descendants" }, v)
-            }
+            // the charts: the zoom lives on the floating toolbar while it is on, and Print on the
+            // main toolbar
+            View::Pedigree | View::Descendants if self.settings.float_tb => return,
+            View::Pedigree | View::Descendants => ("Pedigree", vec![
+                Tool::new("ch_out", Icon::ZoomOut, crate::i18n::tr("Smaller"), crate::i18n::tr("Zoom out (Ctrl/Cmd -)")).enabled(z > 0.3),
+                Tool::new("ch_in", Icon::ZoomIn, crate::i18n::tr("Bigger"), crate::i18n::tr("Zoom in (Ctrl/Cmd +)")).enabled(z < 1.75),
+                Tool::new("ch_fit", Icon::Fit, crate::i18n::tr("Fit"), crate::i18n::tr("Fit the chart to the window (F5)")),
+            ]),
             View::Person => {
                 let editing = self.editing.is_some();
                 ("Individual", vec![
@@ -501,7 +479,7 @@ impl App {
                 Tool::new(GAP, Icon::Back, "", ""),
                 Tool::new("mem_select", Icon::Select, crate::i18n::tr("Select..."), crate::i18n::tr("Tick several items to remove them in one go")).enabled(self.settings.mem_kind != 6),
             ]),
-            View::Charts => ("Charts", vec![Tool::new("chart_print", Icon::Print, crate::i18n::tr("Print chart"), crate::i18n::tr("Print this chart")).enabled(has)]),
+            View::Charts => return,
             View::Table => ("People", vec![
                 Tool::new("tbl_find", Icon::Find, crate::i18n::tr("Find"), crate::i18n::tr("Find a person (F3)")),
                 Tool::new("tbl_csv", Icon::Sheet, crate::i18n::tr("Save as spreadsheet"), crate::i18n::tr("Save the rows shown as a CSV file for Excel, Numbers or Google Sheets")),
@@ -520,17 +498,10 @@ impl App {
             Some("fam_spouse") => *act = Some(Action::Add(Kind::Spouse)),
             Some("fam_child") => *act = Some(Action::Add(Kind::Child(sel.and_then(|s| self.db.fams_of(s).first().copied())))),
             Some("fam_sibling") => *act = Some(Action::Add(Kind::Sibling)),
-            Some("fam_sort") => {
-                if let Some(f) = sel.and_then(|s| self.db.fams_of(s).first().copied()) {
-                    *act = Some(Action::SortChildren(f));
-                }
-            }
             Some("fam_print") => *act = Some(Action::PrintFamily),
             Some("ch_out") => *act = Some(Action::SetZoom(z - 0.1)),
             Some("ch_in") => *act = Some(Action::SetZoom(z + 0.1)),
             Some("ch_fit") => *act = Some(Action::Fit),
-            Some("ch_print_ped") => *act = Some(Action::PrintPedigree),
-            Some("ch_print_desc") => *act = Some(Action::PrintDescendants),
             Some("ind_edit") => *act = Some(Action::EditStart),
             Some("ind_done") => *act = Some(Action::EditSave),
             Some("ind_files") | Some("mem_files") => *act = Some(Action::AttachFiles),
@@ -545,7 +516,6 @@ impl App {
                 self.x.gal_pick = true;
                 self.x.gal_sel.clear();
             }
-            Some("chart_print") => *act = Some(Action::PrintChart),
             Some("tbl_find") => self.find_open = true,
             Some("tbl_csv") => self.x.csv_req = true,
             Some("map_fit") => self.x.map_fit = true,
@@ -589,7 +559,7 @@ mod tests {
         // every picture draws at any size
         let _ = ctx.run(input(), |c| {
             egui::CentralPanel::default().show(c, |ui| {
-                let all = [Icon::Back, Icon::Forward, Icon::Home, Icon::AddPerson, Icon::Edit, Icon::Done, Icon::Find, Icon::Jump, Icon::Undo, Icon::Redo, Icon::Print, Icon::Backup, Icon::Father, Icon::Mother, Icon::Spouse, Icon::Child, Icon::Sibling, Icon::Sort, Icon::Star, Icon::ZoomIn, Icon::ZoomOut, Icon::Fit, Icon::Story, Icon::Mic, Icon::Clip, Icon::Select, Icon::Sheet, Icon::Globe, Icon::Pin, Icon::Notepad];
+                let all = [Icon::Back, Icon::Forward, Icon::Home, Icon::AddPerson, Icon::Edit, Icon::Done, Icon::Find, Icon::Jump, Icon::Undo, Icon::Redo, Icon::Print, Icon::Backup, Icon::Father, Icon::Mother, Icon::Spouse, Icon::Child, Icon::Sibling, Icon::Star, Icon::ZoomIn, Icon::ZoomOut, Icon::Fit, Icon::Story, Icon::Mic, Icon::Clip, Icon::Select, Icon::Sheet, Icon::Globe, Icon::Pin, Icon::Notepad];
                 for (n, i) in all.iter().enumerate() {
                     for s in [12.0, 22.0, 48.0] {
                         paint_icon(ui.painter(), Rect::from_min_size(pos2(n as f32 * 50.0, s * 2.0), vec2(s, s)), *i, Color32::WHITE);

@@ -466,6 +466,7 @@ impl Db {
         }
     }
     /// Move a child one place earlier or later among the family's children.
+    #[cfg(test)]
     pub(crate) fn move_child(&mut self, fid: u32, kid: u32, earlier: bool) -> bool {
         let Some(f) = self.fams.get_mut(&fid) else { return false };
         let Some(i) = f.kids.iter().position(|k| *k == kid) else { return false };
@@ -476,6 +477,16 @@ impl Db {
     }
     /// Put a family's children in order of birth. Children with no birth date keep their place
     /// after the ones before them.
+    /// Every family's children in order of birth (see `sort_children`). Returns whether any moved.
+    pub(crate) fn sort_all_children(&mut self) -> bool {
+        let ids: Vec<u32> = self.fams.iter().filter(|(_, f)| f.kids.len() > 1).map(|(i, _)| *i).collect();
+        let mut moved = false;
+        for f in ids {
+            moved |= self.sort_children(f);
+        }
+        moved
+    }
+
     pub(crate) fn sort_children(&mut self, fid: u32) -> bool {
         let Some(f) = self.fams.get(&fid) else { return false };
         let key = |k: &u32| -> (i32, u32, u32) {

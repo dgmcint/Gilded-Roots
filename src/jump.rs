@@ -42,13 +42,7 @@ impl App {
             match n {
                 100 => self.x.settings_open = !self.x.settings_open,
                 101 => {
-                    *act = Some(match self.view {
-                        View::Pedigree => Action::PrintPedigree,
-                        View::Family => Action::PrintFamily,
-                        View::Descendants => Action::PrintDescendants,
-                        View::Charts => Action::PrintChart,
-                        _ => Action::ReportBook,
-                    })
+                    *act = Some(self.print_action())
                 }
                 102 => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
                 1 => self.help_open = !self.help_open,
@@ -63,8 +57,7 @@ impl App {
                 6 => {
                     self.view = match self.view {
                         View::Family => View::Pedigree,
-                        View::Pedigree => View::Descendants,
-                        View::Descendants => View::Person,
+                        View::Pedigree | View::Descendants => View::Person,
                         View::Person | View::Gallery => View::Memories,
                         View::Memories | View::Charts => View::Table,
                         View::Table => View::Map,
@@ -208,7 +201,12 @@ impl App {
     pub(crate) fn run_jump(&mut self, j: Jump, act: &mut Option<Action>) {
         match j {
             Jump::Act(a) => *act = Some(a),
-            Jump::View(v) => self.view = v,
+            Jump::View(v) => {
+                if v == View::Pedigree && self.settings.ped_mode == 3 {
+                    self.settings.ped_mode = 0;
+                }
+                self.view = v
+            }
             Jump::Window(w) => match w {
                 "todo" => self.x.todo_open = true,
                 "notepad" => self.x.notepad_open = true,

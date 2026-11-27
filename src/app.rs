@@ -405,7 +405,6 @@ pub(crate) enum Action {
     /// Turn the coloured band on pedigree cards on or off.
     PedBand(bool),
     /// Turn the hand tool on the charts on or off
-    SetHand(bool),
     Back,
     Forward,
     PrintPedigree,
@@ -425,9 +424,7 @@ pub(crate) enum Action {
     PrintChart,
     Bookmark(u32),
     /// Move a child earlier (true) or later in a family's list: (family, child, earlier)
-    MoveChild(u32, u32, bool),
     /// Put a family's children in order of birth
-    SortChildren(u32),
     /// Move one of a person's families (spouses) earlier or later: (person, family, earlier)
     MoveFamily(u32, u32, bool),
     /// Add a person to a group, or take them out: (group, person)
@@ -672,6 +669,9 @@ impl App {
             }
             return false;
         }
+        // children are always kept in order of birth (those without a date stay after the
+        // brother or sister they followed), as part of the same change
+        self.db.sort_all_children();
         let cur = serde_json::to_string(&self.db).unwrap_or_default();
         if cur != self.last_json {
             let label = self.change_label();

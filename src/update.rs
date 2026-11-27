@@ -23,6 +23,21 @@ impl eframe::App for App {
 }
 
 impl App {
+    /// What Print does on the tab that is open (and, on the Pedigree tab, the chart chosen there).
+    pub(crate) fn print_action(&self) -> Action {
+        match self.view {
+            View::Pedigree => match self.settings.ped_mode {
+                0 => Action::PrintPedigree,
+                3 => Action::PrintDescendants,
+                _ => Action::PrintChart,
+            },
+            View::Family => Action::PrintFamily,
+            View::Descendants => Action::PrintDescendants,
+            View::Charts => Action::PrintChart,
+            _ => Action::ReportBook,
+        }
+    }
+
     /// Draws the whole program once. This is the body of the frame loop; tests call it
     /// without a window to time how long each screen takes to draw.
     pub(crate) fn frame(&mut self, ctx: &egui::Context) {
@@ -133,10 +148,13 @@ impl App {
                         self.view = View::Person;
                         ui.close_menu();
                     }
-                    ui.separator();
-                    if ui.add(menu_item(crate::i18n::tr("Settings..."), "Cmd+,")).clicked() {
-                        self.x.settings_open = true;
-                        ui.close_menu();
+                    // on a Mac, Settings is in the Gilded Roots menu at the top of the screen
+                    if !MAC {
+                        ui.separator();
+                        if ui.add(menu_item(crate::i18n::tr("Settings..."), "Ctrl+,")).clicked() {
+                            self.x.settings_open = true;
+                            ui.close_menu();
+                        }
                     }
                 });
                 ui.menu_button(crate::i18n::tr("Add"), |ui| {
@@ -176,7 +194,7 @@ impl App {
                         ui.close_menu();
                     }
                     ui.menu_button(crate::i18n::tr("Go to tab"), |ui| {
-                        for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                        for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                             if ui.selectable_label(self.view == v, crate::i18n::trv(l)).clicked() {
                                 self.view = v;
                                 ui.close_menu();
@@ -186,15 +204,6 @@ impl App {
                     ui.separator();
                     if ui.checkbox(&mut self.settings.float_tb, crate::i18n::tr("Floating toolbar beside the charts")).changed() {
                         save_settings(&self.settings);
-                    }
-                    // the rest of the choices live in Settings, each on its page
-                    let tr = crate::i18n::tr;
-                    for (l, page) in [(tr("Appearance..."), 0usize), (tr("Colours..."), 1), (tr("Text and readability..."), 2), (tr("Names and dates..."), 4), (tr("Charts..."), 5), (tr("Toolbars..."), 6)] {
-                        if ui.button(l).clicked() {
-                            self.x.settings_open = true;
-                            self.x.settings_page = page;
-                            ui.close_menu();
-                        }
                     }
                     ui.separator();
                     {
@@ -531,9 +540,8 @@ impl App {
                             ("F12", "History of changes"),
                             ("Arrow keys", "Move around the chart"),
                             ("Home", "Go to the home person"),
-                            ("Ctrl/Cmd+1..9", "Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map, DNA"),
+                            ("Ctrl/Cmd+1..9", "Family, Pedigree, Descendants, Individual, Memories, Fan chart, People, Map, DNA"),
                             ("Ctrl/Cmd + / -", "Zoom the chart"),
-                            ("H", "Pedigree and descendants: switch between Select and the hand"),
                         ] {
                             ui.horizontal(|ui| {
                                 ui.add_sized([170.0, 18.0], egui::Label::new(RichText::new(crate::i18n::trv(k)).strong()));
@@ -578,7 +586,7 @@ impl App {
         }
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Descendants, "Descendants"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
+                for (v, l) in [(View::Home, "Home"), (View::Family, "Family"), (View::Pedigree, "Pedigree"), (View::Person, "Individual"), (View::Memories, "Memories"), (View::Table, "People"), (View::Map, "Map"), (View::Research, "Research"), (View::Dna, "DNA")] {
                     let mut t = RichText::new(crate::i18n::trv(l)).size(16.0);
                     if self.view == v {
                         t = t.strong();
@@ -592,7 +600,7 @@ impl App {
             });
         });
 
-        if self.settings.tb_tab {
+        if self.settings.tb_tab && self.has_tab_toolbar() {
             egui::TopBottomPanel::top("tab_toolbar").show(ctx, |ui| {
                 ui.add_space(1.0);
                 self.tab_toolbar(ui, &mut act);
@@ -657,6 +665,11 @@ impl App {
             }
             // the old Charts tab: the fan chart and hourglass are on the Pedigree tab now, and the
             // lifespans on a person's Timeline tab
+            // the old Descendants tab is a choice on the Pedigree tab now
+            if self.view == View::Descendants {
+                self.view = View::Pedigree;
+                self.settings.ped_mode = 3;
+            }
             if self.view == View::Charts {
                 if self.x.chart == ChartKind::Lifespans {
                     self.view = View::Person;
@@ -664,12 +677,13 @@ impl App {
                     self.settings.tl_mode = 1;
                 } else {
                     self.view = View::Pedigree;
-                    if self.settings.ped_mode == 0 {
+                    if matches!(self.settings.ped_mode, 0 | 3) {
                         self.settings.ped_mode = 1;
                     }
                 }
             }
             match self.view {
+                View::Pedigree if self.settings.ped_mode == 3 => self.descendants(ui, &mut act),
                 View::Pedigree if self.settings.ped_mode != 0 => self.charts_view(ui, &mut act),
                 View::Pedigree => self.pedigree(ui, &mut act),
                 View::Family => self.family_view(ui, &mut act),
@@ -1970,6 +1984,9 @@ impl App {
         }
         for (k, v) in [(egui::Key::Num1, View::Family), (egui::Key::Num2, View::Pedigree), (egui::Key::Num3, View::Descendants), (egui::Key::Num4, View::Person), (egui::Key::Num5, View::Memories), (egui::Key::Num6, View::Charts), (egui::Key::Num7, View::Table), (egui::Key::Num8, View::Map), (egui::Key::Num9, View::Dna)] {
             if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, k)) {
+                if v == View::Pedigree {
+                    self.settings.ped_mode = 0;
+                }
                 self.view = v;
             }
         }
@@ -2009,12 +2026,6 @@ impl App {
                     self.confirm = false;
                 }
                 Action::Fx(i) => self.fx = i,
-                Action::MoveChild(f, k, up) => {
-                    if self.db.move_child(f, k, up) {
-                        self.x.next_label = Some("Changed the order of children".into());
-                        self.dirty = true;
-                    }
-                }
                 Action::GroupToggle(g, id) => {
                     if let Some(gr) = self.db.groups.get_mut(g) {
                         if !gr.ids.remove(&id) {
@@ -2027,15 +2038,6 @@ impl App {
                 Action::GroupsOpen(id) => {
                     self.x.group_who = Some(id);
                     self.x.groups_open = true;
-                }
-                Action::SortChildren(f) => {
-                    if self.db.sort_children(f) {
-                        self.x.next_label = Some("Put children in order of birth".into());
-                        self.dirty = true;
-                        self.status = crate::i18n::tr("Children put in order of birth.").into();
-                    } else {
-                        self.status = crate::i18n::tr("The children are already in order of birth.").into();
-                    }
                 }
                 Action::MoveFamily(who, f, up) => {
                     if self.db.move_family(who, f, up) {
@@ -2207,15 +2209,11 @@ impl App {
                     save_settings(&self.settings);
                 }
                 Action::PedMode(m) => {
-                    self.settings.ped_mode = m.min(2);
+                    self.settings.ped_mode = m.min(3);
                     save_settings(&self.settings);
                 }
                 Action::PedBand(on) => {
                     self.settings.ped_band = on;
-                    save_settings(&self.settings);
-                }
-                Action::SetHand(on) => {
-                    self.settings.hand = on;
                     save_settings(&self.settings);
                 }
                 Action::AddFor(target, k) => {
@@ -2239,6 +2237,9 @@ impl App {
                         1 => View::Descendants,
                         _ => View::Family,
                     };
+                    if which == 0 && self.settings.ped_mode == 3 {
+                        self.settings.ped_mode = 0;
+                    }
                 }
                 Action::QuickEdit(i) => {
                     if let Some(p) = self.db.people.get(&i) {

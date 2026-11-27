@@ -141,6 +141,9 @@ impl App {
                                     if ui.button(crate::i18n::trv(l)).clicked() {
                                         *act = Some(Action::Select(h));
                                         self.view = v;
+                                        if v == View::Pedigree {
+                                            self.settings.ped_mode = 0;
+                                        }
                                     }
                                 }
                             });

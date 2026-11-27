@@ -80,14 +80,15 @@ practice mode. Try anything: nothing is saved, and your own tree is not touched.
 1. **Menus:** File, Edit, Add, View, Search, Reports, Tools and Help. Everything the program does is in a menu.
 2. **Main toolbar:** Back, Forward, Home, Add person, Edit, Find, Quick jump, Notepad, Undo, Redo, Print and Back up
    now. It is the same on every tab.
-3. **Tabs:** Home, Family, Pedigree, Descendants, Individual, Memories, People, Map, Research and DNA. Each shows your
+3. **Tabs:** Home, Family, Pedigree, Individual, Memories, People, Map, Research and DNA. Each shows your
    tree a different way (Ctrl+1 to Ctrl+9; Cmd on a Mac).
-4. **Tab toolbar:** buttons for the tab that is open, such as **Add father** on the Family tab.
+4. **Tab toolbar:** buttons for the tab that is open, such as **Add father** on the Family tab. The Pedigree
+   tab's choices are in the row above the chart: **Pedigree**, **Descendants**, **Fan chart** or **Hourglass**.
 5. **Getting around:** the trail of people you have visited (on the Pedigree tab), **Recent** and **Bookmarks**.
 6. **The chart or page itself.** Click a person to highlight them; double-click to open their page. Drag an empty
    part of a chart, or scroll, to move it.
 7. **Status bar:** what just happened, and whether your changes are saved.
-8. **Floating toolbar** beside the charts: Select or Hand, Centre, the home person, zoom, fit and print.
+8. **Floating toolbar** beside the charts: Centre, Bigger, Smaller and Fit.
 
 Hover over any button to see what it does and its keyboard shortcut.
 
@@ -231,7 +232,7 @@ The **Style** list above the pedigree changes how the chart looks; your choice i
 father's ancestors in one colour and mother's in another). Tick **Colour band** for a thin coloured band across the
 top of each card instead: blue for men and pink for women, or the two sides when Colours is set to them. Every chart
 sits on its own backdrop (darker than the cards in dark mode, a soft grey behind white cards in light mode) so the
-people stand out. **Generations**, **Zoom**, **Fit** and **Select/Hand**
+people stand out. **Generations** and the zoom (on the floating toolbar)
 work in every style. Click a person to make them the centre, double-click to open their page, and right-click
 for the usual menu. Printing the pedigree prints the classic chart.
 
@@ -245,21 +246,24 @@ the right; right-clicking a box opens the same menu:
 - **Show which parents** (when someone has more than one set, such as birth and adoptive parents)
 - **Centre chart on this person** and **Bookmark this person**
 
-**Moving around a chart:** the pedigree, descendants, fan and hourglass charts sit on a canvas that fills the
-window, as on the genealogy websites. The chart starts at the left, centred from top to bottom. Drag any empty part
-of the canvas (or anywhere, with the **Hand** on) to move it, or use the scroll wheel or trackpad. It stays where you
-put it until you choose another person or change the zoom. **Select** clicks people as usual; with the **Hand**,
-clicks never change who is selected by accident. Press **H** to switch between the two.
+**Pedigree, Descendants, Fan chart and Hourglass** are the four charts of the Pedigree tab: choose one at the start
+of the row above the chart. **Descendants** shows the chosen person's children, grandchildren and so on, across the
+page.
 
-**The floating toolbar** down the left of the charts has Select and Hand, **Centre** (puts the chart back in its
-place), the home person, Bigger, Smaller, Fit and Print. Turn it off or on in **View** or **Settings → Toolbars**.
+**Moving around a chart:** every chart on the Pedigree tab sits on a canvas that fills the window, as on the
+genealogy websites. The chart starts at the left, centred from top to bottom. Drag anywhere on the canvas to move
+it, or use the scroll wheel or trackpad; a click on a person still goes to them. It stays where you put it until you
+choose another person or change the zoom.
+
+**The floating toolbar** down the left of the charts has **Centre** (puts the chart back in its place), **Bigger**,
+**Smaller** and **Fit**. It is where the zoom lives: turn it off in **View** or **Settings → Toolbars**, and the zoom
+moves to the tab toolbar (or, with that hidden too, to the row above the chart). **Print** is on the main toolbar.
 
 Fastened under the main person's card is a panel with **Spouse & children** and **Siblings**, both open at first.
 Click a heading to close or open it; it stays as it is, also as you move from person to person. Pick a name to move
 the chart to them, or use the Add entries. **Photo cards** (the style Gilded Roots starts with) shows each person's
 picture, and the last generation shown is a slim card so the chart stays compact; **Classic** shows names only. The
-descendants chart has the same
-right-click menu. **Smaller**, **Bigger** and **Fit** on the tab toolbar change the size of the chart.
+descendants chart has the same right-click menu.
 
 ## Adding people
 Use the **Add** menu (Individual, Spouse, Father, Mother, Child, or **Another set of parents**), the **Add person**
@@ -324,9 +328,8 @@ the buttons above the cards (or "Show this family") to switch. In a narrow windo
 
 ![The Family tab](images/guide/family.png)
 
-**Changing the order.** The **^ v** buttons beside each child move them up or down, and **Sort children by
-birth** puts them in order of birth (children with no date stay after the brother or sister they followed).
-With several spouses, **< >** after the spouse buttons move the chosen spouse earlier or later. The order is
+**Order.** Children are always listed in order of birth (or christening), and stay so as you add children or
+change dates; a child with no date stays after the brother or sister they followed. With several spouses, **< >** after the spouse buttons move the chosen spouse earlier or later. The order is
 saved in GEDCOM files, and spouse order is read from files made by PAF and other programs. Undo (Ctrl+Z) puts
 things back.
 
@@ -861,30 +864,32 @@ never wait for a save.
 The **main toolbar** under the menus is the same on every tab: Back, Forward, Home, Add person, Edit, Find, Quick
 jump, Undo, Redo, Print (prints what the tab shows) and Back up now. Under the tab names, each tab has its own
 **tab toolbar**:
-- **Family:** add father, mother, spouse, child or brother or sister; sort the children by birth; family group sheet.
-- **Pedigree** and **Descendants:** smaller, bigger, fit to the window, print the chart.
+- **Family:** add father, mother, spouse, child or brother or sister; family group sheet.
+- **Pedigree:** smaller, bigger and fit to the window, only while the floating toolbar is turned off (it has them
+  otherwise).
 - **Individual:** Edit (or Done), add files, write a story, record a story, print a family book.
 - **Memories:** add files, write a story, record a story, select several items.
-- **Charts:** print. **People:** find, save as a spreadsheet. **Map:** fit to pins, world, this person's places.
+- **People:** find, save as a spreadsheet. **Map:** fit to pins, world, this person's places.
 
 Hover over a button to see its name and shortcut. Right-click a toolbar to show or hide words beside the pictures,
 use large buttons, choose which buttons it shows, or hide it. **View** has **Show main toolbar** and **Show tab
 toolbars** (each on its own), and the same word and size choices. Your choices are remembered.
 
 ## Settings
-**Edit → Settings...** (**Cmd+,** on a Mac, **Ctrl+,** on Windows and Linux) gathers the choices in one window, laid
+**Edit → Settings...** on Windows and Linux (**Ctrl+,**), and **Gilded Roots → Settings...** on a Mac (**Cmd+,**),
+gathers the choices in one window, laid
 out like a desktop program's preferences: the pages down the left, and each page in titled panels that fit without
 scrolling.
 - **Appearance:** **Light**, **Dark** or **Automatic** (light or dark as your computer is set, changing when it
-  does), and the colour schemes in their groups (Gilded Roots, Tree pictures, Greens, Glass, Heritage, Easy to see and
-  others: click a group to see its schemes). **Back to the Gilded Roots look** at the bottom puts the colours back.
+  does), and every colour scheme on show at once under three headings, **Light**, **Dark** and **Glass**.
+  **Back to the Gilded Roots look** at the bottom puts the colours back.
 - **Colours:** accent colour and dark background, each with a **Custom** colour picker.
 - **Text and readability:** text size, the **font** (the computer's own, San Francisco on a Mac, Segoe UI on Windows,
   your desktop's font on Linux, or the one built into Gilded Roots) and **Easier to see**.
 - **Language**, **Names and dates**, **Charts** (generations, what chart boxes show, profile photo size),
   **Toolbars** (and the floating toolbar), **Printing and privacy** (keep living people private, US Letter or A4
   paper), and **Tree, backups and microphone**.
-**View** opens each of these pages too. Everything is saved as you change it; **Done** closes the window.
+Everything is saved as you change it; **Done** closes the window.
 
 Menus show each command's shortcut on the right, written the way your computer writes them (⌘Z on a Mac, Ctrl+Z
 on Windows and Linux). **Quit Gilded Roots** is **Cmd+Q** on a Mac and **Ctrl+Q** on Linux; on Windows it is
@@ -898,8 +903,7 @@ full screen),
 else and work the same on every computer.
 
 ## View options and text
-- **View** has Go to home person, Fit chart to window, **Go to tab**, the floating toolbar, and the Settings pages
-  (Appearance, Colours, Text and readability, Names and dates, Charts, Toolbars).
+- **View** has Go to home person, Fit chart to window, **Go to tab** and the floating toolbar.
 - **View → Fill the screen (keep the menu bar)** makes the window as big as the screen while the Mac's menu bar (or
   the Windows taskbar) stays; **View → Full screen** (**F11**, or Ctrl+Cmd+F on a Mac) takes the whole screen.
 - Names show as "John Henry Smith", "SMITH, John Henry" or "Smith, John Henry", and dates as typed, "12 Mar 1921",
@@ -910,15 +914,12 @@ else and work the same on every computer.
 
 ## Easier to see and to use
 **Edit → Settings → Appearance** has what helps if the screen is hard to read or the mouse is hard to use:
-- **Glass** looks (Settings → Appearance): **Glass** (light: frosted white over a pale grey), **Dark Glass**,
-  **Ocean Glass** and **Steel Glass**. The panels and windows are see-through over a soft, plain backdrop, with light
+- **Glass** looks (Settings → Appearance): **Light Glass** (frosted white over a pale grey), **Dark Glass** and
+  **Blue Glass**. The panels and windows are see-through over a soft, plain backdrop, with light
   edges and rounder corners. With a glass look, **A splash of colour behind the glass** adds soft glows of the accent
-  colour, and **Transparent window** lets your desktop show behind Gilded Roots (from the next start). More looks:
-  **Console**, **Archive**, **Amber Screen** and **Pioneer** (Retro screens), and **Paper** and **Classic**
-  (Traditional).
-- **Colour schemes** under **Easy to see**: **High contrast light** (black on white) and **High contrast dark** (white
-  on black, with yellow for what is selected). Under **Heritage**: **Sepia** and **Old Photograph**, warm brown looks
-  like an old album.
+  colour, and **Transparent window** lets your desktop show behind Gilded Roots (from the next start).
+- **Colour schemes** that help: **High contrast light** (black on white) and **High contrast dark** (white on black,
+  with yellow for what is selected), and **Sepia**, a warm brown look like an old album.
 - **High contrast:** every button, box, window and chart card gets a clear outline, and chart lines are drawn in the
   text colour. Works with any colour scheme.
 - **Colour-blind friendly chart colours:** men and women, and the father's and mother's sides, are blue and orange
@@ -941,10 +942,10 @@ More languages are coming.
 - **F1** user guide · **F2** edit the selected person · **F3** find a person · **F4** quick jump
 - **F5** fit the chart to the window · **F6** next tab · **F7** data checker · **F8** research to-do list
 - **F9** places · **F11** full screen · **F12** history of changes
-- **Ctrl/Cmd+1 to 9** Family, Pedigree, Descendants, Individual, Memories, Charts, People, Map, DNA
+- **Ctrl/Cmd+1 to 9** Family, Pedigree, Descendants, Individual, Memories, Fan chart, People, Map, DNA
 - **Ctrl/Cmd+K** quick jump · **Ctrl/Cmd+Z** undo · **Ctrl/Cmd+Y** redo (Mac: **Shift+Cmd+Z**) · **Ctrl/Cmd+D** repeat the last date or place
 - **Ctrl/Cmd+,** settings · **Ctrl/Cmd+P** print what the tab shows · **Ctrl/Cmd+Q** quit (Mac and Linux)
-- **Arrow keys** move around the chart · **Home** goes to the home person · **Ctrl/Cmd + / -** zoom · **H** hand tool
+- **Arrow keys** move around the chart · **Home** goes to the home person · **Ctrl/Cmd + / -** zoom
 - On a Mac the top-row keys control brightness and volume. Hold **fn** to use them as F keys, or use
   **Cmd+?** for help and **Ctrl+Cmd+F** for full screen.
 

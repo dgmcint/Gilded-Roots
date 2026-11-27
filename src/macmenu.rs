@@ -27,13 +27,7 @@ pub(crate) fn run_command(app: &mut App, ctx: &egui::Context, id: &str, act: &mu
         "arch_save" => app.save_archive_pick(),
         "arch_open" => app.open_archive_pick(),
         "print" => {
-            *act = Some(match app.view {
-                View::Pedigree => Action::PrintPedigree,
-                View::Family => Action::PrintFamily,
-                View::Descendants => Action::PrintDescendants,
-                View::Charts => Action::PrintChart,
-                _ => Action::ReportBook,
-            })
+            *act = Some(app.print_action())
         }
         "undo" => app.undo_action(),
         "redo" => app.redo_action(),
@@ -61,11 +55,10 @@ pub(crate) fn run_command(app: &mut App, ctx: &egui::Context, id: &str, act: &mu
 
 /// The tabs, as the View menu lists them.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
-const TABS: [(&str, View); 10] = [
+const TABS: [(&str, View); 9] = [
     ("Home", View::Home),
     ("Family", View::Family),
     ("Pedigree", View::Pedigree),
-    ("Descendants", View::Descendants),
     ("Individual", View::Person),
     ("Memories", View::Memories),
     ("People", View::Table),

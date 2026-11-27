@@ -278,7 +278,7 @@ impl App {
         }
         let mut open = true;
         let mut changed = false;
-        let (w, h) = (860.0, 540.0);
+        let (w, h) = (900.0, 600.0);
         crate::look::window(crate::look::wtitle(crate::i18n::tr("Settings")))
             .id(egui::Id::new("settings_window"))
             .open(&mut open)
@@ -437,7 +437,7 @@ impl App {
                     if ui.checkbox(&mut self.settings.focus_ring, tr("Show where the keyboard is (an outline after pressing Tab)")).changed() {
                         changed = true;
                     }
-                    ui.label(RichText::new(tr("The \"Easy to see\" and \"Heritage\" colour schemes (Appearance) include high-contrast and sepia looks.")).small().weak());
+                    ui.label(RichText::new(tr("The High contrast and Sepia colour schemes (Appearance) can help too.")).small().weak());
                 });
             }
             3 => {
@@ -518,7 +518,7 @@ impl App {
                     changed |= ui.checkbox(&mut self.settings.tb_tab, tr("Show tab toolbars")).changed();
                     changed |= ui.checkbox(&mut self.settings.tb_words, tr("Toolbar words beside the pictures")).changed();
                     changed |= ui.checkbox(&mut self.settings.tb_large, tr("Large toolbar buttons")).changed();
-                    changed |= ui.checkbox(&mut self.settings.float_tb, tr("Floating toolbar beside the charts")).on_hover_text(tr("Select or hand, centre, home person, zoom and print, down the left side of the pedigree and descendant charts")).changed();
+                    changed |= ui.checkbox(&mut self.settings.float_tb, tr("Floating toolbar beside the charts")).on_hover_text(tr("Centre, bigger, smaller and fit, down the left side of the charts on the Pedigree tab")).changed();
                     if !self.settings.tb_hidden.is_empty() && ui.button(tr("Show every toolbar button again")).clicked() {
                         self.settings.tb_hidden.clear();
                         changed = true;

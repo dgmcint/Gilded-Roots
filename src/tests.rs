@@ -1874,3 +1874,45 @@ mod contact_tests {
         assert!(back.people.values().next().unwrap().extra.iter().all(|r| !r.text.contains("PHON")), "not kept twice");
     }
 }
+
+#[cfg(test)]
+mod one_chart_tab {
+    use crate::*;
+    use eframe::egui;
+
+    /// The old Descendants tab opens the descendants chart on the Pedigree tab, and Print prints it.
+    #[test]
+    fn descendants_live_on_the_pedigree_tab() {
+        let mut app = App::for_test(crate::sample::sample_family());
+        let ctx = egui::Context::default();
+        let input = || egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1400.0, 900.0))), ..Default::default() };
+        app.view = View::Descendants;
+        let _ = ctx.run(input(), |c| app.frame(c));
+        assert!(app.view == View::Pedigree);
+        assert_eq!(app.settings.ped_mode, 3);
+        assert!(matches!(app.print_action(), Action::PrintDescendants));
+        // the floating toolbar off, then every toolbar off: the zoom still shows somewhere
+        for (f, t, m) in [(false, true, true), (false, false, false)] {
+            app.settings.float_tb = f;
+            app.settings.tb_tab = t;
+            app.settings.tb_main = m;
+            let out = ctx.run(input(), |c| app.frame(c));
+            assert!(!out.shapes.is_empty());
+        }
+        app.settings.ped_mode = 0;
+        assert!(matches!(app.print_action(), Action::PrintPedigree));
+        app.settings.ped_mode = 1;
+        assert!(matches!(app.print_action(), Action::PrintChart));
+    }
+
+    #[test]
+    fn colour_schemes_are_few_and_named_plainly() {
+        let n = crate::settings::SCHEMES.len();
+        assert!(n <= 26, "{n} schemes");
+        let mut names: Vec<&str> = crate::settings::SCHEMES.iter().map(|s| s.name).collect();
+        names.sort();
+        names.dedup();
+        assert_eq!(names.len(), n);
+    }
+}
+
